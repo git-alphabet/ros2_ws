@@ -8,9 +8,9 @@ ign_sim_pointcloud_tool:
 
 pb_navigation_switches:
   ros__parameters:
-    controller_plugin: "neupan_nav2_controller"
-    odometry_source: "small_point_lio"
-    behavior_tree: "disabled"
+    controller_plugin: "pb_omni_pid_pursuit_controller"
+    odometry_source: "point_lio"
+    behavior_tree: "config/7v7.xml"   #.xml or default,none
 
 pb_controller_profiles:
   ros__parameters:

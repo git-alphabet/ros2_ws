@@ -21,7 +21,10 @@ from pathlib import Path
 
 import yaml  # type: ignore
 
-from ament_index_python.packages import get_package_share_directory
+from ament_index_python.packages import (
+    PackageNotFoundError,
+    get_package_share_directory,
+)
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
@@ -379,11 +382,51 @@ def generate_launch_description():
     def _set_navigation_switches(context, *, params_file, namespace):
         params_path = Path(params_file.perform(context)).expanduser()
         ns_value = namespace.perform(context)
+        default_style_file = "rmuc_01.xml"
         enable_rm_bt = False
-        style_file = "rmuc_01.xml"
+        style_file = default_style_file
         processed_file = str(params_path)
         controller_plugin_name = None
         neupan_frame_name = None
+
+        def _resolve_bt_style_path(style_value):
+            candidate = style_value.strip() if isinstance(style_value, str) else ""
+            if not candidate:
+                candidate = default_style_file
+
+            if candidate.startswith("$("):
+                return candidate
+
+            expanded_candidate = os.path.expanduser(candidate)
+            if os.path.isabs(expanded_candidate):
+                return expanded_candidate
+
+            package_name = None
+            relative_path = expanded_candidate
+            if ":" in expanded_candidate:
+                pkg_part, rel_part = expanded_candidate.split(":", 1)
+                pkg_part = pkg_part.strip()
+                if pkg_part:
+                    package_name = pkg_part
+                    relative_path = rel_part.lstrip("/") or default_style_file
+
+            try:
+                share_dir = get_package_share_directory(package_name or "rm_behavior_tree")
+            except PackageNotFoundError:
+                share_dir = get_package_share_directory("rm_behavior_tree")
+
+            if package_name:
+                return os.path.join(share_dir, relative_path)
+
+            if relative_path.startswith("./") or relative_path.startswith("../"):
+                return os.path.normpath(
+                    os.path.join(str(params_path.parent), relative_path)
+                )
+
+            if os.path.sep in relative_path:
+                return os.path.join(share_dir, relative_path)
+
+            return os.path.join(share_dir, "config", relative_path)
 
         if params_path.is_file():
             try:
@@ -444,12 +487,12 @@ def generate_launch_description():
                 rm_bt_params = _get_ros_params(raw_yaml, "rm_behavior_tree")
             style_file = rm_bt_params.get("style", style_file)
             if behavior_tree_selector:
-                if behavior_tree_selector.lower() in {"disabled", "none"}:
+                selector_lower = behavior_tree_selector.lower()
+                if selector_lower in {"disabled", "none", "nav2", "default"}:
                     enable_rm_bt = False
                 else:
                     enable_rm_bt = True
-                    if behavior_tree_selector.endswith(".xml"):
-                        style_file = behavior_tree_selector
+                    style_file = behavior_tree_selector
             else:
                 enable_rm_bt = enable_rm_bt and bool(rm_bt_params)
 
@@ -530,9 +573,7 @@ def generate_launch_description():
                     yaml.safe_dump(raw_yaml, tmp_file, default_flow_style=False)
                     processed_file = tmp_file.name
 
-        style_path = os.path.join(
-            get_package_share_directory("rm_behavior_tree"), "config", style_file
-        )
+        style_path = _resolve_bt_style_path(style_file)
         return [
             SetLaunchConfiguration(
                 "enable_rm_behavior_tree", "true" if enable_rm_bt else "false"
