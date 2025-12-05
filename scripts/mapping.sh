@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# Launch simulator and SLAM, enabling the NeuPAN virtualenv only for the controller.
+# Run the reality (on-robot) SLAM/mapping launch in its own terminal.
 
 export __NV_PRIME_RENDER_OFFLOAD=1
 export __GLX_VENDOR_LIBRARY_NAME=nvidia
@@ -12,7 +12,7 @@ WS_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 ROS_SETUP=${ROS_SETUP:-/opt/ros/humble/setup.bash}
 OVERLAY_SETUP=${OVERLAY_SETUP:-$WS_DIR/install/setup.bash}
-SLAM_PARAMS_FILE=${SLAM_PARAMS_FILE:-$WS_DIR/src/pb2025_sentry_nav/pb2025_nav_bringup/config/simulation/nav2_params.yaml}
+REALITY_PARAMS_FILE=${REALITY_PARAMS_FILE:-$WS_DIR/src/pb2025_sentry_nav/pb2025_nav_bringup/config/reality/nav2_params.yaml}
 NEUPAN_VENV=${NEUPAN_VENV:-$WS_DIR/neupan_env}
 NEUPAN_ACTIVATE="$NEUPAN_VENV/bin/activate"
 NEUPAN_SITE_PACKAGES="$NEUPAN_VENV/lib/python3.10/site-packages"
@@ -31,7 +31,7 @@ fi
 TERMINAL_CMD=${TERMINAL_CMD:-}
 if [[ -n $TERMINAL_CMD ]]; then
 	if ! command -v "$TERMINAL_CMD" >/dev/null 2>&1; then
-			echo "[$SCRIPT_NAME] Requested terminal '$TERMINAL_CMD' not found." >&2
+		echo "[$SCRIPT_NAME] Requested terminal '$TERMINAL_CMD' not found." >&2
 		exit 1
 	fi
 else
@@ -40,7 +40,7 @@ else
 	elif command -v x-terminal-emulator >/dev/null 2>&1; then
 		TERMINAL_CMD="x-terminal-emulator"
 	else
-			echo "[$SCRIPT_NAME] No supported graphical terminal available." >&2
+		echo "[$SCRIPT_NAME] No supported graphical terminal available." >&2
 		exit 1
 	fi
 fi
@@ -48,7 +48,7 @@ fi
 BASE_ENV="source '$ROS_SETUP'; source '$OVERLAY_SETUP'"
 NEUPAN_ENV=""
 
-controller_plugin="$(python3 - <<'PY' "$SLAM_PARAMS_FILE"
+controller_plugin="$(python3 - <<'PY' "$REALITY_PARAMS_FILE"
 import sys
 from pathlib import Path
 
@@ -73,7 +73,7 @@ PY
 
 if [[ "$controller_plugin" == "neupan_nav2_controller" || "$controller_plugin" == "neupan_slam_controller" ]]; then
 	if [[ ! -f $NEUPAN_ACTIVATE ]]; then
-			echo "[$SCRIPT_NAME] NeuPAN virtualenv not found at $NEUPAN_ACTIVATE" >&2
+		echo "[$SCRIPT_NAME] NeuPAN virtualenv not found at $NEUPAN_ACTIVATE" >&2
 		exit 1
 	fi
 
@@ -84,8 +84,8 @@ if [[ "$controller_plugin" == "neupan_nav2_controller" || "$controller_plugin" =
 
 	if [[ -f $NEUPAN_MODEL_SETUP ]]; then
 		NEUPAN_ENV="$NEUPAN_ENV; source '$NEUPAN_MODEL_SETUP'"
-			else
-				echo "[$SCRIPT_NAME] Warning: $NEUPAN_MODEL_SETUP not found; skipping model setup." >&2
+	else
+		echo "[$SCRIPT_NAME] Warning: $NEUPAN_MODEL_SETUP not found; skipping model setup." >&2
 	fi
 else
 	echo "[$SCRIPT_NAME] controller_plugin='${controller_plugin:-unset}'; NeuPAN virtualenv will not be activated." >&2
@@ -96,7 +96,7 @@ launch_in_terminal() {
 	local command="$2"
 	local extra_env="$3"
 
-		echo "[$SCRIPT_NAME] Launching $title: $command"
+	echo "[$SCRIPT_NAME] Launching $title: $command"
 
 	local full_cmd="cd '$WS_DIR'; $BASE_ENV"
 	if [[ -n $extra_env ]]; then
@@ -117,9 +117,12 @@ launch_in_terminal() {
 	esac
 }
 
-GAZEBO_CMD=${GAZEBO_CMD:-"ros2 launch rmu_gazebo_simulator bringup_sim.launch.py"}
-SLAM_CMD=${SLAM_CMD:-"ros2 launch pb2025_nav_bringup rm_navigation_simulation_launch.py slam:=True"}
+if [[ -z ${MAPPING_CMD:-} ]]; then
+	MAPPING_CMD="ros2 launch pb2025_nav_bringup rm_navigation_reality_launch.py slam:=True use_robot_state_pub:=True"
+fi
 
-launch_in_terminal "Gazebo Sim" "$GAZEBO_CMD" ""
-sleep 1
-launch_in_terminal "SLAM" "$SLAM_CMD" "$NEUPAN_ENV"
+if [[ $# -gt 0 ]]; then
+	MAPPING_CMD="$MAPPING_CMD $*"
+fi
+
+launch_in_terminal "Reality Mapping" "$MAPPING_CMD" "$NEUPAN_ENV"

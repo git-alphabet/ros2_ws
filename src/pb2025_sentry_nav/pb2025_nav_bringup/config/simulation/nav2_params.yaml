@@ -8,9 +8,9 @@ ign_sim_pointcloud_tool:
 
 pb_navigation_switches:
   ros__parameters:
-    controller_plugin: "neupan_nav2_controller"
-    odometry_source: "small_point_lio"
-    behavior_tree: "disabled"
+    controller_plugin: "pb_omni_pid_pursuit_controller"
+    odometry_source: "point_lio"
+    behavior_tree: "config/7v7.xml"   #.xml or default,none
 
 pb_controller_profiles:
   ros__parameters:
@@ -160,8 +160,8 @@ point_lio:
       plane_thr: 0.1                                    # 0.05, the threshold for plane criteria, the smaller, the flatter a plane
       match_s: 81.0
       ivox_grid_resolution: 0.5
-      gravity: [ 0.0, -4.9, -8.487047153776548 ]        # gravity to be aligned # rpy = [0, pi/6, 0]
-      gravity_init: [ 0.0, -4.9, -8.487047153776548 ]   # preknown gravity in the first IMU body frame, use when imu_en is False or start from a non-stationary state
+      gravity: [ 0.0, 0.0, -9.81 ]        # gravity to be aligned # rpy = [0, pi/6, 0]
+      gravity_init: [ 0.0, 0.0, -9.81 ]   # preknown gravity in the first IMU body frame, use when imu_en is False or start from a non-stationary state
       extrinsic_T: [ 0.0, 0.0, 0.0 ]
       extrinsic_R: [ 1.0, 0.0, 0.0,
                      0.0, 1.0, 0.0,
@@ -256,7 +256,7 @@ fake_vel_transform:
     input_cmd_vel_topic: "cmd_vel_nav2_result"
     output_cmd_vel_topic: "cmd_vel"
     cmd_spin_topic: "cmd_spin"
-    init_spin_speed: 0.0
+    init_spin_speed: 3.14
 
 small_gicp_relocalization:
   ros__parameters:
@@ -510,6 +510,54 @@ local_costmap:
         inflation_radius: 0.7
       always_send_full_costmap: False
 
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      use_sim_time: True
+      update_frequency: 10.0
+      publish_frequency: 5.0
+      global_frame: odom
+      robot_base_frame: gimbal_yaw_fake
+      rolling_window: true
+      width: 5
+      height: 5
+      resolution: 0.05
+      robot_radius: 0.2
+      plugins: ["static_layer", "intensity_voxel_layer", "inflation_layer"]
+      intensity_voxel_layer:
+        plugin: pb_nav2_costmap_2d::IntensityVoxelLayer
+        enabled: true
+        track_unknown_space: true
+        footprint_clearing_enabled: true
+        publish_voxel_map: false
+        combination_method: 1
+        mark_threshold: 2                # 至少2个体素点才标记（过滤小坡离散点）
+        origin_z: -0.1                   # 覆盖地面凹陷，避免小坡底部误判
+        unknown_threshold: 3             # 降低未知阈值，坡面更易判为可通行
+        z_resolution: 0.05
+        z_voxels: 9                      # 体素高度：-0.1~0.35m（小坡≤0.35m）
+        min_obstacle_height: 0.1         # 忽略<0.1m的小坡凸起
+        max_obstacle_height: 0.35        # 仅标记>0.35m的真实障碍
+        min_obstacle_intensity: 0.8      # 提高强度阈值（小坡强度低，真实障碍强度高）
+        max_obstacle_intensity: 2.0
+        observation_sources: terrain_map
+        terrain_map:
+          data_type: PointCloud2
+          topic: <robot_namespace>/terrain_map
+          sensor_frame: front_mid360
+          min_obstacle_height: 0.1       # 与上层保持一致
+          max_obstacle_height: 0.35
+          obstacle_max_range: 5.0
+          obstacle_min_range: 0.2
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: True
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 15.0        # 代价快速衰减，小坡残差代价忽略
+        inflation_radius: 0.15          # 减小膨胀半径，仅膨胀真实障碍
+      always_send_full_costmap: False
+
 global_costmap:
   global_costmap:
     ros__parameters:
@@ -528,24 +576,22 @@ global_costmap:
         footprint_clearing_enabled: true
         publish_voxel_map: false
         combination_method: 1
-        mark_threshold: 0
-        origin_z: 0.0
-        unknown_threshold: 5
+        mark_threshold: 3                # 全局点云更离散，需3个体素才标记
+        origin_z: -0.1                   # 统一地面基准
+        unknown_threshold: 3
         z_resolution: 0.05
-        z_voxels: 16
-        min_obstacle_height: 0.0
-        max_obstacle_height: 2.0
-        min_obstacle_intensity: 0.1
+        z_voxels: 12                     # 体素高度：-0.1~0.5m（适配全局10m探测范围）
+        min_obstacle_height: 0.1         # 与局部一致，过滤小坡
+        max_obstacle_height: 0.4         # 全局稍放宽，避免漏判远处矮障碍
+        min_obstacle_intensity: 0.8
         max_obstacle_intensity: 2.0
         observation_sources: terrain_map_ext
         terrain_map_ext:
           data_type: PointCloud2
-          # '<robot_namespace>' keyword shall be replaced with 'namespace' where user defined.
-          # It doesn't need to start with '/'
           topic: <robot_namespace>/terrain_map_ext
           sensor_frame: front_mid360
-          min_obstacle_height: 0.0
-          max_obstacle_height: 2.0
+          min_obstacle_height: 0.1
+          max_obstacle_height: 0.4
           obstacle_max_range: 10.0
           obstacle_min_range: 0.2
       static_layer:
@@ -553,8 +599,8 @@ global_costmap:
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 4.0
-        inflation_radius: 0.7
+        cost_scaling_factor: 12.0        # 全局代价衰减稍缓，保证安全
+        inflation_radius: 0.2            # 全局膨胀稍大，适配10m探测范围
       always_send_full_costmap: False
 
 # The yaml_filename does not need to be specified since it going to be set by defaults in launch.
