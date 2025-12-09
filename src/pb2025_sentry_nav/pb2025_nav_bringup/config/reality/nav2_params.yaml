@@ -56,8 +56,8 @@ pb_controller_profiles:
       max_angular_velocity: 2.0
       goal_tolerance: 0.2
       laser_topic: "/red_standard_robot1/obstacle_scan"
-      neupan_config_path: "/home/alphabet/temporary/ros2_ws/src/NeuPAN/example/non_obs/omni/planner.yaml"
-      dune_model_path: "/home/alphabet/temporary/ros2_ws/src/NeuPAN/example/dune_train/model/omni_robot_default/model_5000.pth"
+      neupan_config_path: "$(find-pkg-share neupan_nav2_controller)/vendor/NeuPAN-main/example/non_obs/omni/planner.yaml"
+      dune_model_path: "$(find-pkg-share neupan_nav2_controller)/model/omni_robot_default/model_5000.pth"
       laser_downsample_rate: 2
       debug_mode: false
 
