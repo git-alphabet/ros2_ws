@@ -57,3 +57,4 @@ echo "[INFO] Done. Next steps:" \
   && echo "  - source $WS_DIR/install/setup.bash" \
   && echo "  - source $VENV_DIR/bin/activate" \
   && echo "  - (optional) run ./scripts/complete_build.sh or ./scripts/neupan_build.sh"
+#严格按照/src下放neupan插件    /scripts下放脚本
