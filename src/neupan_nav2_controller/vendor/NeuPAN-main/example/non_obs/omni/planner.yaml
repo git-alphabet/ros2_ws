@@ -10,9 +10,9 @@ collision_threshold: 0.05
 robot:
   kinematics: 'omni'
   max_speed: [2.0, 2.0] # [max_vx, max_vy] for omnidirectional robot
-  max_acce: [2.5, 2.5]   # [max_ax, max_ay] for omnidirectional robot
-  length: 0.58
-  width: 0.46
+  max_acce: [0.7, 0.7]   # [max_ax, max_ay] for omnidirectional robot (aligned to training)
+  length: 0.7
+  width: 0.7
   #vertices: [[-0.8, -1.0], [-0.8, 1.0], [0.8, 1.0], [0.8, -1.0]] 
 
 # initial path
@@ -29,17 +29,18 @@ ipath:
   
 # proximal alternating minimization network
 pan:
-  iter_num: 2
-  dune_max_num: 100
-  nrmp_max_num: 10
-  iter_threshold: 0.1
-  dune_checkpoint: 'model/omni_robot_default/model_5000.pth'
+  iter_num: 3
+  dune_max_num: 150
+  nrmp_max_num: 15
+  iter_threshold: 0.05
+  # During training the checkpoint is None; at runtime set to a model path
+  dune_checkpoint: None
 
 
 # adjust parameters
 adjust:
-  q_s: 0.0
-  p_u: 0.1
-  eta: 20.0
-  d_max: 0.5
-  d_min: 0.05
+  q_s: 1.5
+  p_u: 0.15
+  eta: 3.0
+  d_max: 0.8
+  d_min: 0.01
