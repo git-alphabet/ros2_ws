@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# Run the reality (on-robot) SLAM/mapping launch in its own terminal.
+# Run the reality (on-robot) navigation launch (NOT SLAM) in its own terminal.
 
 export __NV_PRIME_RENDER_OFFLOAD=1
 export __GLX_VENDOR_LIBRARY_NAME=nvidia
@@ -107,7 +107,7 @@ import sys
 from pathlib import Path
 
 cfg_path = Path(sys.argv[1])
-script_name = sys.argv[2] if len(sys.argv) > 2 else "mapping.sh"
+script_name = sys.argv[2] if len(sys.argv) > 2 else "navigation.sh"
 prefix = f"[{script_name}]"
 
 if not cfg_path.exists():
@@ -240,12 +240,14 @@ launch_in_terminal() {
 	esac
 }
 
-if [[ -z ${MAPPING_CMD:-} ]]; then
-	MAPPING_CMD="ros2 launch pb2025_nav_bringup rm_navigation_reality_launch.py slam:=True use_robot_state_pub:=True"
+# Default navigation command (NOT SLAM).
+# Note: rm_navigation_reality_launch.py will start livox_ros_driver2 and joy_teleop by default.
+if [[ -z ${NAVIGATION_CMD:-} ]]; then
+	NAVIGATION_CMD="ros2 launch pb2025_nav_bringup rm_navigation_reality_launch.py slam:=False use_robot_state_pub:=True"
 fi
 
 if [[ $# -gt 0 ]]; then
-	MAPPING_CMD="$MAPPING_CMD $*"
+	NAVIGATION_CMD="$NAVIGATION_CMD $*"
 fi
 
-launch_in_terminal "Reality Mapping" "$MAPPING_CMD" "$NEUPAN_ENV"
+launch_in_terminal "Reality Navigation" "$NAVIGATION_CMD" "$NEUPAN_ENV"
