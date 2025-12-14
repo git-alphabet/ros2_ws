@@ -5,6 +5,7 @@ colcon build --parallel-workers 1 --packages-skip neupan_nav2_controller --symli
 
 # Activate NeuPAN virtual environment and set PYTHONPATH
 source ~/temporary/ros2_ws/neupan_env/bin/activate
+python3 -m pip install -q "numpy<2" || true
 export PYTHONPATH=$PYTHONPATH:~/temporary/ros2_ws/neupan_env/lib/python3.10/site-packages
 
 # Build only the AI packages

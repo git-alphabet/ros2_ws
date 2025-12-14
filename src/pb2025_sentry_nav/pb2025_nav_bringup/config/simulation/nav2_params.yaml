@@ -18,7 +18,7 @@ ign_sim_pointcloud_tool:
 # 导航“开关/选择器”：统一选择控制器插件、里程计来源、行为树
 pb_navigation_switches:
   ros__parameters:
-    controller_plugin: "pb_omni_pid_pursuit_controller"
+    controller_plugin: "neupan_nav2_controller"
     odometry_source: "point_lio"
     behavior_tree: "config/7v7.xml"   #.xml or default,none
 
@@ -66,7 +66,7 @@ pb_controller_profiles:
       laser_topic: /red_standard_robot1/obstacle_scan
       min_distance_noise_floor: -0.01
       neupan_config_path: "$(find-pkg-share neupan_nav2_controller)/vendor/NeuPAN-main/example/non_obs/omni/planner.yaml"
-      dune_model_path: "$(find-pkg-share neupan_nav2_controller)/model/omni_robot_default/model_5000.pth"
+      dune_model_path: "$(find-pkg-share neupan_nav2_controller)/model/omni_robot_default/model_5000_new.pth"
       laser_downsample_rate: 2
       debug_mode: false
 
@@ -277,7 +277,7 @@ fake_vel_transform:
     input_cmd_vel_topic: "cmd_vel_nav2_result"
     output_cmd_vel_topic: "cmd_vel"
     cmd_spin_topic: "cmd_spin"
-    init_spin_speed: 3.14
+    init_spin_speed: 0.0
 
 # 重定位：GICP 基于点云的全局重定位/初始化
 small_gicp_relocalization:
@@ -481,7 +481,7 @@ controller_server:
       goal_tolerance: 0.2
       laser_topic: /red_standard_robot1/obstacle_scan
       neupan_config_path: "$(find-pkg-share neupan_nav2_controller)/vendor/NeuPAN-main/example/non_obs/omni/planner.yaml"
-      dune_model_path: "$(find-pkg-share neupan_nav2_controller)/model/omni_robot_default/model_5000.pth"
+      dune_model_path: "$(find-pkg-share neupan_nav2_controller)/model/omni_robot_default/model_5000_new.pth"
       laser_downsample_rate: 2
       debug_mode: false
 
