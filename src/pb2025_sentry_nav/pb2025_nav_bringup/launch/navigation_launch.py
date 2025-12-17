@@ -34,7 +34,7 @@ from launch.actions import (
     SetLaunchConfiguration,
 )
 from launch.conditions import IfCondition, UnlessCondition
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import LoadComposableNodes, Node
 from launch_ros.descriptions import ComposableNode, ParameterFile
 from nav2_common.launch import RewrittenYaml
@@ -45,6 +45,7 @@ def generate_launch_description():
     bringup_dir = get_package_share_directory("pb2025_nav_bringup")
 
     namespace = LaunchConfiguration("namespace")
+    slam = LaunchConfiguration("slam")
     use_sim_time = LaunchConfiguration("use_sim_time")
     autostart = LaunchConfiguration("autostart")
     params_file = LaunchConfiguration("params_file")
@@ -90,6 +91,12 @@ def generate_launch_description():
         "namespace", default_value="", description="Top-level namespace"
     )
 
+    declare_slam_cmd = DeclareLaunchArgument(
+        "slam",
+        default_value="False",
+        description="Whether SLAM mode is enabled. Used to avoid duplicate obstacle_scan publishers.",
+    )
+
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         "use_sim_time",
         default_value="false",
@@ -130,6 +137,51 @@ def generate_launch_description():
 
     declare_log_level_cmd = DeclareLaunchArgument(
         "log_level", default_value="info", description="log level"
+    )
+
+    enable_obstacle_scan = LaunchConfiguration("enable_obstacle_scan")
+
+    start_pointcloud_to_laserscan_cmd = Node(
+        package="pointcloud_to_laserscan",
+        executable="pointcloud_to_laserscan_node",
+        name="pointcloud_to_laserscan",
+        output="screen",
+        respawn=use_respawn,
+        respawn_delay=2.0,
+        parameters=[configured_params],
+        arguments=["--ros-args", "--log-level", log_level],
+        remappings=[
+            ("cloud_in", "terrain_map_ext"),
+            ("scan", "obstacle_scan"),
+        ],
+        condition=IfCondition(enable_obstacle_scan),
+    )
+
+    load_pointcloud_to_laserscan_composable_cmd = LoadComposableNodes(
+        condition=IfCondition(
+            PythonExpression(
+                [
+                    "('",
+                    use_composition,
+                    "' == 'True') and ('",
+                    enable_obstacle_scan,
+                    "' == 'true')",
+                ]
+            )
+        ),
+        target_container=container_name_full,
+        composable_node_descriptions=[
+            ComposableNode(
+                package="pointcloud_to_laserscan",
+                plugin="pointcloud_to_laserscan::PointCloudToLaserScanNode",
+                name="pointcloud_to_laserscan",
+                parameters=[configured_params],
+                remappings=[
+                    ("cloud_in", "terrain_map_ext"),
+                    ("scan", "obstacle_scan"),
+                ],
+            )
+        ],
     )
 
     start_terrain_analysis_cmd = Node(
@@ -189,6 +241,7 @@ def generate_launch_description():
                 parameters=[configured_params],
                 arguments=["--ros-args", "--log-level", log_level],
             ),
+            start_pointcloud_to_laserscan_cmd,
             Node(
                 package="fake_vel_transform",
                 executable="fake_vel_transform_node",
@@ -379,7 +432,7 @@ def generate_launch_description():
         ],
     )
 
-    def _set_navigation_switches(context, *, params_file, namespace):
+    def _set_navigation_switches(context, *, params_file, namespace, slam):
         params_path = Path(params_file.perform(context)).expanduser()
         ns_value = namespace.perform(context)
         default_style_file = "rmuc_01.xml"
@@ -388,6 +441,10 @@ def generate_launch_description():
         processed_file = str(params_path)
         controller_plugin_name = None
         neupan_frame_name = None
+        enable_obstacle_scan_value = "false"
+
+        slam_raw = slam.perform(context)
+        slam_enabled = str(slam_raw).strip().lower() in {"true", "1", "yes", "on"}
 
         def _resolve_bt_style_path(style_value):
             candidate = style_value.strip() if isinstance(style_value, str) else ""
@@ -566,6 +623,9 @@ def generate_launch_description():
                         _set_nested_value(target_data, path, neupan_frame_name)
                     override_required = True
 
+                if neupan_plugin_selected and not slam_enabled:
+                    enable_obstacle_scan_value = "true"
+
             if override_required:
                 with tempfile.NamedTemporaryFile(
                     mode="w", delete=False, suffix=".yaml"
@@ -580,11 +640,12 @@ def generate_launch_description():
             ),
             SetLaunchConfiguration("rm_behavior_tree_style_path", style_path),
             SetLaunchConfiguration("processed_params_file", processed_file),
+            SetLaunchConfiguration("enable_obstacle_scan", enable_obstacle_scan_value),
         ]
 
     set_switches_cmd = OpaqueFunction(
         function=_set_navigation_switches,
-        kwargs={"params_file": params_file, "namespace": namespace},
+        kwargs={"params_file": params_file, "namespace": namespace, "slam": slam},
     )
 
     # Create the launch description and populate
@@ -596,6 +657,7 @@ def generate_launch_description():
 
     # Declare the launch options
     ld.add_action(declare_namespace_cmd)
+    ld.add_action(declare_slam_cmd)
     ld.add_action(declare_use_sim_time_cmd)
     ld.add_action(declare_params_file_cmd)
     ld.add_action(declare_autostart_cmd)
@@ -607,6 +669,7 @@ def generate_launch_description():
     ld.add_action(
         SetLaunchConfiguration("processed_params_file", params_file)
     )
+    ld.add_action(SetLaunchConfiguration("enable_obstacle_scan", "false"))
     # Set switches before starting nodes
     ld.add_action(set_switches_cmd)
     # Add the actions to launch all of the navigation nodes
@@ -615,5 +678,6 @@ def generate_launch_description():
     ld.add_action(start_rm_behavior_tree_cmd)
     ld.add_action(load_nodes)
     ld.add_action(load_composable_nodes)
+    ld.add_action(load_pointcloud_to_laserscan_composable_cmd)
 
     return ld

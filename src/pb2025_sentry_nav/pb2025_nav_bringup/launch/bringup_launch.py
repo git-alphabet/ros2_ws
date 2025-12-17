@@ -186,6 +186,7 @@ def generate_launch_description():
                 ),
                 launch_arguments={
                     "namespace": namespace,
+                    "slam": slam,
                     "use_sim_time": use_sim_time,
                     "autostart": autostart,
                     "params_file": params_file,
