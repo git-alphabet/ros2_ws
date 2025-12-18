@@ -60,6 +60,8 @@ pb_controller_profiles:
       curvature_forward_dist: 0.7
       curvature_backward_dist: 0.3
       max_velocity_scaling_factor_rate: 0.9
+
+      
     neupan_nav2_controller:
       plugin: "neupan_nav2_controller::NeuPANController"
       robot_type: "omni"
@@ -67,7 +69,7 @@ pb_controller_profiles:
       max_angular_velocity: 2.0
       goal_tolerance: 0.2
       # 注意：这里使用绝对 topic 名（以 / 开头），多机器人时要确认 namespace 是否符合预期
-      laser_topic: "/red_standard_robot1/obstacle_scan"
+      laser_topic: "/obstacle_scan"
       min_distance_noise_floor: -0.01  # match simulation tuning
       neupan_config_path: "$(find-pkg-share neupan_nav2_controller)/vendor/NeuPAN-main/example/non_obs/omni/planner.yaml"
       dune_model_path: "$(find-pkg-share neupan_nav2_controller)/model/omni_robot_default/model_5000.pth"
@@ -483,10 +485,9 @@ controller_server:
       max_linear_velocity: 2.0
       max_angular_velocity: 2.0
       goal_tolerance: 0.2
-      laser_topic: "/scan"
+      laser_topic: "/obstacle_scan"
       neupan_config_path: "$(find-pkg-share neupan_nav2_controller)/vendor/NeuPAN-main/example/non_obs/omni/planner.yaml"
       dune_model_path: "$(find-pkg-share neupan_nav2_controller)/model/omni_robot_default/model_5000.pth"
-      laser_downsample_rate: 2
       laser_downsample_rate: 2
       debug_mode: false
 

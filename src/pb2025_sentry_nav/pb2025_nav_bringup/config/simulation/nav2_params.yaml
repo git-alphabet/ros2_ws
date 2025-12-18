@@ -56,6 +56,8 @@ pb_controller_profiles:
       curvature_forward_dist: 0.7
       curvature_backward_dist: 0.3
       max_velocity_scaling_factor_rate: 0.9
+
+      
     neupan_nav2_controller:
       plugin: "neupan_nav2_controller::NeuPANController"
       robot_type: "omni"
@@ -302,7 +304,7 @@ pointcloud_to_laserscan:
   ros__parameters:
     use_sim_time: True
     target_frame: base_footprint
-    min_height: -0.5
+    min_height: -0.6
     max_height: 6.0
     min_intensity: 0.1
     max_intensity: 2.0
@@ -460,7 +462,7 @@ controller_server:
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.001
     min_theta_velocity_threshold: 0.001
-    failure_tolerance: 0.3
+    failure_tolerance: 0.4
     progress_checker_plugins: ["progress_checker"]
     goal_checker_plugins: ["general_goal_checker"]
     controller_plugins: ["FollowPath"]
@@ -471,7 +473,7 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.15
+      xy_goal_tolerance: 0.2
       yaw_goal_tolerance: 6.28
     FollowPath:
       plugin: "neupan_nav2_controller::NeuPANController"
