@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.5)
 project(rmoss_gz_plugins)
 
+# CMake 4 removes compatibility with CMake < 3.5.
+# Some third-party *Config.cmake files (e.g. jsoncpp) still call
+# cmake_policy(VERSION <3.5), which becomes a hard error.
+# This cache variable asks CMake to clamp such requests to >= 3.5.
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "4.0")
+  set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "Minimum policy version for dependencies" FORCE)
+endif()
+
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
