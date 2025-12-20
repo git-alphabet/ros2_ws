@@ -7,8 +7,8 @@ set -euo pipefail
 #
 # Usage:
 #   ./scripts/setup_neupan_env.sh
-#   PYTHON_BIN=/usr/bin/python3 ./scripts/setup_neupan_env.sh
-#   VENV_DIR=/abs/path/to/neupan_env ./scripts/setup_neupan_env.sh
+#   PYTHON_BIN=python3 ./scripts/setup_neupan_env.sh
+#   VENV_DIR=./neupan_env ./scripts/setup_neupan_env.sh
 
 WS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
