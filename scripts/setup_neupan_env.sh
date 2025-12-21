@@ -25,6 +25,13 @@ if [[ ! -d "$VENV_DIR" ]]; then
   "$PYTHON_BIN" -m venv "$VENV_DIR"
 fi
 
+# Ensure colcon ignores the virtualenv directory so builds skip it
+COLCON_IGNORE_FILE="$VENV_DIR/COLCON_IGNORE"
+if [[ ! -f "$COLCON_IGNORE_FILE" ]]; then
+  echo "[INFO] Creating COLCON_IGNORE in $VENV_DIR"
+  : > "$COLCON_IGNORE_FILE"
+fi
+
 # shellcheck disable=SC1090
 source "$VENV_DIR/bin/activate"
 
@@ -35,12 +42,17 @@ echo "[INFO] Installing NeuPAN python requirements"
 # torch==...+cpu typically needs the CPU wheel index.
 python -m pip install -r "$REQ_FILE" --extra-index-url https://download.pytorch.org/whl/cpu
 
+# Ensure ROS/colcon-related python packages available in the venv
+echo "[INFO] Installing ROS/colcon python packages (catkin_pkg)"
+python -m pip install -q catkin_pkg || true
+
 echo "[INFO] Verifying imports & versions"
 python - <<'PY'
 import sys
 pkgs = [
   'numpy','scipy','torch','yaml','cvxpy','cvxpylayers','diffcp','ecos'
 ]
+pkgs.append('catkin_pkg')
 print('python', sys.version)
 for p in pkgs:
   try:
