@@ -23,6 +23,12 @@ VENV_SYSTEM_SITE_PACKAGES="${VENV_SYSTEM_SITE_PACKAGES:-1}"
 NEUPAN_EXTRAS="${NEUPAN_EXTRAS:-1}"
 RECREATE_VENV="${RECREATE_VENV:-0}"
 
+# ECOS handling:
+# - If ECOS_WHEEL is set to a local wheel path, we force-reinstall it into the venv.
+# - If PATCH_ECOS=1, we ensure ecos/ecos.py contains the sparse-array compatibility patch.
+ECOS_WHEEL="${ECOS_WHEEL:-}"
+PATCH_ECOS="${PATCH_ECOS:-1}"
+
 if [[ ! -f "$REQ_FILE" ]]; then
   echo "[ERROR] requirements.txt not found: $REQ_FILE" >&2
   exit 1
@@ -64,6 +70,53 @@ python -m pip install -q --upgrade pip setuptools wheel
 echo "[INFO] Installing NeuPAN python requirements"
 # torch==...+cpu typically needs the CPU wheel index.
 python -m pip install -r "$REQ_FILE" --extra-index-url https://download.pytorch.org/whl/cpu
+
+if [[ -n "$ECOS_WHEEL" ]]; then
+  if [[ ! -f "$ECOS_WHEEL" ]]; then
+  echo "[ERROR] ECOS_WHEEL not found: $ECOS_WHEEL" >&2
+  exit 1
+  fi
+  echo "[INFO] Forcing ECOS install from wheel: $ECOS_WHEEL"
+  python -m pip install -q --force-reinstall --no-deps "$ECOS_WHEEL"
+fi
+
+if [[ "$PATCH_ECOS" == "1" ]]; then
+  echo "[INFO] Ensuring ECOS sparse-array compatibility patch is applied"
+  python - <<'PY'
+import importlib
+import os
+
+try:
+  ecos_mod = importlib.import_module('ecos.ecos')
+except Exception as e:
+  raise SystemExit(f"[ERROR] cannot import ecos.ecos for patching: {e!r}")
+
+path = getattr(ecos_mod, '__file__', None)
+if not path or not os.path.isfile(path):
+  raise SystemExit(f"[ERROR] cannot locate ecos.ecos file: {path!r}")
+
+with open(path, 'r', encoding='utf-8') as f:
+  src = f.read()
+
+marker = "SciPy >= 1.15 may hand us sparse *arrays*"
+if marker in src:
+  print(f"[INFO] ECOS patch already present: {path}")
+  raise SystemExit(0)
+
+# Best-effort patch: insert sparse-array -> spmatrix conversion after issparse checks.
+needle = "if A is not None and not sparse.issparse(A):\n        raise TypeError(\"A is required to be a sparse matrix\")\n"
+insert = needle + "\n    # SciPy >= 1.15 may hand us sparse *arrays* (e.g. csc_array), which are\n    # not subclasses of spmatrix and do not provide get_shape(). Convert them\n    # explicitly to CSC spmatrix for compatibility with the underlying wrapper.\n    if G is not None and not sparse.isspmatrix(G):\n        warn(\"Converting G sparse array to a CSC matrix; may take a while.\")\n        G = sparse.csc_matrix(G)\n    if A is not None and not sparse.isspmatrix(A):\n        warn(\"Converting A sparse array to a CSC matrix; may take a while.\")\n        A = sparse.csc_matrix(A)\n"
+
+if needle not in src:
+  raise SystemExit(f"[WARN] ECOS patch skipped (unexpected ecos.py layout): {path}")
+
+src2 = src.replace(needle, insert)
+with open(path, 'w', encoding='utf-8') as f:
+  f.write(src2)
+
+print(f"[INFO] ECOS patch applied: {path}")
+PY
+fi
 
 if [[ "$NEUPAN_EXTRAS" == "1" ]]; then
   echo "[INFO] Installing common NeuPAN extras (matplotlib/pillow/scikit-learn)"
@@ -116,12 +169,16 @@ if os.environ.get('NEUPAN_EXTRAS', '1') == '1':
 
 print('python', sys.version)
 for p in pkgs:
-    try:
-        __import__(p)
-        print(f'{p} {version_of(p)}')
-    except Exception as e:
-        print(f'{p} import failed:', repr(e))
-        raise
+  try:
+    m = __import__(p)
+    print(f'{p} {version_of(p)}')
+    if os.environ.get('SHOW_PY_PATHS', '0') == '1':
+      path = getattr(m, '__file__', None)
+      if path:
+        print(f'  -> {path}')
+  except Exception as e:
+    print(f'{p} import failed:', repr(e))
+    raise
 
 try:
     __import__('catkin_pkg')
