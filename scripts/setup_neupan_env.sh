@@ -16,6 +16,13 @@ VENV_DIR="${VENV_DIR:-$WS_DIR/neupan_env}"
 REQ_FILE="$WS_DIR/src/neupan_nav2_controller/requirements.txt"
 EXTRA_PKGS="${EXTRA_PKGS:-}"
 
+# Defaults tuned for ROS2 workflows:
+# - VENV_SYSTEM_SITE_PACKAGES=1: venv can import system ROS python pkgs (rclpy, launch, etc)
+# - NEUPAN_EXTRAS=1: install common non-ROS deps often used by NeuPAN tooling
+VENV_SYSTEM_SITE_PACKAGES="${VENV_SYSTEM_SITE_PACKAGES:-1}"
+NEUPAN_EXTRAS="${NEUPAN_EXTRAS:-1}"
+RECREATE_VENV="${RECREATE_VENV:-0}"
+
 if [[ ! -f "$REQ_FILE" ]]; then
   echo "[ERROR] requirements.txt not found: $REQ_FILE" >&2
   exit 1
@@ -26,9 +33,19 @@ if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
   exit 1
 fi
 
+if [[ "$RECREATE_VENV" == "1" && -d "$VENV_DIR" ]]; then
+  echo "[WARN] RECREATE_VENV=1 set; removing existing venv: $VENV_DIR"
+  rm -rf "$VENV_DIR"
+fi
+
 if [[ ! -d "$VENV_DIR" ]]; then
   echo "[INFO] Creating venv: $VENV_DIR"
-  "$PYTHON_BIN" -m venv "$VENV_DIR"
+  if [[ "$VENV_SYSTEM_SITE_PACKAGES" == "1" ]]; then
+    echo "[INFO] Venv uses system site-packages (for ROS python pkgs)"
+    "$PYTHON_BIN" -m venv --system-site-packages "$VENV_DIR"
+  else
+    "$PYTHON_BIN" -m venv "$VENV_DIR"
+  fi
 fi
 
 # Ensure colcon ignores the virtualenv directory so builds skip it
@@ -47,6 +64,13 @@ python -m pip install -q --upgrade pip setuptools wheel
 echo "[INFO] Installing NeuPAN python requirements"
 # torch==...+cpu typically needs the CPU wheel index.
 python -m pip install -r "$REQ_FILE" --extra-index-url https://download.pytorch.org/whl/cpu
+
+if [[ "$NEUPAN_EXTRAS" == "1" ]]; then
+  echo "[INFO] Installing common NeuPAN extras (matplotlib/pillow/scikit-learn)"
+  python -m pip install -q matplotlib pillow scikit-learn
+else
+  echo "[INFO] Skipping common NeuPAN extras (NEUPAN_EXTRAS=$NEUPAN_EXTRAS)"
+fi
 
 if [[ -n "$EXTRA_PKGS" ]]; then
   echo "[INFO] Installing extra python packages: $EXTRA_PKGS"
@@ -67,6 +91,7 @@ echo "[INFO] Verifying imports & versions"
 python - <<'PY'
 import sys
 from importlib import metadata as importlib_metadata
+import os
 
 def version_of(module_name: str) -> str:
     try:
@@ -83,8 +108,12 @@ def version_of(module_name: str) -> str:
 
 pkgs = [
   'numpy','scipy','torch','yaml','cvxpy','cvxpylayers','diffcp','ecos',
-  'colorama','rich'
+  'colorama','rich','gctl'
 ]
+
+if os.environ.get('NEUPAN_EXTRAS', '1') == '1':
+  pkgs.extend(['matplotlib', 'PIL', 'sklearn'])
+
 print('python', sys.version)
 for p in pkgs:
     try:
