@@ -8,15 +8,24 @@
 
 namespace mid360_driver {
 
-    void LidarPublisher::make_sure_init(rclcpp::Node &node, const std::string &lidar_topic, const std::string &imu_topic) {
+    void LidarPublisher::make_sure_init(
+      rclcpp::Node &node, const std::string &lidar_topic, const std::string &imu_topic,
+      bool publish_custom_msg, const std::string &custom_msg_topic)
+    {
         if (!is_init) {
             pointcloud_publisher = node.create_publisher<sensor_msgs::msg::PointCloud2>(lidar_topic, 1000);
             imu_publisher = node.create_publisher<sensor_msgs::msg::Imu>(imu_topic, 1000);
+            if (publish_custom_msg) {
+                custom_msg_publisher = node.create_publisher<livox_ros_driver2::msg::CustomMsg>(custom_msg_topic, 1000);
+            }
             is_init = true;
         }
     }
 
-    void LidarPublisher::make_sure_init(rclcpp::Node &node, const std::string &lidar_topic, const std::string &imu_topic, const asio::ip::address &lidar_ip) {
+    void LidarPublisher::make_sure_init(
+      rclcpp::Node &node, const std::string &lidar_topic, const std::string &imu_topic,
+      bool publish_custom_msg, const std::string &custom_msg_topic, const asio::ip::address &lidar_ip)
+    {
         if (!is_init) {
             auto lidar_ip_bytes = lidar_ip.to_v4().to_bytes();
             std::string lidar_ip_str;
@@ -30,6 +39,9 @@ namespace mid360_driver {
             lidar_ip_str.append(std::to_string(static_cast<int>(lidar_ip_bytes[3])));
             pointcloud_publisher = node.create_publisher<sensor_msgs::msg::PointCloud2>(lidar_topic + lidar_ip_str, 1000);
             imu_publisher = node.create_publisher<sensor_msgs::msg::Imu>(imu_topic + lidar_ip_str, 1000);
+            if (publish_custom_msg) {
+                custom_msg_publisher = node.create_publisher<livox_ros_driver2::msg::CustomMsg>(custom_msg_topic + lidar_ip_str, 1000);
+            }
             is_init = true;
         }
     }
@@ -114,6 +126,39 @@ namespace mid360_driver {
         }
         msg.is_dense = true;
         pointcloud_publisher->publish(msg);
+
+        if (custom_msg_publisher) {
+            livox_ros_driver2::msg::CustomMsg custom;
+            custom.header.stamp = msg.header.stamp;
+            custom.header.frame_id = frame_id;
+
+            const uint64_t timebase_ns = static_cast<uint64_t>(timestamp * 1e9);
+            custom.timebase = timebase_ns;
+            custom.lidar_id = 0;
+            custom.point_num = static_cast<uint32_t>(points_to_publish.size());
+            custom.rsvd = {0, 0, 0};
+            custom.points.resize(points_to_publish.size());
+            for (size_t i = 0; i < points_to_publish.size(); ++i) {
+                const auto &p = points_to_publish[i];
+                auto &out = custom.points[i];
+                const uint64_t pt_ns = static_cast<uint64_t>(p.timestamp * 1e9);
+                uint64_t offset64 = (pt_ns >= timebase_ns) ? (pt_ns - timebase_ns) : 0ull;
+                if (offset64 > std::numeric_limits<uint32_t>::max()) {
+                    offset64 = std::numeric_limits<uint32_t>::max();
+                }
+                out.offset_time = static_cast<uint32_t>(offset64);
+                out.x = p.x;
+                out.y = p.y;
+                out.z = p.z;
+                float intensity = p.intensity;
+                if (intensity < 0.0f) intensity = 0.0f;
+                if (intensity > 255.0f) intensity = 255.0f;
+                out.reflectivity = static_cast<uint8_t>(intensity);
+                out.tag = 0;
+                out.line = 0;
+            }
+            custom_msg_publisher->publish(custom);
+        }
     }
 
     void LidarPublisher::publish_imu(const std::string &frame_id) const {
@@ -138,11 +183,17 @@ namespace mid360_driver {
         std::string lidar_frame = declare_parameter<std::string>("lidar_frame");
         std::string imu_topic = declare_parameter<std::string>("imu_topic");
         std::string imu_frame = declare_parameter<std::string>("imu_frame");
+        bool publish_custom_msg = declare_parameter<bool>("publish_custom_msg", false);
+        std::string custom_msg_topic = declare_parameter<std::string>("custom_msg_topic", "livox/lidar/pointcloud");
         std::string host_ip = declare_parameter<std::string>("host_ip");
         double lidar_publish_time_interval = declare_parameter<double>("lidar_publish_time_interval");
         bool is_topic_name_with_lidar_ip = declare_parameter<bool>("is_topic_name_with_lidar_ip");
         if (!is_topic_name_with_lidar_ip) {
-            lidar_publisher.make_sure_init(*this, lidar_topic, imu_topic);
+            if (publish_custom_msg && custom_msg_topic == lidar_topic) {
+                RCLCPP_ERROR(get_logger(), "publish_custom_msg is true but custom_msg_topic equals lidar_topic (%s). ROS2 topics cannot have multiple message types; disable publish_custom_msg or use a different custom_msg_topic.", lidar_topic.c_str());
+                publish_custom_msg = false;
+            }
+            lidar_publisher.make_sure_init(*this, lidar_topic, imu_topic, publish_custom_msg, custom_msg_topic);
         }
         mid360_driver = std::make_unique<mid360_driver::Mid360Driver>(
                 io_context,
@@ -168,7 +219,9 @@ namespace mid360_driver {
                     mutex.unlock();
                 });
         if (is_topic_name_with_lidar_ip) {
-            publish_pointcloud_timer = rclcpp::create_timer(this, get_clock(), std::chrono::milliseconds(100), [this, lidar_topic, imu_topic, lidar_frame]() {
+            publish_pointcloud_timer = rclcpp::create_timer(
+                    this, get_clock(), std::chrono::milliseconds(100),
+                    [this, lidar_topic, imu_topic, lidar_frame, publish_custom_msg, custom_msg_topic]() {
                 mutex.lock();
                 for (auto &[lidar_ip, lidar_publisher]: muti_lidar_publisher) {
                     lidar_publisher.prepare_pointcloud_to_publish();
@@ -181,11 +234,13 @@ namespace mid360_driver {
                 }
                 mutex.unlock();
                 for (auto &[lidar_ip, lidar_publisher]: muti_lidar_publisher_temp) {
-                    lidar_publisher->make_sure_init(*this, lidar_topic, imu_topic, lidar_ip);
+                    lidar_publisher->make_sure_init(*this, lidar_topic, imu_topic, publish_custom_msg, custom_msg_topic, lidar_ip);
                     lidar_publisher->publish_pointcloud(lidar_frame);
                 }
-            });
-            publish_imu_timer = rclcpp::create_timer(this, get_clock(), std::chrono::milliseconds(1), [this, lidar_topic, imu_topic, imu_frame]() {
+                  });
+            publish_imu_timer = rclcpp::create_timer(
+                    this, get_clock(), std::chrono::milliseconds(1),
+                    [this, lidar_topic, imu_topic, imu_frame, publish_custom_msg, custom_msg_topic]() {
                 muti_lidar_publisher_temp.clear();
                 mutex.lock();
                 for (auto &[lidar_ip, lidar_publisher]: muti_lidar_publisher) {
@@ -199,10 +254,10 @@ namespace mid360_driver {
                 }
                 mutex.unlock();
                 for (auto &[lidar_ip, lidar_publisher]: muti_lidar_publisher_temp) {
-                    lidar_publisher->make_sure_init(*this, lidar_topic, imu_topic, lidar_ip);
+                    lidar_publisher->make_sure_init(*this, lidar_topic, imu_topic, publish_custom_msg, custom_msg_topic, lidar_ip);
                     lidar_publisher->publish_imu(imu_frame);
                 }
-            });
+                  });
         } else {
             publish_pointcloud_timer = rclcpp::create_timer(this, get_clock(), std::chrono::duration<double, std::ratio<1, 1>>(lidar_publish_time_interval), [this, lidar_frame]() {
                 mutex.lock();

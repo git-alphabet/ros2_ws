@@ -10,11 +10,14 @@
 mid360_driver:
   ros__parameters:
     # 说明：这里用相对话题名（不带前导 /），以便在设置 namespace 时能自动跟随命名空间。
-    # 兼容旧驱动常见话题：/livox/lidar/pointcloud
-    lidar_topic: livox/lidar/pointcloud
+    # mid360_driver 原生输出：PointCloud2
+    lidar_topic: livox/lidar
     lidar_frame: front_mid360
     imu_topic: livox/imu
     imu_frame: front_mid360
+    # 兼容旧 livox_ros_driver2：额外发布 CustomMsg（给 point_lio / small_point_lio 用）
+    publish_custom_msg: true
+    custom_msg_topic: livox/lidar/pointcloud
     # 20Hz 发布点云（与旧配置 publish_freq: 20.0 对齐）
     lidar_publish_time_interval: 0.05
     # 本机网卡 IP（应与 mid360_user_config.json 的 host_net_info.*_ip 一致）
