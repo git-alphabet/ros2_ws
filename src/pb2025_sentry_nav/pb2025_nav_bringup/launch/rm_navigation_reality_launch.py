@@ -157,10 +157,10 @@ def generate_launch_description():
         }.items(),
     )
 
-    start_livox_ros_driver2_node = Node(
-        package="livox_ros_driver2",
-        executable="livox_ros_driver2_node",
-        name="livox_ros_driver2",
+    start_mid360_driver_node = Node(
+        package="mid360_driver",
+        executable="mid360_driver_node",
+        name="mid360_driver",
         output="screen",
         namespace=namespace,
         parameters=[configured_params],
@@ -219,7 +219,7 @@ def generate_launch_description():
 
     # Add the actions to launch all of the navigation nodes
     ld.add_action(start_robot_state_publisher_cmd)
-    ld.add_action(start_livox_ros_driver2_node)
+    ld.add_action(start_mid360_driver_node)
     ld.add_action(bringup_cmd)
     ld.add_action(joy_teleop_cmd)
     ld.add_action(rviz_cmd)

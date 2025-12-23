@@ -6,18 +6,20 @@
 # - TF 的“frame 名”不是 topic；frame 是否带 namespace 取决于各节点如何发布。
 # - 本文件里出现的 <robot_namespace> 是占位符，launch 中会替换。
 #
-# Livox 驱动：实车雷达数据源
-livox_ros_driver2:
+# Mid360 驱动：实车雷达数据源（替代 livox_ros_driver2）
+mid360_driver:
   ros__parameters:
-    xfer_format: 4                                      # 0-PointCloud2Msg(PointXYZRTL), 1-LivoxCustomMsg, 2-PclPxyziMsg, 3-LivoxImuMsg, 4-AllMsg
-    multi_topic: 0                                      # 0-All LiDARs share the same topic, 1-One LiDAR one topic
-    data_src: 0                                         # 0-lidar, others-Invalid data src
-    publish_freq: 20.0                                  # frequency of publish, 5.0, 10.0, 20.0, 50.0, etc.
-    output_data_type: 0
-    frame_id: front_mid360
-    user_config_path: $(find-pkg-share pb2025_nav_bringup)/config/reality/mid360_user_config.json
-    cmdline_input_bd_code: livox0000000001
-    lvx_file_path: ""
+    # 说明：这里用相对话题名（不带前导 /），以便在设置 namespace 时能自动跟随命名空间。
+    lidar_topic: livox/lidar
+    lidar_frame: front_mid360
+    imu_topic: livox/imu
+    imu_frame: front_mid360
+    # 20Hz 发布点云（与旧配置 publish_freq: 20.0 对齐）
+    lidar_publish_time_interval: 0.05
+    # 本机网卡 IP（应与 mid360_user_config.json 的 host_net_info.*_ip 一致）
+    host_ip: 192.168.1.2
+    # 多雷达时可打开，让话题名后缀带雷达 ip
+    is_topic_name_with_lidar_ip: false
 
 # 导航“开关/选择器”：建议与仿真保持一致（除 use_sim_time/硬件话题等必须不同项）
 pb_navigation_switches:
