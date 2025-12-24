@@ -191,7 +191,7 @@ namespace mid360_driver {
         if (!is_topic_name_with_lidar_ip) {
             if (publish_custom_msg && custom_msg_topic == lidar_topic) {
                 RCLCPP_ERROR(get_logger(), "publish_custom_msg is true but custom_msg_topic equals lidar_topic (%s). ROS2 topics cannot have multiple message types; disable publish_custom_msg or use a different custom_msg_topic.", lidar_topic.c_str());
-                publish_custom_msg = false;
+                publish_custom_msg = true;
             }
             lidar_publisher.make_sure_init(*this, lidar_topic, imu_topic, publish_custom_msg, custom_msg_topic);
         }
