@@ -68,7 +68,7 @@ pb_controller_profiles:
       laser_topic: /red_standard_robot1/obstacle_scan
       min_distance_noise_floor: -0.01
       neupan_config_path: "$(find-pkg-share neupan_nav2_controller)/vendor/NeuPAN-main/example/non_obs/omni/planner.yaml"
-      dune_model_path: "$(find-pkg-share neupan_nav2_controller)/model/omni_robot_default/model_5000_new.pth"
+      dune_model_path: "$(find-pkg-share neupan_nav2_controller)/model/omni_robot_default/model_6000.pth"
       laser_downsample_rate: 2
       debug_mode: false
 
@@ -483,7 +483,7 @@ controller_server:
       goal_tolerance: 0.2
       laser_topic: /red_standard_robot1/obstacle_scan
       neupan_config_path: "$(find-pkg-share neupan_nav2_controller)/vendor/NeuPAN-main/example/non_obs/omni/planner.yaml"
-      dune_model_path: "$(find-pkg-share neupan_nav2_controller)/model/omni_robot_default/model_5000_new.pth"
+      dune_model_path: "$(find-pkg-share neupan_nav2_controller)/model/omni_robot_default/model_6000.pth"
       laser_downsample_rate: 2
       debug_mode: false
 
