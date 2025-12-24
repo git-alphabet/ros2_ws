@@ -113,6 +113,9 @@ void OmniPidPursuitController::configure(
   declare_parameter_if_not_declared(
     node, plugin_name_ + ".max_velocity_scaling_factor_rate", rclcpp::ParameterValue(0.9));
 
+  declare_parameter_if_not_declared(
+    node, plugin_name_ + ".debug_print_control_frequency", rclcpp::ParameterValue(false));
+
   node->get_parameter(plugin_name_ + ".translation_kp", translation_kp_);
   node->get_parameter(plugin_name_ + ".translation_ki", translation_ki_);
   node->get_parameter(plugin_name_ + ".translation_kd", translation_kd_);
@@ -156,6 +159,9 @@ void OmniPidPursuitController::configure(
   node->get_parameter(
     plugin_name_ + ".max_velocity_scaling_factor_rate", max_velocity_scaling_factor_rate_);
 
+  node->get_parameter(
+    plugin_name_ + ".debug_print_control_frequency", debug_print_control_frequency_);
+
   node->get_parameter("controller_frequency", control_frequency);
 
   transform_tolerance_ = tf2::durationFromSec(transform_tolerance);
@@ -173,6 +179,38 @@ void OmniPidPursuitController::configure(
     translation_ki_);
   heading_pid_ = std::make_shared<PID>(
     control_duration_, v_angular_max_, v_angular_min_, rotation_kp_, rotation_kd_, rotation_ki_);
+
+  // Reset controller frequency stats
+  control_cycle_count_ = 0;
+  last_control_freq_report_time_ = steady_clock_.now();
+  control_freq_initialized_ = true;
+}
+
+void OmniPidPursuitController::maybeLogControlFrequency()
+{
+  if (!debug_print_control_frequency_) {
+    return;
+  }
+
+  const auto now = steady_clock_.now();
+  if (!control_freq_initialized_) {
+    last_control_freq_report_time_ = now;
+    control_cycle_count_ = 0;
+    control_freq_initialized_ = true;
+    return;
+  }
+
+  ++control_cycle_count_;
+  const double dt = (now - last_control_freq_report_time_).seconds();
+  if (dt < 1.0) {
+    return;
+  }
+
+  const double hz = (dt > 0.0) ? (static_cast<double>(control_cycle_count_) / dt) : 0.0;
+  RCLCPP_INFO(logger_, "\033[33m控制器频率: %.2f Hz\033[0m", hz);
+
+  control_cycle_count_ = 0;
+  last_control_freq_report_time_ = now;
 }
 
 void OmniPidPursuitController::cleanup()
@@ -220,6 +258,8 @@ geometry_msgs::msg::TwistStamped OmniPidPursuitController::computeVelocityComman
   const geometry_msgs::msg::PoseStamped & pose, const geometry_msgs::msg::Twist & velocity,
   nav2_core::GoalChecker * /*goal_checker*/)
 {
+  maybeLogControlFrequency();
+
   std::lock_guard<std::mutex> lock_reinit(mutex_);
 
   nav2_costmap_2d::Costmap2D * costmap = costmap_ros_->getCostmap();

@@ -3,7 +3,7 @@ receding: 10
 step_time: 0.1
 ref_speed: 2.0          # align with trained speed
 device: 'cpu'
-time_print: True
+time_print: False
 collision_threshold: 0.1
 
 # robot
@@ -22,7 +22,7 @@ ipath:
   curve_style: 'line'   # 'dubins' or reeds or line
   min_radius: 4.0
   loop: False
-  arrive_threshold: 0.1
+  arrive_threshold: 0.2
   close_threshold: 0.1
   ind_range: 10
   arrive_index_threshold: 1
@@ -33,13 +33,13 @@ pan:
   dune_max_num: 100
   nrmp_max_num: 10
   iter_threshold: 0.1
-  dune_checkpoint: 'C:/Users/86185/Desktop/workspace/NeuPAN/NeuPAN-main/model/omni_robot_user_custom_dune/model_6000.pth'
+  dune_checkpoint: '../../../../../model/omni_robot_default/model_6000.pth'
 
 
 # adjust parameters
 adjust:
   q_s: 2.0     # 官方是0.5。保持较大值以增强高速（2.0m/s）下的轨迹跟踪能力。
   p_u: 0.05    # 关键！官方是1.0。动力（加速度1.0）相对受限，降低惩罚以允许满负荷加速。
-  eta: 5.0     # 官方是10.0。降低至5.0，避免在狭窄处过于保守（被“吓死”）。
+  eta: 10.0     # 官方是10.0。降低至5.0，避免在狭窄处过于保守（被“吓死”）。
   d_max: 1.2   # 官方是1.0。速度提升至2.0m/s，需要更远的感知/反应距离，故调大。
   d_min: 0.2

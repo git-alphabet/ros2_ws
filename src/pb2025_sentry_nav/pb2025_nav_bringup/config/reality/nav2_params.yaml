@@ -37,6 +37,7 @@ pb_controller_profiles:
   ros__parameters:
     pb_omni_pid_pursuit_controller:
       plugin: "pb_omni_pid_pursuit_controller::OmniPidPursuitController"
+      debug_print_control_frequency: false
       translation_kp: 3.0
       translation_ki: 0.1
       translation_kd: 0.3
@@ -70,6 +71,7 @@ pb_controller_profiles:
       
     neupan_nav2_controller:
       plugin: "neupan_nav2_controller::NeuPANController"
+      debug_print_control_frequency: false
       robot_type: "omni"
       max_linear_velocity: 2.0
       max_angular_velocity: 2.0
@@ -487,6 +489,7 @@ controller_server:
       yaw_goal_tolerance: 6.28
     FollowPath:
       plugin: "neupan_nav2_controller::NeuPANController"
+      debug_print_control_frequency: false
       robot_type: "omni"
       max_linear_velocity: 2.0
       max_angular_velocity: 2.0
