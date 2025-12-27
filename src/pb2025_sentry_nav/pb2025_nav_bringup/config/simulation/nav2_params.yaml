@@ -18,7 +18,7 @@ ign_sim_pointcloud_tool:
 # 导航“开关/选择器”：统一选择控制器插件、里程计来源、行为树
 pb_navigation_switches:
   ros__parameters:
-    controller_plugin: "neupan_nav2_controller"
+    controller_plugin: "pb_omni_pid_pursuit_controller"
     odometry_source: "point_lio"
     behavior_tree: "config/7v7.xml"   #.xml or default,none
 
@@ -268,7 +268,7 @@ terrain_analysis:
     voxelTimeUpdateThre: 1.0
     minRelZ: -1.5                       # min_rel_z 以及 max_rel_z 限制了有效点云点的Z值范围，用于对天花板和地板进行处理
     maxRelZ: 0.5
-    disRatioZ: 0.2                      # Z 值的最大最小范围由这两个值决定，但是并不等于这两个值，是有一个比例关系的，距离机器人越远，限定范围就越大，这其中考虑了坡度
+    disRatioZ: 0.2                    # Z 值的最大最小范围由这两个值决定，但是并不等于这两个值，是有一个比例关系的，距离机器人越远，限定范围就越大，这其中考虑了坡度
 
 # 地形分析（扩展版）：输出 terrain_map_ext（全局代价地图常用）
 terrain_analysis_ext:
