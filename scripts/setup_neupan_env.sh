@@ -65,7 +65,9 @@ fi
 source "$VENV_DIR/bin/activate"
 
 echo "[INFO] Upgrading pip tooling"
-python -m pip install -q --upgrade pip setuptools wheel
+# 注意：ROS/colcon 依赖对 setuptools 版本有上限（例如 colcon-core 要求 < 80）。
+# 这里显式限制 setuptools，避免升级到过新版本导致依赖冲突。
+python -m pip install -q --upgrade pip wheel "setuptools<80"
 
 echo "[INFO] Installing NeuPAN python requirements"
 # torch==...+cpu typically needs the CPU wheel index.
