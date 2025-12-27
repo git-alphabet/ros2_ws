@@ -1,21 +1,26 @@
 <?xml version="1.0"?>
-<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
-<package format="3">
-  <name>ign_sim_pointcloud_tool</name>
-  <version>1.3.1</version>
-  <description>The package converts pointcloud in Ignition Gazebo to velodyne format</description>
-
+<package format="2">
+  <name>pb_teleop_twist_joy</name>
+  <version>1.0.1</version>
+  <description>Generic joystick teleop for robots with chassis and gimbal.</description>
   <maintainer email="lihanchen2004@163.com">Lihan Chen</maintainer>
-
   <license>Apache-2.0</license>
+  <author email="lihanchen2004@163.com">Lihan Chen</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
+  <depend>rclcpp_action</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
-  <depend>pcl_conversions</depend>
-  <depend>pcl_ros</depend>
+  <depend>nav2_msgs</depend>
+  <depend>example_interfaces</depend>
+
+  <exec_depend>joy</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
