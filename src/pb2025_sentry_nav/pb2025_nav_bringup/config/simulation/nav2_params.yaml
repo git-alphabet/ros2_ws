@@ -20,7 +20,7 @@ pb_navigation_switches:
   ros__parameters:
     controller_plugin: "pb_omni_pid_pursuit_controller"
     odometry_source: "point_lio"
-    behavior_tree: "config/7v7.xml"   #.xml or default,none
+    behavior_tree: "default"   # .xml or default,none
 
 # Nav2 Controller Server：轨迹跟随控制
 # 标注：NeuPAN 控制器参数（如 neupan_config_path / dune_model_path / laser_topic / debug_*）只在这里维护。
@@ -243,32 +243,41 @@ sensor_scan_generation:
 # 地形分析：输出 terrain_map（用于代价地图的点云观测源）
 terrain_analysis:
   ros__parameters:
-    scanVoxelSize: 0.05                 # 点云下采样
-    decayTime: 0.5                      # 点云时间差阈值 大于则不会被处理
-    noDecayDis: 0.0                     # 点云距离阈值 小于该阈值不考虑时间差
-    clearingDis: 0.0                    # 该距离外的点会被清除
-    useSorting: True                    # 这个参数开起来就能上坡了；如果 use_sorting,那么就以周围点中的分位点作为地面点，否则以最低点作为地面点；周围其余点相对于地面点的高度作为通过代价，所以对于坡面，有的点的代价是正，有的是负，就相互抵消了；不要与 consider_drop 同时开启，计算上会有冲突
-    quantileZ: 0.2                      # useful if use_sorting is enabled.
-    considerDrop: False                 # 考虑凹下去的地面,开启则将相对于地面点的高度取绝对值
+    scanVoxelSize: 0.05
+    decayTime: 0.5
+    noDecayDis: 0.0
+    clearingDis: 0.0
+    useSorting: True
+    quantileZ: 0.2
+    considerDrop: False
     limitGroundLift: False
     maxGroundLift: 0.3
-    clearDyObs: True                    # 清除动态物体的话，有动态物体走过的地方就走不了了
-    minDyObsDis: 0.3                    # 以下参数都是在 clear_dy_obs 的情况下才有用的
+    clearDyObs: True
+    minDyObsDis: 0.3
     minDyObsAngle: 0.0
     minDyObsRelZ: -0.3
     absDyObsRelZThre: 0.2
     minDyObsVFOV: -28.0
     maxDyObsVFOV: 33.0
     minDyObsPointNum: 1
-    noDataObstacle: False               # treat no data as obstacle
+    noDataObstacle: False
     noDataBlockSkipNum: 0
     minBlockPointNum: 10
-    vehicleHeight: 0.5                  # 小于车辆高度的点才会进行处理
-    voxelPointUpdateThre: 100
+    
+    # 【修改点1】拉高到 1.5，防止坡太高被切成断头路（解决左坡局部识别问题）
+    vehicleHeight: 1.5
+    
+    # 【修改点2】从 100 降到 10！非常重要！解决斜坡点云稀疏不识别的问题
+    voxelPointUpdateThre: 10
+    
     voxelTimeUpdateThre: 1.0
-    minRelZ: -1.5                       # min_rel_z 以及 max_rel_z 限制了有效点云点的Z值范围，用于对天花板和地板进行处理
-    maxRelZ: 0.5
-    disRatioZ: 0.2                    # Z 值的最大最小范围由这两个值决定，但是并不等于这两个值，是有一个比例关系的，距离机器人越远，限定范围就越大，这其中考虑了坡度
+    minRelZ: -1.5
+    
+    # 【修改点3】拉高上限，允许机器人看到头顶上的坡
+    maxRelZ: 2.0
+    
+    # 【修改点4】坡度容忍，0.6 约等于 30度坡
+    disRatioZ: 0.6
 
 # 地形分析（扩展版）：输出 terrain_map_ext（全局代价地图常用）
 terrain_analysis_ext:
@@ -279,12 +288,22 @@ terrain_analysis_ext:
     clearingDis: 20.0
     useSorting: true
     quantileZ: 0.2
-    vehicleHeight: 1.0
-    voxelPointUpdateThre: 100
+    
+    # 【修改点5】统一拉高
+    vehicleHeight: 1.5
+    
+    # 【修改点6】必须降低！否则全局图也建不出来
+    voxelPointUpdateThre: 10
+    
     voxelTimeUpdateThre: 2.0
     lowerBoundZ: -1.5
-    upperBoundZ: 0.5
-    disRatioZ: 0.2
+    
+    # 【修改点7】扩展分析里的 Z轴上限，原值 0.5 会导致高台直接不可见
+    upperBoundZ: 2.0
+    
+    # 【修改点8】坡度容忍
+    disRatioZ: 0.6
+    
     checkTerrainConn: False
     terrainUnderVehicle: -0.75
     terrainConnThre: 0.5
@@ -302,7 +321,7 @@ fake_vel_transform:
     input_cmd_vel_topic: "cmd_vel_nav2_result"
     output_cmd_vel_topic: "cmd_vel"
     cmd_spin_topic: "cmd_spin"
-    init_spin_speed: 0.0
+    init_spin_speed: 3.14
 
 # 重定位：GICP 基于点云的全局重定位/初始化
 small_gicp_relocalization:
@@ -504,7 +523,9 @@ local_costmap:
         z_voxels: 16
         min_obstacle_height: 0.0
         max_obstacle_height: 2.0
-        min_obstacle_intensity: 0.1
+        # intensity == 离地高度差 disZ（由 terrain_analysis 写入）
+        # 为了让可通行坡更“顺滑”，提高阈值避免坡面被当作障碍并触发膨胀层。
+        min_obstacle_intensity: 0.5
         max_obstacle_intensity: 2.0
         observation_sources: terrain_map
         terrain_map:
@@ -553,7 +574,10 @@ global_costmap:
         z_voxels: 16
         min_obstacle_height: 0.0
         max_obstacle_height: 2.0
-        min_obstacle_intensity: 0.1
+        # intensity == 离地高度差 disZ（由 terrain_analysis_ext 写入）
+        # 宽坡面点云在 disZ>0.1 时会被全局层当作障碍，导致大面积粉红（膨胀）。
+        # 提高阈值让“可通行坡”不过度进入障碍/膨胀。
+        min_obstacle_intensity: 0.5
         max_obstacle_intensity: 2.0
         observation_sources: terrain_map_ext
         terrain_map_ext:
