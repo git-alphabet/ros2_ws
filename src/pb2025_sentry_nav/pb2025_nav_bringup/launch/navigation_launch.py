@@ -633,7 +633,7 @@ def generate_launch_description():
                     yaml.safe_dump(raw_yaml, tmp_file, default_flow_style=False)
                     processed_file = tmp_file.name
 
-        style_path = _resolve_bt_style_path(style_file)
+        style_path = _resolve_bt_style_path(style_file) if enable_rm_bt else style_file
         return [
             SetLaunchConfiguration(
                 "enable_rm_behavior_tree", "true" if enable_rm_bt else "false"

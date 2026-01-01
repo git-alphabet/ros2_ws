@@ -221,6 +221,34 @@ DOCKER_BUILDKIT=1 docker build --progress=plain --network host -t gxu_robotz_nav
 
 > 注意：`COLCON_SKIP_PACKAGES` 需要是“空格分隔”的包名列表。若你要裁剪仿真相关包以减小镜像体积，请先告诉我你要保留/裁剪的包，我再帮你给出一份默认推荐列表（避免瞎猜）。
 
+### 8.1.1（推荐）带版本号构建 + 同步 latest + 推送 Docker Hub
+
+说明：
+- `latest` 始终指向“最新可用镜像”
+- 同时打一个日期版本号 tag（便于回滚/对齐小电脑部署）
+
+```bash
+# 你的 Docker Hub 命名空间（用户名或组织名）
+export DOCKERHUB_NS=alphabet2006
+# 仓库名
+export IMAGE_REPO=gxu_robotz_nav2026
+# 版本号（示例：v20251228_2359）
+export IMAGE_TAG="v$(date +%Y%m%d_%H%M)"
+
+DOCKER_BUILDKIT=1 docker build --progress=plain --network host \
+  -t ${IMAGE_REPO}:latest \
+  -t ${DOCKERHUB_NS}/${IMAGE_REPO}:${IMAGE_TAG} \
+  -t ${DOCKERHUB_NS}/${IMAGE_REPO}:latest \
+  --build-arg APT_MIRROR=mirrors.tuna.tsinghua.edu.cn \
+  --build-arg http_proxy=http://127.0.0.1:7897 --build-arg https_proxy=http://127.0.0.1:7897 \
+  --build-arg HTTP_PROXY=http://127.0.0.1:7897 --build-arg HTTPS_PROXY=http://127.0.0.1:7897 \
+  . 2>&1 | tee docker_build_plain.log
+
+docker login -u ${DOCKERHUB_NS}
+docker push ${DOCKERHUB_NS}/${IMAGE_REPO}:${IMAGE_TAG}
+docker push ${DOCKERHUB_NS}/${IMAGE_REPO}:latest
+```
+
 ### 8.2 运行镜像
 
 容器默认进入 bash，并已自动 source：`/opt/ros/$ROS_DISTRO/setup.bash` 与 `/ws/install/setup.bash`。
