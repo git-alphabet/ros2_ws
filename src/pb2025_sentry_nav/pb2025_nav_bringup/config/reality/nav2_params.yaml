@@ -30,7 +30,7 @@ pb_navigation_switches:
   ros__parameters:
     controller_plugin: "pb_omni_pid_pursuit_controller"
     odometry_source: "point_lio"
-    behavior_tree: "config/7v7.xml"   # align with simulation navigation BT
+    behavior_tree: "default"   # align with simulation navigation BT
 
 # Nav2 Controller Server：轨迹跟随控制
 # 标注：NeuPAN 控制器参数（如 neupan_config_path / dune_model_path / laser_topic / debug_*）只在这里维护。
