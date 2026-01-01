@@ -279,11 +279,12 @@ terrain_analysis:
     voxelTimeUpdateThre: 1.0
     minRelZ: -1.5
     
-    # 【修改点3】拉高上限，允许机器人看到头顶上的坡
-    maxRelZ: 0.6
+    # 【修改点3】2.5D 场地：降低Z轴上限，减少无关高点
+    maxRelZ: 0.5
     
-    # 【修改点4】坡度容忍，0.6 约等于 30度坡
-    disRatioZ: 0.6
+    # 【修改点4】注意：代码里实际用的是 (上限 + disRatioZ * 距离)，disRatioZ 越大远处允许的Z越高。
+    # 2.5D 场地想让点云“更矮”，这里应调小。
+    disRatioZ: 0.2
 
 
 
@@ -310,11 +311,11 @@ terrain_analysis_ext:
     voxelTimeUpdateThre: 2.0
     lowerBoundZ: -1.5
     
-    # 【修改点7】扩展分析里的 Z轴上限，原值 0.5 会导致高台直接不可见
-    upperBoundZ: 0.6
+    # 【修改点7】2.5D 场地：降低Z轴上限，减少无关高点
+    upperBoundZ: 0.5
     
-    # 【修改点8】坡度容忍
-    disRatioZ: 0.6
+    # 【修改点8】同上：disRatioZ 会随着距离放宽Z窗口；2.5D 场地调小可压低远处高点  就是这个参数 调大会让点云扫的很高
+    disRatioZ: 0.2
     
     checkTerrainConn: False
     terrainUnderVehicle: -0.75
