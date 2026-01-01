@@ -3,5 +3,5 @@ install/
 log/    
 .vscode/
 neupan_env/
-tips.txt
-env.txt
+/tips.txt
+/env.txt
