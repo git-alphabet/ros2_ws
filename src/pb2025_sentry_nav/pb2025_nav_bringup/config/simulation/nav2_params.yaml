@@ -240,6 +240,10 @@ sensor_scan_generation:
     base_frame: "base_footprint"
     robot_base_frame: "gimbal_yaw"
 
+
+
+
+
 # 地形分析：输出 terrain_map（用于代价地图的点云观测源）
 terrain_analysis:
   ros__parameters:
@@ -249,7 +253,7 @@ terrain_analysis:
     clearingDis: 0.0
     useSorting: True
     # 推断：坡下“第一次像墙”通常是地面估计被低点(outlier)拉低，导致坡面 disZ 偏大。
-    # 提高分位数可减小这种影响，让坡面第一次就更像“地面”。
+    # 提高分位数可减小这种影响，让坡面第一次就更像“地面”。  我去，调了这个就好了
     quantileZ: 0.5
     considerDrop: False
     limitGroundLift: False
@@ -267,7 +271,7 @@ terrain_analysis:
     minBlockPointNum: 10
     
     # 【修改点1】拉高到 1.5，防止坡太高被切成断头路（解决左坡局部识别问题）
-    vehicleHeight: 1.5
+    vehicleHeight: 0.6
     
     # 【修改点2】从 100 降到 10！非常重要！解决斜坡点云稀疏不识别的问题
     voxelPointUpdateThre: 10
@@ -276,10 +280,15 @@ terrain_analysis:
     minRelZ: -1.5
     
     # 【修改点3】拉高上限，允许机器人看到头顶上的坡
-    maxRelZ: 2.0
+    maxRelZ: 0.6
     
     # 【修改点4】坡度容忍，0.6 约等于 30度坡
     disRatioZ: 0.6
+
+
+
+
+
 
 # 地形分析（扩展版）：输出 terrain_map_ext（全局代价地图常用）
 terrain_analysis_ext:
@@ -289,11 +298,11 @@ terrain_analysis_ext:
     noDecayDis: 0.0
     clearingDis: 20.0
     useSorting: true
-    # 同上：提高地面估计分位数，减少坡面被误标为障碍。
+    # 同上：提高地面估计分位数，减少坡面被误标为障碍。   我去，调了这个就好了
     quantileZ: 0.5
     
     # 【修改点5】统一拉高
-    vehicleHeight: 1.5
+    vehicleHeight: 0.6
     
     # 【修改点6】必须降低！否则全局图也建不出来
     voxelPointUpdateThre: 10
@@ -302,7 +311,7 @@ terrain_analysis_ext:
     lowerBoundZ: -1.5
     
     # 【修改点7】扩展分析里的 Z轴上限，原值 0.5 会导致高台直接不可见
-    upperBoundZ: 2.0
+    upperBoundZ: 0.6
     
     # 【修改点8】坡度容忍
     disRatioZ: 0.6
@@ -312,6 +321,10 @@ terrain_analysis_ext:
     terrainConnThre: 0.5
     ceilingFilteringThre: 2.0
     localTerrainMapRadius: 4.0
+
+
+
+
 
 # 假速度/坐标变换：把 Nav2 内部期望的底盘速度/局部路径做一层适配
 fake_vel_transform:
@@ -350,7 +363,7 @@ pointcloud_to_laserscan:
     use_sim_time: True
     target_frame: base_footprint
     min_height: -0.6
-    max_height: 6.0
+    max_height: 0.6
     min_intensity: 0.1
     max_intensity: 2.0
     angle_min: -3.1415926                   # -M_PI/2
@@ -525,11 +538,11 @@ local_costmap:
         z_resolution: 0.05
         z_voxels: 16
         min_obstacle_height: 0.0
-        max_obstacle_height: 2.0
+        max_obstacle_height: 0.8
         # intensity == 离地高度差 disZ（由 terrain_analysis 写入）
         # 为了让可通行坡更“顺滑”，提高阈值避免坡面被当作障碍并触发膨胀层。
         min_obstacle_intensity: 0.5
-        max_obstacle_intensity: 2.0
+        max_obstacle_intensity: 0.8
         observation_sources: terrain_map
         terrain_map:
           data_type: PointCloud2
@@ -538,7 +551,7 @@ local_costmap:
           topic: <robot_namespace>/terrain_map
           sensor_frame: front_mid360
           min_obstacle_height: 0.0
-          max_obstacle_height: 2.0
+          max_obstacle_height: 0.8
           obstacle_max_range: 5.0
           obstacle_min_range: 0.2
       static_layer:
@@ -576,12 +589,12 @@ global_costmap:
         z_resolution: 0.05
         z_voxels: 16
         min_obstacle_height: 0.0
-        max_obstacle_height: 2.0
+        max_obstacle_height: 0.8
         # intensity == 离地高度差 disZ（由 terrain_analysis_ext 写入）
         # 宽坡面点云在 disZ>0.1 时会被全局层当作障碍，导致大面积粉红（膨胀）。
         # 提高阈值让“可通行坡”不过度进入障碍/膨胀。
         min_obstacle_intensity: 0.5
-        max_obstacle_intensity: 2.0
+        max_obstacle_intensity: 0.8
         observation_sources: terrain_map_ext
         terrain_map_ext:
           data_type: PointCloud2
@@ -590,7 +603,7 @@ global_costmap:
           topic: <robot_namespace>/terrain_map_ext
           sensor_frame: front_mid360
           min_obstacle_height: 0.0
-          max_obstacle_height: 2.0
+          max_obstacle_height: 0.8
           obstacle_max_range: 10.0
           obstacle_min_range: 0.2
       static_layer:
