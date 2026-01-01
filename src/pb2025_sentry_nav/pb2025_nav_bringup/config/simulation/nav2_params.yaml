@@ -248,7 +248,9 @@ terrain_analysis:
     noDecayDis: 0.0
     clearingDis: 0.0
     useSorting: True
-    quantileZ: 0.2
+    # 推断：坡下“第一次像墙”通常是地面估计被低点(outlier)拉低，导致坡面 disZ 偏大。
+    # 提高分位数可减小这种影响，让坡面第一次就更像“地面”。
+    quantileZ: 0.5
     considerDrop: False
     limitGroundLift: False
     maxGroundLift: 0.3
@@ -287,7 +289,8 @@ terrain_analysis_ext:
     noDecayDis: 0.0
     clearingDis: 20.0
     useSorting: true
-    quantileZ: 0.2
+    # 同上：提高地面估计分位数，减少坡面被误标为障碍。
+    quantileZ: 0.5
     
     # 【修改点5】统一拉高
     vehicleHeight: 1.5
