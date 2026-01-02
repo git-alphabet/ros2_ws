@@ -18,7 +18,7 @@ ign_sim_pointcloud_tool:
 # 导航“开关/选择器”：统一选择控制器插件、里程计来源、行为树
 pb_navigation_switches:
   ros__parameters:
-    controller_plugin: "pb_omni_pid_pursuit_controller"
+    controller_plugin: "pb_omni_pid_pursuit_controller"   # 控制器插件名称（见 pb_controller_profiles）
     odometry_source: "point_lio"
     behavior_tree: "default"   # .xml or default,none
 
@@ -254,7 +254,7 @@ terrain_analysis:
     useSorting: True
     # 推断：坡下“第一次像墙”通常是地面估计被低点(outlier)拉低，导致坡面 disZ 偏大。
     # 提高分位数可减小这种影响，让坡面第一次就更像“地面”。  我去，调了这个就好了
-    quantileZ: 0.5
+    quantileZ: 0.2
     considerDrop: False
     limitGroundLift: False
     maxGroundLift: 0.3
@@ -270,19 +270,18 @@ terrain_analysis:
     noDataBlockSkipNum: 0
     minBlockPointNum: 10
     
-    # 【修改点1】拉高到 1.5，防止坡太高被切成断头路（解决左坡局部识别问题）
     vehicleHeight: 0.6
     
-    # 【修改点2】从 100 降到 10！非常重要！解决斜坡点云稀疏不识别的问题
+    #从 100 降到 10 增高点云更新频率
     voxelPointUpdateThre: 10
     
     voxelTimeUpdateThre: 1.0
     minRelZ: -1.5
     
-    # 【修改点3】2.5D 场地：降低Z轴上限，减少无关高点
+    # 2.5D 场地：降低Z轴上限，减少无关高点
     maxRelZ: 0.5
     
-    # 【修改点4】注意：代码里实际用的是 (上限 + disRatioZ * 距离)，disRatioZ 越大远处允许的Z越高。
+    # 注意：代码里实际用的是 (上限 + disRatioZ * 距离)，disRatioZ 越大远处允许的Z越高。
     # 2.5D 场地想让点云“更矮”，这里应调小。
     disRatioZ: 0.2
 
@@ -299,22 +298,22 @@ terrain_analysis_ext:
     noDecayDis: 0.0
     clearingDis: 20.0
     useSorting: true
-    # 同上：提高地面估计分位数，减少坡面被误标为障碍。   我去，调了这个就好了
-    quantileZ: 0.5
+    # 提高地面估计分位数，减少坡面被误标为障碍。  可以先调这个
+    quantileZ: 0.2
     
-    # 【修改点5】统一拉高
+    # 统一拉高
     vehicleHeight: 0.6
     
-    # 【修改点6】必须降低！否则全局图也建不出来
+    #从 100 降到 10 增高点云更新频率
     voxelPointUpdateThre: 10
     
     voxelTimeUpdateThre: 2.0
     lowerBoundZ: -1.5
     
-    # 【修改点7】2.5D 场地：降低Z轴上限，减少无关高点
+    # 2.5D 场地：降低Z轴上限，减少无关高点
     upperBoundZ: 0.5
     
-    # 【修改点8】同上：disRatioZ 会随着距离放宽Z窗口；2.5D 场地调小可压低远处高点  就是这个参数 调大会让点云扫的很高
+    # 同上：disRatioZ 会随着距离放宽Z窗口；2.5D 场地调小可压低远处高点  就是这个参数 调大会让点云扫的很高
     disRatioZ: 0.2
     
     checkTerrainConn: False
@@ -327,7 +326,7 @@ terrain_analysis_ext:
 
 
 
-# 假速度/坐标变换：把 Nav2 内部期望的底盘速度/局部路径做一层适配
+# 坐标变换：把 Nav2 内部期望的底盘速度/局部路径做一层适配
 fake_vel_transform:
   ros__parameters:
     use_sim_time: True
@@ -540,8 +539,6 @@ local_costmap:
         z_voxels: 16
         min_obstacle_height: 0.0
         max_obstacle_height: 0.8
-        # intensity == 离地高度差 disZ（由 terrain_analysis 写入）
-        # 为了让可通行坡更“顺滑”，提高阈值避免坡面被当作障碍并触发膨胀层。
         min_obstacle_intensity: 0.5
         max_obstacle_intensity: 0.8
         observation_sources: terrain_map
@@ -591,9 +588,6 @@ global_costmap:
         z_voxels: 16
         min_obstacle_height: 0.0
         max_obstacle_height: 0.8
-        # intensity == 离地高度差 disZ（由 terrain_analysis_ext 写入）
-        # 宽坡面点云在 disZ>0.1 时会被全局层当作障碍，导致大面积粉红（膨胀）。
-        # 提高阈值让“可通行坡”不过度进入障碍/膨胀。
         min_obstacle_intensity: 0.5
         max_obstacle_intensity: 0.8
         observation_sources: terrain_map_ext
