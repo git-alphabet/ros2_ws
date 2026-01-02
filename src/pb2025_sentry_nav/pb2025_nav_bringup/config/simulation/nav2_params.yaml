@@ -247,48 +247,32 @@ sensor_scan_generation:
 # 地形分析：输出 terrain_map（用于代价地图的点云观测源）
 terrain_analysis:
   ros__parameters:
-    scanVoxelSize: 0.05
-    decayTime: 0.5
-    noDecayDis: 0.0
-    clearingDis: 0.0
-    useSorting: True
-    # 推断：坡下“第一次像墙”通常是地面估计被低点(outlier)拉低，导致坡面 disZ 偏大。
-    # 提高分位数可减小这种影响，让坡面第一次就更像“地面”。  我去，调了这个就好了
-    quantileZ: 0.2
-    considerDrop: False
+    scanVoxelSize: 0.05                 # 点云下采样
+    decayTime: 0.5                      # 点云时间差阈值 大于则不会被处理
+    noDecayDis: 0.0                     # 点云距离阈值 小于该阈值不考虑时间差
+    clearingDis: 0.0                    # 该距离外的点会被清除
+    useSorting: True                    # 这个参数开起来就能上坡了；如果 use_sorting,那么就以周围点中的分位点作为地面点，否则以最低点作为地面点；周围其余点相对于地面点的高度作为通过代价，所以对于坡面，有的点的代价是正，有的是负，就相互抵消了；不要与 consider_drop 同时开启，计算上会有冲突
+    quantileZ: 0.5                      # useful if use_sorting is enabled.
+    considerDrop: False                 # 考虑凹下去的地面,开启则将相对于地面点的高度取绝对值
     limitGroundLift: False
     maxGroundLift: 0.3
-    clearDyObs: True
-    minDyObsDis: 0.3
+    clearDyObs: True                    # 清除动态物体的话，有动态物体走过的地方就走不了了
+    minDyObsDis: 0.3                    # 以下参数都是在 clear_dy_obs 的情况下才有用的
     minDyObsAngle: 0.0
     minDyObsRelZ: -0.3
     absDyObsRelZThre: 0.2
     minDyObsVFOV: -28.0
     maxDyObsVFOV: 33.0
     minDyObsPointNum: 1
-    noDataObstacle: False
+    noDataObstacle: False               # treat no data as obstacle
     noDataBlockSkipNum: 0
     minBlockPointNum: 10
-    
-    vehicleHeight: 0.6
-    
-    #从 100 降到 10 增高点云更新频率
-    voxelPointUpdateThre: 10
-    
+    vehicleHeight: 0.5                  # 小于车辆高度的点才会进行处理
+    voxelPointUpdateThre: 50
     voxelTimeUpdateThre: 1.0
-    minRelZ: -1.5
-    
-    # 2.5D 场地：降低Z轴上限，减少无关高点
+    minRelZ: -1.5                       # min_rel_z 以及 max_rel_z 限制了有效点云点的Z值范围，用于对天花板和地板进行处理
     maxRelZ: 0.5
-    
-    # 注意：代码里实际用的是 (上限 + disRatioZ * 距离)，disRatioZ 越大远处允许的Z越高。
-    # 2.5D 场地想让点云“更矮”，这里应调小。
-    disRatioZ: 0.2
-
-
-
-
-
+    disRatioZ: 0.2                    # Z 值的最大最小范围由这两个值决定，但是并不等于这两个值，是有一个比例关系的，距离机器人越远，限定范围就越大，这其中考虑了坡度
 
 # 地形分析（扩展版）：输出 terrain_map_ext（全局代价地图常用）
 terrain_analysis_ext:
@@ -298,24 +282,13 @@ terrain_analysis_ext:
     noDecayDis: 0.0
     clearingDis: 20.0
     useSorting: true
-    # 提高地面估计分位数，减少坡面被误标为障碍。  可以先调这个
-    quantileZ: 0.2
-    
-    # 统一拉高
-    vehicleHeight: 0.6
-    
-    #从 100 降到 10 增高点云更新频率
-    voxelPointUpdateThre: 10
-    
+    quantileZ: 0.5
+    vehicleHeight: 1.0
+    voxelPointUpdateThre: 50
     voxelTimeUpdateThre: 2.0
     lowerBoundZ: -1.5
-    
-    # 2.5D 场地：降低Z轴上限，减少无关高点
     upperBoundZ: 0.5
-    
-    # 同上：disRatioZ 会随着距离放宽Z窗口；2.5D 场地调小可压低远处高点  就是这个参数 调大会让点云扫的很高
     disRatioZ: 0.2
-    
     checkTerrainConn: False
     terrainUnderVehicle: -0.75
     terrainConnThre: 0.5
@@ -538,9 +511,9 @@ local_costmap:
         z_resolution: 0.05
         z_voxels: 16
         min_obstacle_height: 0.0
-        max_obstacle_height: 0.8
-        min_obstacle_intensity: 0.5
-        max_obstacle_intensity: 0.8
+        max_obstacle_height: 2.0
+        min_obstacle_intensity: 0.1
+        max_obstacle_intensity: 2.0
         observation_sources: terrain_map
         terrain_map:
           data_type: PointCloud2
@@ -549,7 +522,7 @@ local_costmap:
           topic: <robot_namespace>/terrain_map
           sensor_frame: front_mid360
           min_obstacle_height: 0.0
-          max_obstacle_height: 0.8
+          max_obstacle_height: 2.0
           obstacle_max_range: 5.0
           obstacle_min_range: 0.2
       static_layer:
@@ -587,9 +560,9 @@ global_costmap:
         z_resolution: 0.05
         z_voxels: 16
         min_obstacle_height: 0.0
-        max_obstacle_height: 0.8
-        min_obstacle_intensity: 0.5
-        max_obstacle_intensity: 0.8
+        max_obstacle_height: 2.0
+        min_obstacle_intensity: 0.1
+        max_obstacle_intensity: 2.0
         observation_sources: terrain_map_ext
         terrain_map_ext:
           data_type: PointCloud2
@@ -598,7 +571,7 @@ global_costmap:
           topic: <robot_namespace>/terrain_map_ext
           sensor_frame: front_mid360
           min_obstacle_height: 0.0
-          max_obstacle_height: 0.8
+          max_obstacle_height: 2.0
           obstacle_max_range: 10.0
           obstacle_min_range: 0.2
       static_layer:
