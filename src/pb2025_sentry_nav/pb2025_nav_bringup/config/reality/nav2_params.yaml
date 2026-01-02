@@ -6,31 +6,75 @@
 # - TF 的“frame 名”不是 topic；frame 是否带 namespace 取决于各节点如何发布。
 # - 本文件里出现的 <robot_namespace> 是占位符，launch 中会替换。
 #
-# Livox 驱动：实车雷达数据源
-livox_ros_driver2:
+# Mid360 驱动：实车雷达数据源（替代 livox_ros_driver2）
+mid360_driver:
   ros__parameters:
-    xfer_format: 4                                      # 0-PointCloud2Msg(PointXYZRTL), 1-LivoxCustomMsg, 2-PclPxyziMsg, 3-LivoxImuMsg, 4-AllMsg
-    multi_topic: 0                                      # 0-All LiDARs share the same topic, 1-One LiDAR one topic
-    data_src: 0                                         # 0-lidar, others-Invalid data src
-    publish_freq: 20.0                                  # frequency of publish, 5.0, 10.0, 20.0, 50.0, etc.
-    output_data_type: 0
-    frame_id: front_mid360
-    user_config_path: $(find-pkg-share pb2025_nav_bringup)/config/reality/mid360_user_config.json
-    cmdline_input_bd_code: livox0000000001
-    lvx_file_path: ""
+    # 说明：这里用相对话题名（不带前导 /），以便在设置 namespace 时能自动跟随命名空间。
+    # mid360_driver 原生输出：PointCloud2
+    lidar_topic: livox/lidar
+    lidar_frame: front_mid360
+    imu_topic: livox/imu
+    imu_frame: front_mid360
+    # 兼容旧 livox_ros_driver2：额外发布 CustomMsg（给 point_lio / small_point_lio 用）
+    publish_custom_msg: true
+    custom_msg_topic: livox/lidar/pointcloud
+    # 20Hz 发布点云（与旧配置 publish_freq: 20.0 对齐）
+    lidar_publish_time_interval: 0.05
+    # 本机网卡 IP（应与 mid360_user_config.json 的 host_net_info.*_ip 一致）
+    host_ip: 192.168.1.2
+    # 多雷达时可打开，让话题名后缀带雷达 ip
+    is_topic_name_with_lidar_ip: false
 
 # 导航“开关/选择器”：建议与仿真保持一致（除 use_sim_time/硬件话题等必须不同项）
 pb_navigation_switches:
   ros__parameters:
     controller_plugin: "pb_omni_pid_pursuit_controller"
     odometry_source: "point_lio"
-    behavior_tree: "config/7v7.xml"   # align with simulation navigation BT
+    behavior_tree: "default"   # align with simulation navigation BT
 
-# 控制器参数集合：这里的 profile 通常与仿真保持一致，便于复现调参
+# Nav2 Controller Server：轨迹跟随控制
+# 标注：NeuPAN 控制器参数（如 neupan_config_path / dune_model_path / laser_topic / debug_*）只在这里维护。
+# 说明：launch 会根据 pb_navigation_switches.controller_plugin 选择是否用 pb_controller_profiles 覆盖 FollowPath。
+controller_server:
+  ros__parameters:
+    use_sim_time: False
+    odom_topic: odometry
+    controller_frequency: 20.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.5
+    min_theta_velocity_threshold: 0.001
+    failure_tolerance: 0.3
+    progress_checker_plugins: ["progress_checker"]
+    goal_checker_plugins: ["general_goal_checker"]
+    controller_plugins: ["FollowPath"]
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      required_movement_radius: 0.5
+      movement_time_allowance: 10.0
+    general_goal_checker:
+      stateful: True
+      plugin: "nav2_controller::SimpleGoalChecker"
+      xy_goal_tolerance: 0.15
+      yaw_goal_tolerance: 6.28
+    FollowPath:
+      plugin: "neupan_nav2_controller::NeuPANController"
+      debug_print_control_frequency: false   #看控制器频率
+      robot_type: "omni"
+      max_linear_velocity: 2.0
+      max_angular_velocity: 2.0
+      goal_tolerance: 0.2
+      laser_topic: "/obstacle_scan"
+      neupan_config_path: "$(find-pkg-share neupan_nav2_controller)/vendor/NeuPAN-main/example/non_obs/omni/planner.yaml"
+      dune_model_path: "$(find-pkg-share neupan_nav2_controller)/model/omni_robot_default/model_5000.pth"
+      laser_downsample_rate: 2
+      
+
+# 控制器参数集合（传统控制器 profile）：这里的 profile 通常与仿真保持一致，便于复现调参。
 pb_controller_profiles:
   ros__parameters:
     pb_omni_pid_pursuit_controller:
       plugin: "pb_omni_pid_pursuit_controller::OmniPidPursuitController"
+      debug_print_control_frequency: false
       translation_kp: 3.0
       translation_ki: 0.1
       translation_kd: 0.3
@@ -61,24 +105,9 @@ pb_controller_profiles:
       curvature_backward_dist: 0.3
       max_velocity_scaling_factor_rate: 0.9
 
-      
-    neupan_nav2_controller:
-      plugin: "neupan_nav2_controller::NeuPANController"
-      robot_type: "omni"
-      max_linear_velocity: 2.0
-      max_angular_velocity: 2.0
-      goal_tolerance: 0.2
-      # 注意：这里使用绝对 topic 名（以 / 开头），多机器人时要确认 namespace 是否符合预期
-      laser_topic: "/obstacle_scan"
-      min_distance_noise_floor: -0.01  # match simulation tuning
-      neupan_config_path: "$(find-pkg-share neupan_nav2_controller)/vendor/NeuPAN-main/example/non_obs/omni/planner.yaml"
-      dune_model_path: "$(find-pkg-share neupan_nav2_controller)/model/omni_robot_default/model_5000.pth"
-      laser_downsample_rate: 2
-      debug_mode: false
-
 small_point_lio:
   ros__parameters:
-    lidar_topic: livox/lidar
+    lidar_topic: livox/lidar/pointcloud
     imu_topic: livox/imu
     lidar_type: livox
     lidar_frame: front_mid360
@@ -140,7 +169,7 @@ point_lio:
     runtime_pos_log_enable: False                       # Option: True
 
     common:
-      lid_topic: "livox/lidar"
+      lid_topic: "livox/lidar/pointcloud"
       imu_topic: "livox/imu"
       con_frame: False                                  # True: if you need to combine several LiDAR frames into one
       con_frame_num: 1                                  # the number of frames combined
@@ -454,42 +483,6 @@ bt_navigator:
       - nav2_assisted_teleop_cancel_bt_node
       - nav2_drive_on_heading_cancel_bt_node
       - nav2_is_battery_charging_condition_bt_node
-
-# Nav2 Controller Server：轨迹跟随控制
-# 注意：这里 FollowPath 下的 neupan_config_path/dune_model_path/laser_topic 与上面的 profile 可能不同，
-# 若需要完全对齐仿真行为，建议统一到同一套 topic/path（但本文件仅加注释，不改值）。
-controller_server:
-  ros__parameters:
-    use_sim_time: False
-    odom_topic: odometry
-    controller_frequency: 20.0
-    min_x_velocity_threshold: 0.001
-    min_y_velocity_threshold: 0.5
-    min_theta_velocity_threshold: 0.001
-    failure_tolerance: 0.3
-    progress_checker_plugins: ["progress_checker"]
-    goal_checker_plugins: ["general_goal_checker"]
-    controller_plugins: ["FollowPath"]
-    progress_checker:
-      plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.5
-      movement_time_allowance: 10.0
-    general_goal_checker:
-      stateful: True
-      plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.15
-      yaw_goal_tolerance: 6.28
-    FollowPath:
-      plugin: "neupan_nav2_controller::NeuPANController"
-      robot_type: "omni"
-      max_linear_velocity: 2.0
-      max_angular_velocity: 2.0
-      goal_tolerance: 0.2
-      laser_topic: "/obstacle_scan"
-      neupan_config_path: "$(find-pkg-share neupan_nav2_controller)/vendor/NeuPAN-main/example/non_obs/omni/planner.yaml"
-      dune_model_path: "$(find-pkg-share neupan_nav2_controller)/model/omni_robot_default/model_5000.pth"
-      laser_downsample_rate: 2
-      debug_mode: false
 
 # 代价地图（local）：rolling window + 障碍物/地形点云
 local_costmap:

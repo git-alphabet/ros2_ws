@@ -18,15 +18,53 @@ ign_sim_pointcloud_tool:
 # 导航“开关/选择器”：统一选择控制器插件、里程计来源、行为树
 pb_navigation_switches:
   ros__parameters:
-    controller_plugin: "neupan_nav2_controller"
+    controller_plugin: "pb_omni_pid_pursuit_controller"
     odometry_source: "point_lio"
-    behavior_tree: "config/7v7.xml"   #.xml or default,none
+    behavior_tree: "default"   # .xml or default,none
 
-# 控制器参数集合：同一个 controller_server 可通过 profile 切换不同插件/调参
+# Nav2 Controller Server：轨迹跟随控制
+# 标注：NeuPAN 控制器参数（如 neupan_config_path / dune_model_path / laser_topic / debug_*）只在这里维护。
+# 说明：launch 会根据 pb_navigation_switches.controller_plugin 选择是否用 pb_controller_profiles 覆盖 FollowPath。
+controller_server:
+  ros__parameters:
+    use_sim_time: True
+    odom_topic: odometry
+    controller_frequency: 20.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.001
+    min_theta_velocity_threshold: 0.001
+    failure_tolerance: 0.4
+    progress_checker_plugins: ["progress_checker"]
+    goal_checker_plugins: ["general_goal_checker"]
+    controller_plugins: ["FollowPath"]
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      required_movement_radius: 0.5
+      movement_time_allowance: 10.0
+    general_goal_checker:
+      stateful: True
+      plugin: "nav2_controller::SimpleGoalChecker"
+      xy_goal_tolerance: 0.2
+      yaw_goal_tolerance: 6.28
+    FollowPath:
+      plugin: "neupan_nav2_controller::NeuPANController"
+      debug_print_control_frequency: true    #看控制器频率
+      robot_type: "omni"
+      max_linear_velocity: 2.0
+      max_angular_velocity: 2.0
+      goal_tolerance: 0.2
+      laser_topic: /red_standard_robot1/obstacle_scan
+      neupan_config_path: "$(find-pkg-share neupan_nav2_controller)/vendor/NeuPAN-main/example/non_obs/omni/planner.yaml"
+      dune_model_path: "$(find-pkg-share neupan_nav2_controller)/model/omni_robot_default/model_6000.pth"
+      laser_downsample_rate: 2
+     
+
+# 控制器参数集合（传统控制器 profile）：需要切换传统控制器时只改这里即可。
 pb_controller_profiles:
   ros__parameters:
     pb_omni_pid_pursuit_controller:
       plugin: "pb_omni_pid_pursuit_controller::OmniPidPursuitController"
+      debug_print_control_frequency: true
       translation_kp: 3.0
       translation_ki: 0.1
       translation_kd: 0.3
@@ -56,21 +94,6 @@ pb_controller_profiles:
       curvature_forward_dist: 0.7
       curvature_backward_dist: 0.3
       max_velocity_scaling_factor_rate: 0.9
-
-      
-    neupan_nav2_controller:
-      plugin: "neupan_nav2_controller::NeuPANController"
-      robot_type: "omni"
-      max_linear_velocity: 2.0
-      max_angular_velocity: 2.0
-      goal_tolerance: 0.2
-      # 注意：这里是绝对 topic 名（以 / 开头），多机器人时要确认 namespace 是否符合预期
-      laser_topic: /red_standard_robot1/obstacle_scan
-      min_distance_noise_floor: -0.01
-      neupan_config_path: "$(find-pkg-share neupan_nav2_controller)/vendor/NeuPAN-main/example/non_obs/omni/planner.yaml"
-      dune_model_path: "$(find-pkg-share neupan_nav2_controller)/model/omni_robot_default/model_5000_new.pth"
-      laser_downsample_rate: 2
-      debug_mode: false
 
 small_point_lio:
   ros__parameters:
@@ -217,35 +240,56 @@ sensor_scan_generation:
     base_frame: "base_footprint"
     robot_base_frame: "gimbal_yaw"
 
+
+
+
+
 # 地形分析：输出 terrain_map（用于代价地图的点云观测源）
 terrain_analysis:
   ros__parameters:
-    scanVoxelSize: 0.05                 # 点云下采样
-    decayTime: 0.5                      # 点云时间差阈值 大于则不会被处理
-    noDecayDis: 0.0                     # 点云距离阈值 小于该阈值不考虑时间差
-    clearingDis: 0.0                    # 该距离外的点会被清除
-    useSorting: True                    # 这个参数开起来就能上坡了；如果 use_sorting,那么就以周围点中的分位点作为地面点，否则以最低点作为地面点；周围其余点相对于地面点的高度作为通过代价，所以对于坡面，有的点的代价是正，有的是负，就相互抵消了；不要与 consider_drop 同时开启，计算上会有冲突
-    quantileZ: 0.2                      # useful if use_sorting is enabled.
-    considerDrop: False                 # 考虑凹下去的地面,开启则将相对于地面点的高度取绝对值
+    scanVoxelSize: 0.05
+    decayTime: 0.5
+    noDecayDis: 0.0
+    clearingDis: 0.0
+    useSorting: True
+    # 推断：坡下“第一次像墙”通常是地面估计被低点(outlier)拉低，导致坡面 disZ 偏大。
+    # 提高分位数可减小这种影响，让坡面第一次就更像“地面”。  我去，调了这个就好了
+    quantileZ: 0.5
+    considerDrop: False
     limitGroundLift: False
     maxGroundLift: 0.3
-    clearDyObs: True                    # 清除动态物体的话，有动态物体走过的地方就走不了了
-    minDyObsDis: 0.3                    # 以下参数都是在 clear_dy_obs 的情况下才有用的
+    clearDyObs: True
+    minDyObsDis: 0.3
     minDyObsAngle: 0.0
     minDyObsRelZ: -0.3
     absDyObsRelZThre: 0.2
     minDyObsVFOV: -28.0
     maxDyObsVFOV: 33.0
     minDyObsPointNum: 1
-    noDataObstacle: False               # treat no data as obstacle
+    noDataObstacle: False
     noDataBlockSkipNum: 0
     minBlockPointNum: 10
-    vehicleHeight: 0.5                  # 小于车辆高度的点才会进行处理
-    voxelPointUpdateThre: 100
+    
+    # 【修改点1】拉高到 1.5，防止坡太高被切成断头路（解决左坡局部识别问题）
+    vehicleHeight: 0.6
+    
+    # 【修改点2】从 100 降到 10！非常重要！解决斜坡点云稀疏不识别的问题
+    voxelPointUpdateThre: 10
+    
     voxelTimeUpdateThre: 1.0
-    minRelZ: -1.5                       # min_rel_z 以及 max_rel_z 限制了有效点云点的Z值范围，用于对天花板和地板进行处理
+    minRelZ: -1.5
+    
+    # 【修改点3】2.5D 场地：降低Z轴上限，减少无关高点
     maxRelZ: 0.5
-    disRatioZ: 0.2                      # Z 值的最大最小范围由这两个值决定，但是并不等于这两个值，是有一个比例关系的，距离机器人越远，限定范围就越大，这其中考虑了坡度
+    
+    # 【修改点4】注意：代码里实际用的是 (上限 + disRatioZ * 距离)，disRatioZ 越大远处允许的Z越高。
+    # 2.5D 场地想让点云“更矮”，这里应调小。
+    disRatioZ: 0.2
+
+
+
+
+
 
 # 地形分析（扩展版）：输出 terrain_map_ext（全局代价地图常用）
 terrain_analysis_ext:
@@ -255,18 +299,33 @@ terrain_analysis_ext:
     noDecayDis: 0.0
     clearingDis: 20.0
     useSorting: true
-    quantileZ: 0.2
-    vehicleHeight: 1.0
-    voxelPointUpdateThre: 100
+    # 同上：提高地面估计分位数，减少坡面被误标为障碍。   我去，调了这个就好了
+    quantileZ: 0.5
+    
+    # 【修改点5】统一拉高
+    vehicleHeight: 0.6
+    
+    # 【修改点6】必须降低！否则全局图也建不出来
+    voxelPointUpdateThre: 10
+    
     voxelTimeUpdateThre: 2.0
     lowerBoundZ: -1.5
+    
+    # 【修改点7】2.5D 场地：降低Z轴上限，减少无关高点
     upperBoundZ: 0.5
+    
+    # 【修改点8】同上：disRatioZ 会随着距离放宽Z窗口；2.5D 场地调小可压低远处高点  就是这个参数 调大会让点云扫的很高
     disRatioZ: 0.2
+    
     checkTerrainConn: False
     terrainUnderVehicle: -0.75
     terrainConnThre: 0.5
     ceilingFilteringThre: 2.0
     localTerrainMapRadius: 4.0
+
+
+
+
 
 # 假速度/坐标变换：把 Nav2 内部期望的底盘速度/局部路径做一层适配
 fake_vel_transform:
@@ -279,7 +338,7 @@ fake_vel_transform:
     input_cmd_vel_topic: "cmd_vel_nav2_result"
     output_cmd_vel_topic: "cmd_vel"
     cmd_spin_topic: "cmd_spin"
-    init_spin_speed: 0.0
+    init_spin_speed: 3.14
 
 # 重定位：GICP 基于点云的全局重定位/初始化
 small_gicp_relocalization:
@@ -305,7 +364,7 @@ pointcloud_to_laserscan:
     use_sim_time: True
     target_frame: base_footprint
     min_height: -0.6
-    max_height: 6.0
+    max_height: 0.6
     min_intensity: 0.1
     max_intensity: 2.0
     angle_min: -3.1415926                   # -M_PI/2
@@ -452,43 +511,6 @@ bt_navigator:
       - nav2_assisted_teleop_cancel_bt_node
       - nav2_drive_on_heading_cancel_bt_node
       - nav2_is_battery_charging_condition_bt_node
-
-# Nav2 Controller Server：轨迹跟随控制（FollowPath plugin 由上面的 profile 选择/配置）
-controller_server:
-  ros__parameters:
-    use_sim_time: True
-    odom_topic: odometry
-    controller_frequency: 20.0
-    min_x_velocity_threshold: 0.001
-    min_y_velocity_threshold: 0.001
-    min_theta_velocity_threshold: 0.001
-    failure_tolerance: 0.4
-    progress_checker_plugins: ["progress_checker"]
-    goal_checker_plugins: ["general_goal_checker"]
-    controller_plugins: ["FollowPath"]
-    progress_checker:
-      plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.5
-      movement_time_allowance: 10.0
-    general_goal_checker:
-      stateful: True
-      plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.2
-      yaw_goal_tolerance: 6.28
-    FollowPath:
-      plugin: "neupan_nav2_controller::NeuPANController"
-      robot_type: "omni"
-      max_linear_velocity: 2.0
-      max_angular_velocity: 2.0
-      goal_tolerance: 0.2
-      laser_topic: /red_standard_robot1/obstacle_scan
-      neupan_config_path: "$(find-pkg-share neupan_nav2_controller)/vendor/NeuPAN-main/example/non_obs/omni/planner.yaml"
-      dune_model_path: "$(find-pkg-share neupan_nav2_controller)/model/omni_robot_default/model_5000_new.pth"
-      laser_downsample_rate: 2
-      debug_mode: false
-
-
-
 # 代价地图（local）：rolling window + 障碍物/地形点云
 local_costmap:
   local_costmap:
@@ -517,9 +539,11 @@ local_costmap:
         z_resolution: 0.05
         z_voxels: 16
         min_obstacle_height: 0.0
-        max_obstacle_height: 2.0
-        min_obstacle_intensity: 0.1
-        max_obstacle_intensity: 2.0
+        max_obstacle_height: 0.8
+        # intensity == 离地高度差 disZ（由 terrain_analysis 写入）
+        # 为了让可通行坡更“顺滑”，提高阈值避免坡面被当作障碍并触发膨胀层。
+        min_obstacle_intensity: 0.5
+        max_obstacle_intensity: 0.8
         observation_sources: terrain_map
         terrain_map:
           data_type: PointCloud2
@@ -528,7 +552,7 @@ local_costmap:
           topic: <robot_namespace>/terrain_map
           sensor_frame: front_mid360
           min_obstacle_height: 0.0
-          max_obstacle_height: 2.0
+          max_obstacle_height: 0.8
           obstacle_max_range: 5.0
           obstacle_min_range: 0.2
       static_layer:
@@ -566,9 +590,12 @@ global_costmap:
         z_resolution: 0.05
         z_voxels: 16
         min_obstacle_height: 0.0
-        max_obstacle_height: 2.0
-        min_obstacle_intensity: 0.1
-        max_obstacle_intensity: 2.0
+        max_obstacle_height: 0.8
+        # intensity == 离地高度差 disZ（由 terrain_analysis_ext 写入）
+        # 宽坡面点云在 disZ>0.1 时会被全局层当作障碍，导致大面积粉红（膨胀）。
+        # 提高阈值让“可通行坡”不过度进入障碍/膨胀。
+        min_obstacle_intensity: 0.5
+        max_obstacle_intensity: 0.8
         observation_sources: terrain_map_ext
         terrain_map_ext:
           data_type: PointCloud2
@@ -577,7 +604,7 @@ global_costmap:
           topic: <robot_namespace>/terrain_map_ext
           sensor_frame: front_mid360
           min_obstacle_height: 0.0
-          max_obstacle_height: 2.0
+          max_obstacle_height: 0.8
           obstacle_max_range: 10.0
           obstacle_min_range: 0.2
       static_layer:

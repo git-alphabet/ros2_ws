@@ -1,10 +1,9 @@
-# Livox costom pointcloud format.
+# Livox point format (minimal fields used by downstream)
 
-uint32 offset_time      # offset time relative to the base time
-float32 x               # X axis, unit:m
-float32 y               # Y axis, unit:m
-float32 z               # Z axis, unit:m
-uint8 reflectivity      # reflectivity, 0~255
-uint8 tag               # livox tag
-uint8 line              # laser number in lidar
-
+uint32 offset_time      # nanosecond offset from timebase
+float32 x
+float32 y
+float32 z
+uint8 reflectivity
+uint8 tag
+uint8 line

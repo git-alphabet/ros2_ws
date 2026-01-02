@@ -105,6 +105,10 @@ public:
    */
   void setSpeedLimit(const double & speed_limit, const bool & percentage) override;
 
+  /// @brief Print controller call frequency once per second (yellow ANSI).
+  /// Uses steady clock so it is not affected by /clock.
+  void maybeLogControlFrequency();
+
 protected:
   /**
    * @brief Transforms global plan into same frame as pose and clips poses
@@ -266,6 +270,13 @@ private:
   rclcpp::Logger logger_{rclcpp::get_logger("OmniPidPursuitController")};
   rclcpp::Clock::SharedPtr clock_;
   double last_velocity_scaling_factor_;
+
+  // Debug: controller frequency (based on computeVelocityCommands call rate)
+  bool debug_print_control_frequency_{false};
+  rclcpp::Clock steady_clock_{RCL_STEADY_TIME};
+  rclcpp::Time last_control_freq_report_time_{0, 0, RCL_STEADY_TIME};
+  std::size_t control_cycle_count_{0};
+  bool control_freq_initialized_{false};
 
   std::shared_ptr<PID> move_pid_;
   std::shared_ptr<PID> heading_pid_;

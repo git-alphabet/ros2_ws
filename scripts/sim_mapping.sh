@@ -28,8 +28,58 @@ if [[ ! -f $OVERLAY_SETUP ]]; then
 	exit 1
 fi
 
+is_truthy() {
+	local value=${1:-}
+	case "${value,,}" in
+		1|true|yes|on) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
+in_docker() {
+	[[ -f /.dockerenv ]] && return 0
+	grep -qaE '(docker|containerd)' /proc/1/cgroup 2>/dev/null
+}
+
+NO_NEW_TERMINAL=${NO_NEW_TERMINAL:-}
+if [[ -z ${NO_NEW_TERMINAL} ]] && in_docker; then
+	NO_NEW_TERMINAL=1
+fi
+
+BG_PIDS=()
+
+cleanup_bg() {
+	if ! is_truthy "${NO_NEW_TERMINAL:-}"; then
+		return 0
+	fi
+	if [[ ${#BG_PIDS[@]} -eq 0 ]]; then
+		return 0
+	fi
+
+	echo "[$SCRIPT_NAME] Cleaning up background processes..." >&2
+	for pid in "${BG_PIDS[@]}"; do
+		if [[ -z ${pid} ]]; then
+			continue
+		fi
+		if kill -0 "$pid" 2>/dev/null; then
+			kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
+		fi
+	done
+	sleep 1
+	for pid in "${BG_PIDS[@]}"; do
+		if [[ -n ${pid} ]] && kill -0 "$pid" 2>/dev/null; then
+			kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+		fi
+	done
+}
+
+trap cleanup_bg INT TERM EXIT
+
 TERMINAL_CMD=${TERMINAL_CMD:-}
-if [[ -n $TERMINAL_CMD ]]; then
+
+if is_truthy "$NO_NEW_TERMINAL"; then
+	TERMINAL_CMD=""
+	elif [[ -n $TERMINAL_CMD ]]; then
 	if ! command -v "$TERMINAL_CMD" >/dev/null 2>&1; then
 			echo "[$SCRIPT_NAME] Requested terminal '$TERMINAL_CMD' not found." >&2
 		exit 1
@@ -40,8 +90,7 @@ else
 	elif command -v x-terminal-emulator >/dev/null 2>&1; then
 		TERMINAL_CMD="x-terminal-emulator"
 	else
-			echo "[$SCRIPT_NAME] No supported graphical terminal available." >&2
-		exit 1
+			NO_NEW_TERMINAL=1
 	fi
 fi
 
@@ -218,6 +267,7 @@ launch_in_terminal() {
 	local title="$1"
 	local command="$2"
 	local extra_env="$3"
+	local background="${4:-}"
 
 		echo "[$SCRIPT_NAME] Launching $title: $command"
 
@@ -225,7 +275,31 @@ launch_in_terminal() {
 	if [[ -n $extra_env ]]; then
 		full_cmd="$full_cmd; $extra_env"
 	fi
-	full_cmd="$full_cmd; $command; exec bash"
+	full_cmd="$full_cmd; $command"
+
+	if is_truthy "$NO_NEW_TERMINAL"; then
+		local log_dir="$WS_DIR/log"
+		mkdir -p "$log_dir"
+		local slug
+		slug="$(echo "$title" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/_/g; s/^_+|_+$//g')"
+		local log_file="$log_dir/${SCRIPT_NAME%.*}_${slug}.log"
+		if [[ "$background" == "bg" ]]; then
+			echo "[$SCRIPT_NAME] (single-terminal) $title -> $log_file" >&2
+			if command -v setsid >/dev/null 2>&1; then
+				setsid bash -lc "$full_cmd" >"$log_file" 2>&1 &
+			else
+				bash -lc "$full_cmd" >"$log_file" 2>&1 &
+			fi
+			BG_PIDS+=("$!")
+			return 0
+		fi
+		echo "[$SCRIPT_NAME] (single-terminal) $title (foreground)" >&2
+		echo "[$SCRIPT_NAME] Log: $log_file" >&2
+		bash -lc "$full_cmd" 2>&1 | tee -a "$log_file"
+		return $?
+	fi
+
+	full_cmd="$full_cmd; exec bash"
 
 	case "$TERMINAL_CMD" in
 		gnome-terminal)
@@ -243,6 +317,6 @@ launch_in_terminal() {
 GAZEBO_CMD=${GAZEBO_CMD:-"ros2 launch rmu_gazebo_simulator bringup_sim.launch.py"}
 SLAM_CMD=${SLAM_CMD:-"ros2 launch pb2025_nav_bringup rm_navigation_simulation_launch.py slam:=True"}
 
-launch_in_terminal "Gazebo Sim" "$GAZEBO_CMD" ""
+launch_in_terminal "Gazebo Sim" "$GAZEBO_CMD" "" "bg"
 sleep 1
 launch_in_terminal "SLAM" "$SLAM_CMD" "$NEUPAN_ENV"

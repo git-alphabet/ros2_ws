@@ -28,8 +28,29 @@ if [[ ! -f $OVERLAY_SETUP ]]; then
 	exit 1
 fi
 
+is_truthy() {
+	local value=${1:-}
+	case "${value,,}" in
+		1|true|yes|on) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
+in_docker() {
+	[[ -f /.dockerenv ]] && return 0
+	grep -qaE '(docker|containerd)' /proc/1/cgroup 2>/dev/null
+}
+
+NO_NEW_TERMINAL=${NO_NEW_TERMINAL:-}
+if [[ -z ${NO_NEW_TERMINAL} ]] && in_docker; then
+	NO_NEW_TERMINAL=1
+fi
+
 TERMINAL_CMD=${TERMINAL_CMD:-}
-if [[ -n $TERMINAL_CMD ]]; then
+
+if is_truthy "$NO_NEW_TERMINAL"; then
+	TERMINAL_CMD=""
+	elif [[ -n $TERMINAL_CMD ]]; then
 	if ! command -v "$TERMINAL_CMD" >/dev/null 2>&1; then
 		echo "[$SCRIPT_NAME] Requested terminal '$TERMINAL_CMD' not found." >&2
 		exit 1
@@ -40,8 +61,7 @@ else
 	elif command -v x-terminal-emulator >/dev/null 2>&1; then
 		TERMINAL_CMD="x-terminal-emulator"
 	else
-		echo "[$SCRIPT_NAME] No supported graphical terminal available." >&2
-		exit 1
+		NO_NEW_TERMINAL=1
 	fi
 fi
 
@@ -225,7 +245,20 @@ launch_in_terminal() {
 	if [[ -n $extra_env ]]; then
 		full_cmd="$full_cmd; $extra_env"
 	fi
-	full_cmd="$full_cmd; $command; exec bash"
+	full_cmd="$full_cmd; $command"
+
+	if is_truthy "$NO_NEW_TERMINAL"; then
+		local log_dir="$WS_DIR/log"
+		mkdir -p "$log_dir"
+		local slug
+		slug="$(echo "$title" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/_/g; s/^_+|_+$//g')"
+		local log_file="$log_dir/${SCRIPT_NAME%.*}_${slug}.log"
+		echo "[$SCRIPT_NAME] (single-terminal) $title (foreground)" >&2
+		echo "[$SCRIPT_NAME] Log: $log_file" >&2
+		exec bash -lc "$full_cmd" 2>&1 | tee -a "$log_file"
+	fi
+
+	full_cmd="$full_cmd; exec bash"
 
 	case "$TERMINAL_CMD" in
 		gnome-terminal)

@@ -96,6 +96,10 @@ public:
    */
   void setSpeedLimit(const double & speed_limit, const bool & percentage) override;
 
+  /// @brief Print controller call frequency once per second.
+  /// Uses steady clock so it is not affected by simulated / paused ROS time.
+  void maybeLogControlFrequency();
+
 protected:
   /**
    * @brief Initialize Python interpreter and NeuPAN module synchronously
@@ -294,6 +298,13 @@ protected:
 
   // Logger
   rclcpp::Logger logger_{rclcpp::get_logger("NeuPANController")};
+
+  // Control loop frequency stats (based on computeVelocityCommands call rate)
+  rclcpp::Clock steady_clock_{RCL_STEADY_TIME};
+  rclcpp::Time last_control_freq_report_time_{0, 0, RCL_STEADY_TIME};
+  std::size_t control_cycle_count_{0};
+  bool control_freq_initialized_{false};
+  bool debug_print_control_frequency_{false};
 };
 
 }  // namespace neupan_nav2_controller

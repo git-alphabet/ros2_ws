@@ -51,6 +51,11 @@ void NeuPANController::configure(
 
   RCLCPP_INFO(logger_, "Configuring NeuPAN Controller Plugin: %s", plugin_name_.c_str());
 
+  // Reset controller frequency stats
+  control_cycle_count_ = 0;
+  last_control_freq_report_time_ = steady_clock_.now();
+  control_freq_initialized_ = true;
+
   // Declare and get parameters
   nav2_util::declare_parameter_if_not_declared(
     node, plugin_name_ + ".max_linear_velocity", rclcpp::ParameterValue(0.5));
@@ -70,6 +75,8 @@ void NeuPANController::configure(
     node, plugin_name_ + ".obstacle_clear_radius", rclcpp::ParameterValue(0.35));
   nav2_util::declare_parameter_if_not_declared(
     node, plugin_name_ + ".min_distance_noise_floor", rclcpp::ParameterValue(-0.01));
+  nav2_util::declare_parameter_if_not_declared(
+    node, plugin_name_ + ".debug_print_control_frequency", rclcpp::ParameterValue(false));
 
   node->get_parameter(plugin_name_ + ".max_linear_velocity", max_linear_velocity_);
   node->get_parameter(plugin_name_ + ".max_angular_velocity", max_angular_velocity_);
@@ -80,6 +87,7 @@ void NeuPANController::configure(
   node->get_parameter(plugin_name_ + ".neupan_config_path", neupan_config_path_);
   node->get_parameter(plugin_name_ + ".obstacle_clear_radius", obstacle_clear_radius_);
   node->get_parameter(plugin_name_ + ".min_distance_noise_floor", min_distance_noise_floor_);
+  node->get_parameter(plugin_name_ + ".debug_print_control_frequency", debug_print_control_frequency_);
   obstacle_clear_radius_ = std::max(0.0, obstacle_clear_radius_);
   min_distance_noise_floor_ = std::min(0.0, min_distance_noise_floor_);
 
@@ -112,6 +120,34 @@ void NeuPANController::configure(
   RCLCPP_INFO(logger_, "NeuPAN Controller configured successfully");
 }
 
+void NeuPANController::maybeLogControlFrequency()
+{
+  if (!debug_print_control_frequency_) {
+    return;
+  }
+
+  const auto now = steady_clock_.now();
+  if (!control_freq_initialized_) {
+    last_control_freq_report_time_ = now;
+    control_cycle_count_ = 0;
+    control_freq_initialized_ = true;
+    return;
+  }
+
+  ++control_cycle_count_;
+  const double dt = (now - last_control_freq_report_time_).seconds();
+  if (dt < 1.0) {
+    return;
+  }
+
+  const double hz = (dt > 0.0) ? (static_cast<double>(control_cycle_count_) / dt) : 0.0;
+  // Yellow ANSI (may depend on terminal / logging sink preserving escapes)
+  RCLCPP_INFO(logger_, "\033[33m控制器频率: %.2f Hz\033[0m", hz);
+
+  control_cycle_count_ = 0;
+  last_control_freq_report_time_ = now;
+}
+
 void NeuPANController::cleanup()
 {
   RCLCPP_INFO(logger_, "Cleaning up NeuPAN Controller");
@@ -132,6 +168,11 @@ void NeuPANController::cleanup()
 void NeuPANController::activate()
 {
   RCLCPP_INFO(logger_, "Activating NeuPAN Controller");
+
+  // Reset controller frequency stats on activation
+  control_cycle_count_ = 0;
+  last_control_freq_report_time_ = steady_clock_.now();
+  control_freq_initialized_ = true;
   
   // Start Python initialization in background thread (non-blocking)
   if (!python_initialized_ && !python_initialization_in_progress_) {
@@ -177,16 +218,12 @@ geometry_msgs::msg::TwistStamped NeuPANController::computeVelocityCommands(
   cmd.header.stamp = pose.header.stamp;
   cmd.header.frame_id = pose.header.frame_id;
 
-  // 强制输出调试信息
-  RCLCPP_INFO(logger_, "🔍 [DEBUG] computeVelocityCommands called!");
-  RCLCPP_INFO(logger_, "🔍 [DEBUG] Global plan size: %zu poses", global_plan_.poses.size());
-  RCLCPP_INFO(logger_, "🔍 [DEBUG] Python initialized: %s", python_initialized_.load() ? "YES" : "NO");
-  RCLCPP_INFO(logger_, "🔍 [DEBUG] Python initializing: %s", python_initialization_in_progress_.load() ? "YES" : "NO");
-  RCLCPP_INFO(logger_, "🔍 [DEBUG] Python init failed: %s", python_initialization_failed_.load() ? "YES" : "NO");
+  // Log controller call rate (once per second)
+  maybeLogControlFrequency();
 
   // Check if we have a valid plan
   if (global_plan_.poses.empty()) {
-    RCLCPP_WARN(logger_, "No global plan available");
+    RCLCPP_WARN_THROTTLE(logger_, *node_.lock()->get_clock(), 1000, "No global plan available");
     return cmd;
   }
 
@@ -194,8 +231,6 @@ geometry_msgs::msg::TwistStamped NeuPANController::computeVelocityCommands(
   if (goal_checker->isGoalReached(pose.pose, global_plan_.poses.back().pose, velocity)) {
     RCLCPP_INFO(logger_, "🎯 Goal reached!");
     return cmd;  // Return zero velocity
-  } else {
-    RCLCPP_INFO(logger_, "🔍 [DEBUG] Goal not yet reached, continuing navigation");
   }
 
   // Get current robot state
@@ -207,45 +242,38 @@ geometry_msgs::msg::TwistStamped NeuPANController::computeVelocityCommands(
 
   // Get obstacle points from laser scan
   auto laser_scan = getLatestLaserScan();
-  RCLCPP_INFO(logger_, "🔍 [DEBUG] Laser scan available: %s", laser_scan ? "YES" : "NO");
   if (!laser_scan) {
     RCLCPP_WARN_THROTTLE(logger_, *node_.lock()->get_clock(), 1000, "No laser scan available");
     return cmd;
-  } else {
-    RCLCPP_INFO(logger_, "🔍 [DEBUG] Laser scan has %zu ranges", laser_scan->ranges.size());
   }
 
   auto obstacle_points = laserScanToObstaclePoints(laser_scan, pose);
-  RCLCPP_INFO(
-    logger_, "🔍 [DEBUG] Obstacle point count: %zu", obstacle_points.size());
   if (obstacle_points.empty()) {
-    RCLCPP_WARN(logger_, "NeuPAN received empty obstacle set; using fallback");
+    RCLCPP_WARN_THROTTLE(logger_, *node_.lock()->get_clock(), 1000, "NeuPAN received empty obstacle set; using fallback");
   }
 
   // Call NeuPAN planner only if Python is initialized
   if (python_initialized_) {
     geometry_msgs::msg::Twist neu_cmd;
     if (!callNeuPANPlanner(robot_state, obstacle_points, neu_cmd)) {
-      RCLCPP_WARN(logger_, "NeuPAN planner failed, delegating to fallback controller");
+      RCLCPP_WARN_THROTTLE(logger_, *node_.lock()->get_clock(), 1000,
+        "NeuPAN planner failed, delegating to fallback controller");
       return computeSimpleFallbackVelocity(pose, global_plan_);
     }
-    RCLCPP_INFO(
-      logger_, "🔍 [DEBUG] NeuPAN command: vx=%.3f, vy=%.3f, wz=%.3f",
-      neu_cmd.linear.x, neu_cmd.linear.y, neu_cmd.angular.z);
     cmd.twist = neu_cmd;
   } else if (python_initialization_in_progress_) {
-    RCLCPP_INFO_THROTTLE(logger_, *node_.lock()->get_clock(), 2000, 
-      "🔄 Python initialization in progress, using simple fallback controller");
+    RCLCPP_WARN_THROTTLE(logger_, *node_.lock()->get_clock(), 1000,
+      "🔄 Python initialization in progress, using fallback controller");
     // Fallback: use simple goal-seeking behavior while initializing
     return computeSimpleFallbackVelocity(pose, global_plan_);
   } else if (python_initialization_failed_) {
-    RCLCPP_DEBUG_THROTTLE(logger_, *node_.lock()->get_clock(), 10000, 
-      "Python initialization failed, using fallback behavior");
+    RCLCPP_WARN_THROTTLE(logger_, *node_.lock()->get_clock(), 1000,
+      "❌ Python initialization failed, using fallback behavior");
     // Fallback: return zero velocity when initialization failed
     return cmd;
   } else {
-    RCLCPP_DEBUG_THROTTLE(logger_, *node_.lock()->get_clock(), 5000, 
-      "Python not initialized yet, using fallback behavior");
+    RCLCPP_WARN_THROTTLE(logger_, *node_.lock()->get_clock(), 1000,
+      "⏳ Python not initialized yet, using fallback behavior");
     return cmd;
   }
 
@@ -254,18 +282,10 @@ geometry_msgs::msg::TwistStamped NeuPANController::computeVelocityCommands(
   cmd.twist.linear.y = std::clamp(cmd.twist.linear.y, -max_linear_velocity_, max_linear_velocity_);
   cmd.twist.angular.z = std::clamp(cmd.twist.angular.z, -max_angular_velocity_, max_angular_velocity_);
 
-  RCLCPP_INFO(
-    logger_, "🔍 [DEBUG] Final command to Nav2: vx=%.3f, vy=%.3f, wz=%.3f",
-    cmd.twist.linear.x, cmd.twist.linear.y, cmd.twist.angular.z);
-
   // Create and publish local plan for visualization based on velocity commands
   // This shows the actual trajectory the robot will follow based on the computed velocities
   nav_msgs::msg::Path local_plan = generateVelocityBasedTrajectory(pose, cmd.twist);
   publishLocalPlan(pose, local_plan);
-
-  RCLCPP_DEBUG(
-    logger_, "NeuPAN computed velocity: linear=[%.3f, %.3f], angular=%.3f",
-    cmd.twist.linear.x, cmd.twist.linear.y, cmd.twist.angular.z);
 
   return cmd;
 }
@@ -665,7 +685,7 @@ bool NeuPANController::callNeuPANPlanner(
   geometry_msgs::msg::Twist & cmd_vel)
 {
   if (!python_initialized_ || !neupan_core_instance_) {
-    RCLCPP_ERROR(logger_, "Python not initialized");
+    RCLCPP_WARN_THROTTLE(logger_, *node_.lock()->get_clock(), 1000, "Python not initialized");
     return false;
   }
 
@@ -987,7 +1007,8 @@ bool NeuPANController::callNeuPANPlanner(
 
     const std::size_t required_elems = (robot_type_ == "omni") ? 2u : 2u;
     if (action_values.size() < required_elems) {
-      RCLCPP_WARN(logger_,
+      RCLCPP_WARN_THROTTLE(
+        logger_, *node_.lock()->get_clock(), 1000,
         "NeuPAN action has insufficient elements (%zu) for robot_type=%s; falling back", action_values.size(),
         robot_type_.c_str());
       Py_DECREF(result);
@@ -1011,7 +1032,9 @@ bool NeuPANController::callNeuPANPlanner(
       cmd_vel.linear.y = 0.0;
       cmd_vel.angular.z = action_values[1];
     } else {
-      RCLCPP_WARN(logger_, "Unknown robot type: %s, using differential drive", robot_type_.c_str());
+      RCLCPP_WARN_THROTTLE(
+        logger_, *node_.lock()->get_clock(), 1000,
+        "Unknown robot type: %s, using differential drive", robot_type_.c_str());
       cmd_vel.linear.x = action_values[0];
       cmd_vel.linear.y = 0.0;
       cmd_vel.angular.z = (action_values.size() > 1) ? action_values[1] : 0.0;
@@ -1019,18 +1042,13 @@ bool NeuPANController::callNeuPANPlanner(
 
     Py_DECREF(result);
     
-    RCLCPP_DEBUG(
-      logger_, "NeuPAN computed velocity: linear=[%.3f, %.3f], angular=%.3f",
-      cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z);
-
-    RCLCPP_DEBUG(
-      logger_, "NeuPAN planner output before clamping: vx=%.3f, vy=%.3f, wz=%.3f",
-      cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z);
     return true;
 
   } catch (const std::exception& e) {
-    RCLCPP_ERROR(logger_, "Exception in callNeuPANPlanner: %s", e.what());
-    RCLCPP_ERROR(logger_, "NeuPAN planner threw; falling back to simple control");
+    RCLCPP_ERROR_THROTTLE(logger_, *node_.lock()->get_clock(), 1000,
+      "Exception in callNeuPANPlanner: %s", e.what());
+    RCLCPP_ERROR_THROTTLE(logger_, *node_.lock()->get_clock(), 1000,
+      "NeuPAN planner threw; falling back to simple control");
     return false;
   }
 }
@@ -1405,7 +1423,7 @@ void NeuPANController::startAsyncPythonInitialization()
 
 void NeuPANController::pythonInitializationWorker()
 {
-  RCLCPP_INFO(logger_, "Background Python initialization started...");
+  RCLCPP_DEBUG(logger_, "Background Python initialization started...");
   
   try {
     std::lock_guard<std::mutex> lock(python_mutex_);
@@ -1416,7 +1434,6 @@ void NeuPANController::pythonInitializationWorker()
     python_initialization_in_progress_ = false;
     
     if (success) {
-      RCLCPP_INFO(logger_, "✅ Background Python initialization completed successfully!");
       python_initialized_ = true;
       python_initialization_failed_ = false;
     } else {
