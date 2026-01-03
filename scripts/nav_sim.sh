@@ -324,7 +324,7 @@ launch_in_terminal() {
 }
 
 GAZEBO_CMD=${GAZEBO_CMD:-"ros2 launch rmu_gazebo_simulator bringup_sim.launch.py"}
-NAV_CMD=${NAV_CMD:-"ros2 launch pb2025_nav_bringup rm_navigation_simulation_launch.py world:=rmuc_2025 slam:=False"}
+NAV_CMD=${NAV_CMD:-"ros2 launch pb2025_nav_bringup rm_navigation_simulation_launch.py world:=rmul_2026 slam:=False"}
 
 launch_in_terminal "Gazebo Sim" "$GAZEBO_CMD" "" "bg"
 sleep 1
