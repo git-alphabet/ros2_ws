@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Run the reality (on-robot) SLAM/mapping launch in its own terminal.
-
+export QT_FONT_DPI=120
 export __NV_PRIME_RENDER_OFFLOAD=1
 export __GLX_VENDOR_LIBRARY_NAME=nvidia
 
