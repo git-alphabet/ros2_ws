@@ -45,10 +45,15 @@ namespace small_point_lio {
 
     public:
         inline void setup_subscription(rclcpp::Node *node, const std::string &topic, std::function<void(const std::vector<common::Point> &)> callback) override {
+            // Some simulators publish a `time` field whose unit/meaning differs from what Small Point-LIO expects.
+            // Allow disabling per-point timing or scaling it.
+            const bool use_point_time = node->declare_parameter<bool>("use_point_time", true);
+            const double point_time_scale = node->declare_parameter<double>("point_time_scale", 1.0);
+
             subscription = node->create_subscription<sensor_msgs::msg::PointCloud2>(
                     topic,
                     rclcpp::SensorDataQoS(),
-                    [callback](const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+                    [callback, use_point_time, point_time_scale](const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
                         pcl::PointCloud<unilidar_ros::Point> pl_orig;
                         pcl::fromROSMsg(*msg, pl_orig);
                         if (pl_orig.empty()) {
@@ -60,7 +65,11 @@ namespace small_point_lio {
                         for (const auto &src: pl_orig.points) {
                             common::Point p;
                             p.position << src.x, src.y, src.z;
-                            p.timestamp = msg_time + src.time;
+                            if (use_point_time) {
+                                p.timestamp = msg_time + static_cast<double>(src.time) * point_time_scale;
+                            } else {
+                                p.timestamp = msg_time;
+                            }
                             pointcloud.push_back(p);
                         }
                         callback(pointcloud);
