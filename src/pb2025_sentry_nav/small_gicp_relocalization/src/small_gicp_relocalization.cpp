@@ -20,6 +20,8 @@
 #include "small_gicp/util/downsampling_omp.hpp"
 #include "tf2_eigen/tf2_eigen.hpp"
 
+#include <cmath>
+
 namespace small_gicp_relocalization
 {
 
@@ -112,6 +114,27 @@ void SmallGicpRelocalizationNode::loadGlobalMap(const std::string & file_name)
   }
   RCLCPP_INFO(this->get_logger(), "Loaded global map with %zu points", global_map_->points.size());
 
+  // small_gicp voxelgrid has a strict coordinate range; pre-filter points to avoid warning spam.
+  // Valid range per axis is roughly [-1048576 * leaf_size, 1048575 * leaf_size].
+  const double max_abs_coord = 1048576.0 * global_leaf_size_;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr filtered(new pcl::PointCloud<pcl::PointXYZ>());
+  filtered->points.reserve(global_map_->points.size());
+  for (const auto & p : global_map_->points) {
+    if (!pcl::isFinite(p)) {
+      continue;
+    }
+    if (std::abs(static_cast<double>(p.x)) > max_abs_coord ||
+        std::abs(static_cast<double>(p.y)) > max_abs_coord ||
+        std::abs(static_cast<double>(p.z)) > max_abs_coord) {
+      continue;
+    }
+    filtered->points.push_back(p);
+  }
+  filtered->width = filtered->points.size();
+  filtered->height = 1;
+  filtered->is_dense = true;
+  global_map_ = filtered;
+
   // NOTE: Transform global pcd_map (based on `lidar_odom` frame) to the `odom` frame
   Eigen::Affine3d odom_to_lidar_odom;
   while (true) {
@@ -140,7 +163,23 @@ void SmallGicpRelocalizationNode::registeredPcdCallback(
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr scan(new pcl::PointCloud<pcl::PointXYZ>());
   pcl::fromROSMsg(*msg, *scan);
-  *accumulated_cloud_ += *scan;
+
+  // Filter non-finite and out-of-range points before accumulation to prevent downsampling warnings.
+  const double max_abs_coord = 1048576.0 * registered_leaf_size_;
+  for (const auto & p : scan->points) {
+    if (!pcl::isFinite(p)) {
+      continue;
+    }
+    if (std::abs(static_cast<double>(p.x)) > max_abs_coord ||
+        std::abs(static_cast<double>(p.y)) > max_abs_coord ||
+        std::abs(static_cast<double>(p.z)) > max_abs_coord) {
+      continue;
+    }
+    accumulated_cloud_->points.push_back(p);
+  }
+  accumulated_cloud_->width = accumulated_cloud_->points.size();
+  accumulated_cloud_->height = 1;
+  accumulated_cloud_->is_dense = true;
 }
 
 void SmallGicpRelocalizationNode::performRegistration()
