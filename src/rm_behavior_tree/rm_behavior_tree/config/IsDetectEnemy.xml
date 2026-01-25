@@ -5,23 +5,6 @@
         <IsDetectEnemy message="{armors}"/>
         <RobotControl stop_gimbal_scan="True"
                         chassis_spin_vel="0.5"/>
-        <Fallback name="CombatByHP">
-            <Sequence>
-                <IsHPAbove message="{robot_status}" hp_threshold="280"/>
-                <!-- TODO：执行高血战斗逻辑 -->
-                <SubTree ID="HighHPCombatLogic"/>
-            </Sequence>
-            <Sequence>
-                <IsHPAbove message="{robot_status}" hp_threshold="180"/>
-                <!-- TODO：执行中血战斗逻辑 -->
-                <SubTree ID="MediumHPCombatLogic"/>
-            </Sequence>
-            <Sequence>
-                <IsHPAbove message="{robot_status}" hp_threshold="1"/>
-                <!-- TODO：执行低血战斗逻辑 -->
-                <SubTree ID="LowHPCombatLogic"/>
-            </Sequence>
-        </Fallback>
     </Sequence>
   </BehaviorTree>
 </root>
