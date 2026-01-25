@@ -17,10 +17,11 @@
                             red_outpost_hp_threshold="0"
                             heat_threshold="9999"/>
               </Inverter>
-              <SendGoal goal_pose="-0.35;-7.77;0; 0;0;0;1"/>
+              <!-- Converted from goal_pose to goal_x/goal_y -->
+              <SendGoal goal_x="-0.35" goal_y="-7.77"/>
             </Sequence>
             <SendGoal name="AttackedGoToAggressivePos"
-                      goal_pose="-2.94;3.43;0; 0;0;0;1"/>
+                      goal_x="-2.94" goal_y="3.43"/>
           </Fallback>
         </Sequence>
         <Sequence name="OriginalComplexLogic">
@@ -52,7 +53,7 @@
                                   red_outpost_hp_threshold="0"
                                   heat_threshold="9999"/>
                     </Inverter>
-                    <SendGoal goal_pose="3.64;1.36;0; 0;0;0;1"/>
+                        <SendGoal goal_x="3.64" goal_y="1.36"/>
                   </Sequence>
                   <Sequence name="HighHPGoAggressivePoint">
                     <IsStatusOK message="{robot_status}"
@@ -60,10 +61,10 @@
                                 blue_outpost_hp_threshold="0"
                                 red_outpost_hp_threshold="0"
                                 heat_threshold="9999"/>
-                    <SendGoal goal_pose="-7.63;5.60;1; 0;0;0;1"/>
+                    <SendGoal goal_x="-7.63" goal_y="5.60"/>
                   </Sequence>
                   <SendGoal name="DefaultOrMediumHPGoInitialPoint"
-                            goal_pose="-7.63;5.60;1; 0;0;0;1"/>
+                            goal_x="-7.63" goal_y="5.60"/>
                 </Fallback>
               </RateController>
             </Sequence>
@@ -114,11 +115,13 @@
       <input_port name="chassis_spin_vel"
                   default="0.0"/>
     </Action>
-    <Action ID="SendGoal"
-            editable="true">
+        <Action ID="SendGoal"
+        editable="true">
       <input_port name="goal_pose"
-                  default="0;0;0; 0;0;0;1"/>
-    </Action>
+          default="{goal_pose}"/>
+      <input_port name="goal_x" default="0.0"/>
+      <input_port name="goal_y" default="0.0"/>
+        </Action>
     <Action ID="SubGameStatus"
             editable="true">
       <input_port name="topic_name"

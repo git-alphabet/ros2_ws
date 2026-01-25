@@ -4,9 +4,12 @@
 #include <cstdint>
 #include <string>
 #include <algorithm>  // 用于std::min
+#include <limits>     // 用于数值溢出保护
 
+#include <boost/signals2/connection.hpp>
 #include "behaviortree_ros2/bt_topic_sub_node.hpp"
 #include "rm_decision_interfaces/msg/robot_status.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 namespace rm_behavior_tree
 {
@@ -15,23 +18,27 @@ class DetectRespawnAndSetRecoveryAction
 : public BT::RosTopicSubNode<rm_decision_interfaces::msg::RobotStatus>
 {
 public:
+  // 构造函数（保持原有）
   DetectRespawnAndSetRecoveryAction(
     const std::string & name,
     const BT::NodeConfig & conf,
     const BT::RosNodeParams & params);
 
+  // 新增析构函数：释放资源
+  ~DetectRespawnAndSetRecoveryAction() override;
+
+  // 修正语法错误：移除嵌套return，正确复用providedBasicPorts
   static BT::PortsList providedPorts()
   {
-    return {
-      BT::InputPort<std::string>("topic_name"),
-      BT::InputPort<int>("hp_cur"),  // 保留hp_cur端口（兼容XML）
-      // inout黑板端口
+    // 核心修正：直接return providedBasicPorts的返回值，而非嵌套return
+    return providedBasicPorts({
+      BT::BidirectionalPort<int>("hp_cur"),
       BT::BidirectionalPort<bool>("was_dead"),
       BT::BidirectionalPort<bool>("need_recovery"),
       BT::BidirectionalPort<std::uint64_t>("recovery_start_ms"),
       BT::BidirectionalPort<std::uint64_t>("search_start_ms"),
       BT::BidirectionalPort<std::uint64_t>("heal_start_ms")
-    };
+    });
   }
 
   BT::NodeStatus onTick(
@@ -50,6 +57,12 @@ private:
   std::uint64_t last_respawn_ms_ = 0;
   // 6. 当前血量（成员变量，避免局部变量未定义问题）
   int current_hp_ = 0;
+  // Fallback subscription in case the RosTopicSubNode registry-based subscriber
+  // does not deliver messages to this instance (diagnostic fallback).
+  rclcpp::Subscription<rm_decision_interfaces::msg::RobotStatus>::SharedPtr fallback_sub_;
+  std::shared_ptr<rm_decision_interfaces::msg::RobotStatus> fallback_last_msg_ = nullptr;
+  // connection to the shared SubscriberInstance broadcaster (diagnostic fallback)
+  boost::signals2::connection fallback_signal_conn_;
   // 7. 机器人最大血量
   static constexpr int MAX_HP = 400;
 };

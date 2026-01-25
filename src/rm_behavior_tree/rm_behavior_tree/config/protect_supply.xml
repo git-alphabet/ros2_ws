@@ -44,8 +44,9 @@
                 <IsStatusOK message="{robot_status}"
                             hp_threshold="250"
                             heat_threshold="350"/>
+                <!-- Converted from goal_pose to goal_x/goal_y -->
                 <SendGoal name="SupplyArea"
-                          goal_pose="-2.5;4.07;0; 0;0;0;1"
+                          goal_x="-2.5" goal_y="4.07"
                           action_name="navigate_to_pose"/>
               </Fallback>
             </WhileDoElse>
@@ -67,9 +68,10 @@
                               game_progress="4"
                               lower_remain_time="250"
                               higher_remain_time="300"/>
-                  <RateController hz="1">
+                    <RateController hz="1">
+                    <!-- Converted from goal_pose to goal_x/goal_y -->
                     <SendGoal name="ProtectSupply"
-                              goal_pose="-1.1;3.4;0; 0;0;0;1"
+                              goal_x="-1.1" goal_y="3.4"
                               action_name="navigate_to_pose"/>
                   </RateController>
                   <WhileDoElse>
@@ -82,28 +84,31 @@
                       <IsFriendOK message="{robot_hp}"
                                   friend_color="red"/>
                     </Sequence>
+                    <!-- Converted from goal_pose to goal_x/goal_y -->
                     <SendGoal name="OccupyCenter"
-                              goal_pose="3.0;0.4;0; 0;0;0;1"
+                              goal_x="3.0" goal_y="0.4"
                               action_name="navigate_to_pose"/>
                     <SendGoal name="BaseLeft"
-                              goal_pose="-2.2;0.3;0; 0;0;0;1"
+                              goal_x="-2.2" goal_y="0.3"
                               action_name="navigate_to_pose"/>
                   </WhileDoElse>
                 </WhileDoElse>
               </WhileDoElse>
-              <RateController name="Retreat"
-                              hz="1">
+                <RateController name="Retreat"
+                                hz="1">
+                <!-- Converted from goal_pose to goal_x/goal_y -->
                 <SendGoal name="SupplyArea"
-                          goal_pose="-2.5;4.07;0; 0;0;0;1"
+                          goal_x="-2.5" goal_y="4.07"
                           action_name="navigate_to_pose"/>
               </RateController>
             </WhileDoElse>
           </WhileDoElse>
         </ReactiveSequence>
         <ReactiveSequence>
-          <RateController hz="1">
+            <RateController hz="1">
+            <!-- TODO: set goal_x and goal_y -->
             <SendGoal name="Home"
-                      goal_pose="0;0;0; 0;0;0;1"
+                      goal_x="0.0" goal_y="0.0"
                       action_name="navigate_to_pose"/>
           </RateController>
           <RobotControl stop_gimbal_scan="True"
@@ -176,13 +181,15 @@
       <input_port name="chassis_spin_vel"
                   default="False"/>
     </Action>
-    <Action ID="SendGoal"
-            editable="true">
+        <Action ID="SendGoal"
+        editable="true">
       <input_port name="goal_pose"
-                  default="0;0;0; 0;0;0;1"/>
+          default="{goal_pose}"/>
+      <input_port name="goal_x" default="0.0"/>
+      <input_port name="goal_y" default="0.0"/>
       <input_port name="action_name"
-                  default="navigate_to_pose"/>
-    </Action>
+          default="navigate_to_pose"/>
+        </Action>
     <Action ID="SubAllRobotHP"
             editable="true">
       <input_port name="topic_name"

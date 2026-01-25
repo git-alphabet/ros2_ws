@@ -1,5 +1,20 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="MediumHPCombatLogic">
-    
+    <ReactiveSequence>
+      <!-- 中血：200~300 -->
+      <IsHPBelow message="{robot_status}" hp_threshold="300"/>
+      <IsHPAbove message="{robot_status}" hp_threshold="200"/>
+
+      <!-- 不管有没有被打：持续小幅度闪避/微游走 -->
+      <GetCurrentLocation current_location="{current_location}"/>
+      <MoveAround expected_nearby_goal_count="5"
+                  expected_dis="0.25"
+                  message="{current_location}"/>
+
+      <!-- 保持云台扫描； -->
+      <RobotControl stop_gimbal_scan="False"
+                    chassis_spin_vel="3.5"/>
+
+    </ReactiveSequence>
   </BehaviorTree>
 </root>

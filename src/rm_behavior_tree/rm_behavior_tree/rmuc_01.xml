@@ -44,9 +44,11 @@
                 <IsStatusOK message="{robot_status}"
                             hp_threshold="250"
                             heat_threshold="350"/>
-                <SendGoal name="SupplyArea"
-                          goal_pose="-3.3;-7.1;0;1"
-                          action_name="navigate_to_pose"/>
+              <!-- Converted from goal_pose to goal_x/goal_y -->
+              <SendGoal name="SupplyArea"
+                    goal_x="-3.3"
+                    goal_y="-7.1"
+                    action_name="navigate_to_pose"/>
               </Fallback>
             </WhileDoElse>
             <WhileDoElse>
@@ -65,23 +67,30 @@
                   <IsOutpostOK robot_status="{robot_status}"
                                all_robot_hp="{robot_hp}"
                                hp_threshold="10"/>
+                  <!-- Converted from goal_pose to goal_x/goal_y -->
                   <SendGoal name="ProtectFeiPo"
-                            goal_pose="7.1;6.8;0;1"
+                            goal_x="7.1"
+                            goal_y="6.8"
                             action_name="navigate_to_pose"/>
                   <SendGoal name="Home"
-                            goal_pose="0;0;0;1"
+                            goal_x="0.0"
+                            goal_y="0.0"
                             action_name="navigate_to_pose"/>
                 </WhileDoElse>
               </WhileDoElse>
+              <!-- Converted from goal_pose to goal_x/goal_y -->
               <SendGoal name="SupplyArea"
-                        goal_pose="-3.3;-7.1;0;1"
+                        goal_x="-3.3"
+                        goal_y="-7.1"
                         action_name="navigate_to_pose"/>
             </WhileDoElse>
           </WhileDoElse>
         </ReactiveSequence>
+        <!-- Converted from goal_pose to goal_x/goal_y -->
         <SendGoal name="Home"
-                  goal_pose="0;0;0;1"
-                  action_name="navigate_to_pose"/>
+            goal_x="0.0"
+            goal_y="0.0"
+            action_name="navigate_to_pose"/>
       </WhileDoElse>
     </ReactiveSequence>
   </BehaviorTree>
@@ -148,13 +157,15 @@
       <input_port name="chassis_spin_vel"
                   default="False"/>
     </Action>
-    <Action ID="SendGoal"
-            editable="true">
+        <Action ID="SendGoal"
+        editable="true">
       <input_port name="goal_pose"
-                  default="0;0;0; 0;0;0;1"/>
+          default="{goal_pose}"/>
+      <input_port name="goal_x" default="0.0"/>
+      <input_port name="goal_y" default="0.0"/>
       <input_port name="action_name"
-                  default="navigate_to_pose"/>
-    </Action>
+          default="navigate_to_pose"/>
+        </Action>
     <Action ID="SubAllRobotHP"
             editable="true">
       <input_port name="topic_name"

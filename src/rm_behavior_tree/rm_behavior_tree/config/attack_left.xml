@@ -11,8 +11,8 @@
 
             <!-- 主逻辑序列 -->
             <Sequence>
-                <!-- 初始化阶段 -->
-                <SendGoal goal_pose="0;0;0;0;0;0;1"/>
+                <!-- 初始化阶段 (converted to goal_x/goal_y) -->
+                <SendGoal goal_x="0.0" goal_y="0.0"/>
                 
                 <!-- 持续监测循环 -->
                 <RepeatUntilSuccess _failureLimit="-1">
@@ -23,17 +23,17 @@
                                 <IsGameTime game_progress="4"/>
                                 <Fallback>
                                     <!-- 低血量撤退逻辑 -->
-                                    <Sequence>
+                                        <Sequence>
                                         <IsStatusOK hp_threshold="150" operator="lt"/>
-                                        <SendGoal goal_pose="2;3;0;0;0;0;1"/>
+                                        <SendGoal goal_x="2.0" goal_y="3.0"/>
                                     </Sequence>
                                     <!-- 正常进攻逻辑 -->
-                                    <SendGoal goal_pose="5;6;0;0;0;0;1"/>
+                                    <SendGoal goal_x="5.0" goal_y="6.0"/>
                                 </Fallback>
                             </Sequence>
                             
                             <!-- 比赛未开始保持待机 -->
-                            <SendGoal goal_pose="0;0;0;0;0;0;1"/>
+                            <SendGoal goal_x="0.0" goal_y="0.0"/>
                         </Fallback>
                     </RateController>
                 </RepeatUntilSuccess>
@@ -104,11 +104,13 @@
       <input_port name="chassis_spin_vel"
                   default="False"/>
     </Action>
-    <Action ID="SendGoal"
+        <Action ID="SendGoal"
             editable="true">
-      <input_port name="goal_pose"
-                  default="0;0;0; 0;0;0;1"/>
-    </Action>
+        <input_port name="goal_pose"
+                default="{goal_pose}"/>
+        <input_port name="goal_x" default="0.0"/>
+        <input_port name="goal_y" default="0.0"/>
+        </Action>
     <Action ID="SubAllRobotHP"
             editable="true">
       <input_port name="topic_name"

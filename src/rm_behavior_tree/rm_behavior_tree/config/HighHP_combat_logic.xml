@@ -1,5 +1,26 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="HighHPCombatLogic">
-    <!-- 先判断是否被攻击，然后分成两种情况，被打和没被打 -->
+    <ReactiveSequence>
+      <IsHPAbove message="{robot_status}" hp_threshold="300"/>
+
+      <!-- 高血：被打闪避；不被打就站着 -->
+      <Fallback>
+
+        <ReactiveSequence>
+          <!-- 待定控制区坐标 -->
+          <IsAttaked message="{robot_status}"/>
+          <GetCurrentLocation current_location="{current_location}"/>
+          <MoveAround expected_nearby_goal_count="5"
+                      expected_dis="0.35"
+                      message="{current_location}"/>
+        </ReactiveSequence>
+
+        <!-- 没被打：站着不动（保持云台扫描可选） -->
+        <RobotControl stop_gimbal_scan="False"
+                      chassis_spin_vel="3.5"/>
+
+      </Fallback>
+
+    </ReactiveSequence>
   </BehaviorTree>
 </root>

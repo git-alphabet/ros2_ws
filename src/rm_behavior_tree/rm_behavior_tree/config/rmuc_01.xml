@@ -4,9 +4,10 @@
   <BehaviorTree ID="BehaviorTree">
     <ReactiveSequence>
       <SentryFollower topic="/goal_pose"
-                      follow_distance="2.0"
-                      current_goal="{current_goal}"/>
-      <SendGoal goal_pose="0;0;0; 0;0;0;1"/>
+              follow_distance="2.0"
+              current_goal="{current_goal}"/>
+      <!-- TODO: set goal_x and goal_y -->
+      <SendGoal goal_x="0.0" goal_y="0.0"/>
     </ReactiveSequence>
   </BehaviorTree>
 
@@ -14,7 +15,9 @@
   <TreeNodesModel>
     <Action ID="SendGoal">
       <input_port name="goal_pose"
-                  default="0;0;0; 0;0;0;1"/>
+                  default="{goal_pose}"/>
+      <input_port name="goal_x" default="0.0"/>
+      <input_port name="goal_y" default="0.0"/>
     </Action>
     <Action ID="SentryFollower">
       <input_port name="topic"

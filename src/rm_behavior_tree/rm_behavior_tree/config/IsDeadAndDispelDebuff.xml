@@ -12,14 +12,14 @@
 
           <!-- 检测复活沿：dead -> alive 时置 need_recovery=true -->
           <DetectRespawnAndSetRecovery
-              was_dead="{state.was_dead}"
-              hp_cur="{hp.cur}"
-              now_ms="{time.now_ms}"
-              need_recovery="{state.need_recovery}"
-              recovery_start_ms="{state.recovery_start_ms}"
-              search_start_ms="{state.search_start_ms}"/>
+              was_dead="{was_dead}"
+              hp_cur="{hp_cur}"
+              now_ms="{now_ms}"
+              need_recovery="{need_recovery}"
+              recovery_start_ms="recovery_start_ms}"
+              search_start_ms="{search_start_ms}"/>
 
-          <IsRecoveryNeeded need_recovery="{state.need_recovery}"/>
+          <IsRecoveryNeeded need_recovery="{need_recovery}"/>
 
           <Fallback name="RecoveryFlow">
 
@@ -30,12 +30,12 @@
               <!-- WaitAndHeal的端口解释看下面 -->
               <WaitAndHeal
                   topic_name="/robot_status"
-                  now_ms="{time.now_ms}"
-                  heal_start_ms="{state.heal_start_ms}"
-                  heal_wait_ms="{cfg.heal_wait_ms}"
-                  hp_cur="{hp.cur}"
-                  hp_max="{hp.max}"
-                  heal_min_ratio="{cfg.heal_min_ratio}"/>
+                  now_ms="{now_ms}"
+                  heal_start_ms="{heal_start_ms}"
+                  heal_wait_ms="{heal_wait_ms}"
+                  hp_cur="{hp_cur}"
+                  hp_max="{hp_max}"
+                  heal_min_ratio="{heal_min_ratio}"/>
               <!-- 退出恢复模式 -->
               <ClearRecoveryFlag
                   need_recovery="{state.need_recovery}"
@@ -99,8 +99,9 @@
 
                                 <!-- 未到达时 IsWithinScope 应返回 FAILURE，才能走到这里 -->
                                 <SendGoal name="GoSupplyToHeal"
-                                        goal_pose="{nav.goal_pose}"
-                                        min_interval_ms="200"/>
+                                    goal_x="{nav.goal_x}"
+                                    goal_y="{nav.goal_y}"
+                                    min_interval_ms="200"/>
 
                                 <!-- 这里不再放 IsWithinScope，避免“到达瞬间”还多发一拍导航 -->
                                 <KeepRunning/>
@@ -124,131 +125,18 @@
 
   <TreeNodesModel>
 
-    <!-- ========== 数据同步 / 安全控制 ========== -->
-
-    <Action ID="RefSerialBlackboardSync" editable="true">
-        <!-- 这个节点通常不需要端口：它内部把“串口解析线程的最新快照”写进黑板键 -->
-    </Action>
-
-    <Condition ID="IsDead" editable="true">
-        <input_port name="message" default="{robot_status}"/>
-    </Condition>
-
-    <Action ID="StopMotion" editable="true">
-        <!-- 内部发底盘速度=0；不需要端口 -->
-    </Action>
-
-    <Action ID="KeepRunning" editable="true">
-        <!-- 永远返回RUNNING，用于“等待/持续执行” -->
-    </Action>
-
-    <Action ID="CancelNavGoal" editable="true">
-        <input_port name="action_name" default="navigate_to_pose"/>
-    </Action>
-
-    <Action ID="UpdateWasDead" editable="true">
-        <input_port  name="hp_cur" default="{hp.cur}"/>
-        <inout_port  name="was_dead" default="{state.was_dead}"/>
-    </Action>
-    <!-- ========== 复活沿检测 / 恢复模式标志 ========== -->
-
-    <Action ID="DetectRespawnAndSetRecovery" editable="true">
-        <inout_port name="was_dead" default="{state.was_dead}"/>
-        <input_port name="hp_cur" default="{hp.cur}"/>
-        <input_port name="now_ms" default="{time.now_ms}"/>
-        <inout_port name="need_recovery" default="{state.need_recovery}"/>
-        <inout_port name="recovery_start_ms" default="{state.recovery_start_ms}"/>
-        <inout_port name="search_start_ms" default="{state.search_start_ms}"/>
-        <!-- 可选：如果你在 WaitAndHeal 里需要独立起点，也可以在这里清零 -->
-        <inout_port name="heal_start_ms" default="{state.heal_start_ms}"/>
-    </Action>
-
-    <Condition ID="IsRecoveryNeeded" editable="true">
-        <input_port name="need_recovery" default="{state.need_recovery}"/>
-    </Condition>
-
-    <Action ID="ClearRecoveryFlag" editable="true">
-        <inout_port name="need_recovery" default="{state.need_recovery}"/>
-        <inout_port name="heal_start_ms" default="{state.heal_start_ms}"/>
-        <inout_port name="search_start_ms" default="{state.search_start_ms}"/>
-        <inout_port name="recovery_start_ms" default="{state.recovery_start_ms}"/>
-    </Action>
-
-
-    <!-- ========== RFID 补给区检测（解除虚弱关键触发） ========== -->
-
-    <Condition ID="IsSupplyCardDetected" editable="true">
-        <input_port name="rfid_status" default="{rfid.status}"/>
-        <!-- 节点内部判 bit19 或 bit20 -->
-    </Condition>
-
-    <Condition ID="IsWithinScope" editable="true">
-        <input_port name="pose_x" default="{pose.x}"/>
-        <input_port name="pose_y" default="{pose.y}"/>
-        <input_port name="goal_x" default="{cfg.supply_goal_x}"/>
-        <input_port name="goal_y" default="{cfg.supply_goal_y}"/>
-        <input_port name="arrive_radius" default="{cfg.arrive_radius}"/>
-    </Condition>
-
-    <!-- ========== 导航到补给区 ========== -->
-
-    <Action ID="SetNavGoalFromConfig" editable="true">
-        <input_port  name="cfg_x" default="{cfg.supply_goal_x}"/>
-        <input_port  name="cfg_y" default="{cfg.supply_goal_y}"/>
-        <output_port name="goal_x" default="{nav.goal_x}"/>
-        <output_port name="goal_y" default="{nav.goal_y}"/>
-    </Action>
-
-    <Condition ID="NotArrived" editable="true">
-        <input_port name="arrived" default="{nav.arrived}"/>
-    </Condition>
-
-    <!-- ========== 到补给区后的“搜卡”微动作（处理死区） ========== -->
-
-    <Action ID="InitSearchTimerIfNeeded" editable="true">
-        <inout_port name="search_start_ms" default="{state.search_start_ms}"/>
-    </Action>
-
-
-    <Action ID="MicroSearchSupplyCard" editable="true">
-        <inout_port name="search_start_ms" default="{state.search_start_ms}"/>
-        <input_port name="timeout_ms" default="{cfg.search_timeout_ms}"/>
-        <input_port name="rfid_supply_arrived" default="{rfid.supply_arrived}"/>
-    </Action>
-
-
-
-    <!-- ========== 刷到卡后的回血等待 ========== -->
-
-    <Action ID="WaitAndHeal" editable="true">
-        <!-- 当前时间（毫秒），用来计算等待了多久 -->
-        <input_port name="now_ms" default="{time.now_ms}"/>
-        <!-- “开始回血等待”的起点时间。第一次进入 WaitAndHeal 时，如果 heal_start_ms == 0（或未初始化），就把它设成 now_ms。
-             之后每 tick 用 now_ms - heal_start_ms 判断是否已经等够时间 -->
-        <inout_port name="heal_start_ms" default="{state.heal_start_ms}"/>
-        <!-- 配置的最大等待时间（毫秒），超过这个时间就不等了 -->
-        <input_port name="heal_wait_ms" default="{cfg.heal_wait_ms}"/>
-        <!-- 当前血量，用于判断回血是否达到阈值 -->
-        <input_port name="hp_cur" default="{hp.cur}"/>
-        <!-- 最大血量，用来算血量比例：hp_cur / hp_max -->
-        <input_port name="hp_max" default="{hp.max}"/>
-        <!-- 回血比例阈值，当 hp_cur / hp_max >= heal_min_ratio 时认为回血完成才能走 -->
-        <input_port name="heal_min_ratio" default="{cfg.heal_min_ratio}"/>
-    </Action>
-
-    <!-- ========== 恢复模式总超时兜底 ========== -->
-
-    <Action ID="RecoveryTimeoutGuard" editable="true">
-        <input_port name="now_ms" default="{time.now_ms}"/>
-        <input_port name="recovery_start_ms" default="{state.recovery_start_ms}"/>
-        <input_port name="timeout_ms" default="{cfg.recovery_timeout_ms}"/>
-        <inout_port name="need_recovery" default="{state.need_recovery}"/>
-    </Action>
+    
 
     <!-- ========== 你们自己的作战入口 ========== -->
 
     <Action ID="CombatMain" editable="true">
     </Action>
+        <Action ID="SendGoal" editable="true">
+            <input_port name="goal_pose" default="{goal_pose}"/>
+            <input_port name="goal_x" default="0.0"/>
+            <input_port name="goal_y" default="0.0"/>
+            <input_port name="action_name" default="navigate_to_pose"/>
+        </Action>
 
   </TreeNodesModel>
 

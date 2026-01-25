@@ -43,7 +43,6 @@ int main(int argc, char ** argv)
     "sub_all_robot_hp",
     "sub_robot_status",
     "sub_game_status",
-    "sub_armors",
     
   };
 
@@ -51,25 +50,38 @@ int main(int argc, char ** argv)
     "rate_controller",
     "decision_switch",
     "is_game_time",
+    "is_hp_above",
+    "is_hp_below",
+    "is_dead",
+    "is_recovery_needed",
     "is_status_ok",
-    "is_detect_enemy",
     "is_attacked",
     "is_friend_ok",
     "is_outpost_ok",
     "get_current_location",
     "move_around",
     "print_message",
-  
+    "is_supply_card_detected",
+    "is_within_scope",
+
     
   };
   // clang-format on
 
   for (const auto & p : msg_update_plugin_libs) {
-    RegisterRosNode(factory, BT::SharedLibrary::getOSName(p), params_update_msg);
+    try {
+      RegisterRosNode(factory, BT::SharedLibrary::getOSName(p), params_update_msg);
+    } catch (const std::exception & e) {
+      RCLCPP_WARN(node->get_logger(), "Could not load msg-update plugin '%s': %s", p.c_str(), e.what());
+    }
   }
 
   for (const auto & p : bt_plugin_libs) {
-    factory.registerFromPlugin(BT::SharedLibrary::getOSName(p));
+    try {
+      factory.registerFromPlugin(BT::SharedLibrary::getOSName(p));
+    } catch (const std::exception & e) {
+      RCLCPP_WARN(node->get_logger(), "Could not load BT plugin '%s': %s", p.c_str(), e.what());
+    }
   }
 
   RegisterRosNode(factory, BT::SharedLibrary::getOSName("send_goal"), params_send_goal);
@@ -78,7 +90,14 @@ int main(int argc, char ** argv)
 
   RegisterRosNode(factory, BT::SharedLibrary::getOSName("sentry_follower"), params_sentry_follower);
 
-  auto tree = factory.createTreeFromFile(bt_xml_path);
+  BT::Tree tree;
+  try {
+    tree = factory.createTreeFromFile(bt_xml_path);
+  } catch (const std::exception & e) {
+    RCLCPP_ERROR(node->get_logger(), "Failed to create behavior tree from '%s': %s", bt_xml_path.c_str(), e.what());
+    rclcpp::shutdown();
+    return 1;
+  }
 
   // Connect the Groot2Publisher. This will allow Groot2 to get the tree and poll status updates.
   const unsigned port = 1667;

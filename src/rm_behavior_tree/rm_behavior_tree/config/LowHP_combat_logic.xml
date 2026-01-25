@@ -1,5 +1,16 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="LowHPCombatLogic">
-    
+    <ReactiveSequence>
+
+      <IsHPBelow message="{robot_status}" hp_threshold="300"/>
+      <IsHPAbove message="{robot_status}" hp_threshold="200"/>
+
+      <!-- 中血：不管有没有被打，都小幅闪避 -->
+      <GetCurrentLocation current_location="{current_location}"/>
+      <MoveAround expected_nearby_goal_count="5"
+                  expected_dis="0.35"
+                  message="{current_location}"/>
+
+    </ReactiveSequence>
   </BehaviorTree>
 </root>

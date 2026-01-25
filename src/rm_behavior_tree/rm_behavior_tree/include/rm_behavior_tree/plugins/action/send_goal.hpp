@@ -10,8 +10,13 @@
 #include <iomanip>
 #include <limits>
 
+// PoseStamped -> JSON for Groot2 (defined inline to avoid ODR)
+
+namespace rm_behavior_tree
+{
+
 // Allows PoseStamped to be visualized in Groot2
-void PoseStampedToJson(nlohmann::json & j, const geometry_msgs::msg::PoseStamped & p)
+inline void PoseStampedToJson(nlohmann::json & j, const geometry_msgs::msg::PoseStamped & p)
 {
   j["position_x"] = p.pose.position.x;
   j["position_y"] = p.pose.position.y;
@@ -22,8 +27,6 @@ void PoseStampedToJson(nlohmann::json & j, const geometry_msgs::msg::PoseStamped
   j["orientation_w"] = p.pose.orientation.w;
 }
 
-namespace rm_behavior_tree
-{
 
 class SendGoalAction : public BT::RosTopicPubNode<geometry_msgs::msg::PoseStamped>
 {
@@ -36,9 +39,12 @@ public:
   static BT::PortsList providedPorts()
   {
     return {
-      BT::InputPort<geometry_msgs::msg::PoseStamped>("goal_pose"),
+      BT::InputPort<geometry_msgs::msg::PoseStamped>("goal_pose", "full goal pose (preferred)"),
+      // Alternatively pass coordinates directly in XML: goal_x and goal_y
+      BT::InputPort<double>("goal_x", 0.0, "goal x coordinate"),
+      BT::InputPort<double>("goal_y", 0.0, "goal y coordinate"),
       // Optional: throttle interval in milliseconds. Default 0 keeps old behavior (publish every tick).
-      BT::InputPort<int>("min_interval_ms", 0)
+      BT::InputPort<int>("min_interval_ms", 0, "minimum publish interval in ms")
     };
   }
 

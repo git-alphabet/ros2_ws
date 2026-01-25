@@ -19,7 +19,6 @@
                     game_progress="4"
                     lower_remain_time="0"
                     higher_remain_time="300"/>
-            <!-- 比赛阶段执行战斗逻辑 -->
             <Fallback>
                 <!--判断战亡，若战亡，执行解除虚弱状态操作 -->
                 <SubTree ID="IsDeadAndDispelDebuff"/>
@@ -32,8 +31,6 @@
                         <SubTree ID="HighHPCombatLogic"/>
                         <!-- 中血量战斗逻辑 -->
                         <SubTree ID="MediumHPCombatLogic"/>
-                        <!-- 低血量战斗逻辑 -->
-                        <SubTree ID="LowHPCombatLogic"/>
                     </Fallback>
 
                     <!-- 非战斗时刻占点逻辑 -->
@@ -43,8 +40,10 @@
                             <IsHPBelow message="{robot_status}" hp_threshold="200"/>
 
                             <RateController hz="1">
+                                <!-- Converted from goal_pose to goal_x/goal_y -->
                                 <SendGoal name="GoSupplyToHeal"
-                                        goal_pose="{ally_supply_pose}"
+                                        goal_x="{ally_supply_pose_x}"
+                                        goal_y="{ally_supply_pose_y}"
                                         action_name="navigate_to_pose"/>
                             </RateController>
 
@@ -56,8 +55,10 @@
                         <!-- 3) 抢控制区：对方每秒-1胜利点；离开后延迟2s失效 -->
                         <ReactiveSequence>
                             <RateController hz="1">
+                                <!-- Converted from goal_pose to goal_x/goal_y -->
                                 <SendGoal name="GoControlZone"
-                                        goal_pose="{control_zone_pose}"
+                                        goal_x="{control_zone_pose_x}"
+                                        goal_y="{control_zone_pose_y}"
                                         action_name="navigate_to_pose"/>
                             </RateController>
 
@@ -72,10 +73,12 @@
             </Fallback>
             <!-- 非比赛阶段停止云台和旋转，回家 -->
             <ReactiveSequence>
-                <RateController hz="1">
+                    <RateController hz="1">
+                    <!-- TODO: set goal_x and goal_y -->
                     <SendGoal name="Home"
-                            goal_pose="0;0;0; 0;0;0;1"
-                            action_name="navigate_to_pose"/>
+                        goal_x="0.0"
+                        goal_y="0.0"
+                        action_name="navigate_to_pose"/>
                 </RateController>
                 <RobotControl stop_gimbal_scan="True"
                                 chassis_spin_vel="0.0"/>
@@ -101,7 +104,9 @@
             <input_port name="scan_status" default="False"/>
         </Action>
         <Action ID="SendGoal" editable="true">
-            <input_port name="goal_pose" default="0;0;0;0;0;0;1"/>
+            <input_port name="goal_pose" default="{goal_pose}"/>
+            <input_port name="goal_x" default="0.0"/>
+            <input_port name="goal_y" default="0.0"/>
         </Action>
         <Action ID="SetGoal" editable="true">
             <input_port name="goal" default="0;0;0;0;0;0;1"/>
@@ -155,6 +160,59 @@
             <output_port name="pose_y" default="{pose_y}"/>
             <output_port name="pose_yaw" default="{pose_yaw}"/>
         </Action>
+        <Action ID="RefSerialBlackboardSync" editable="true"/>
+        <Action ID="StopMotion" editable="true"/>
+        <Action ID="KeepRunning" editable="true"/>
+        <Action ID="CancelNavGoal" editable="true">
+            <input_port name="action_name" default="navigate_to_pose"/>
+        </Action>
+        <Action ID="UpdateWasDead" editable="true">
+            <input_port  name="hp_cur" default="{hp.cur}"/>
+            <inout_port  name="was_dead" default="{state.was_dead}"/>
+        </Action>
+        <Action ID="DetectRespawnAndSetRecovery" editable="true">
+            <inout_port name="was_dead" default="{state.was_dead}"/>
+            <input_port name="hp_cur" default="{hp.cur}"/>
+            <input_port name="now_ms" default="{time.now_ms}"/>
+            <inout_port name="need_recovery" default="{state.need_recovery}"/>
+            <inout_port name="recovery_start_ms" default="{state.recovery_start_ms}"/>
+            <inout_port name="search_start_ms" default="{state.search_start_ms}"/>
+            <inout_port name="heal_start_ms" default="{state.heal_start_ms}"/>
+        </Action>
+        <Action ID="ClearRecoveryFlag" editable="true">
+            <inout_port name="need_recovery" default="{state.need_recovery}"/>
+            <inout_port name="heal_start_ms" default="{state.heal_start_ms}"/>
+            <inout_port name="search_start_ms" default="{state.search_start_ms}"/>
+            <inout_port name="recovery_start_ms" default="{state.recovery_start_ms}"/>
+        </Action>
+        <Action ID="SetNavGoalFromConfig" editable="true">
+            <input_port  name="cfg_x" default="{cfg.supply_goal_x}"/>
+            <input_port  name="cfg_y" default="{cfg.supply_goal_y}"/>
+            <output_port name="goal_x" default="{nav.goal_x}"/>
+            <output_port name="goal_y" default="{nav.goal_y}"/>
+        </Action>
+        <Action ID="InitSearchTimerIfNeeded" editable="true">
+            <inout_port name="search_start_ms" default="{state.search_start_ms}"/>
+        </Action>
+        <Action ID="MicroSearchSupplyCard" editable="true">
+            <inout_port name="search_start_ms" default="{state.search_start_ms}"/>
+            <input_port name="timeout_ms" default="{cfg.search_timeout_ms}"/>
+            <input_port name="rfid_supply_arrived" default="{rfid.supply_arrived}"/>
+        </Action>
+        <Action ID="WaitAndHeal" editable="true">
+            <input_port name="now_ms" default="{time.now_ms}"/>
+            <inout_port name="heal_start_ms" default="{state.heal_start_ms}"/>
+            <input_port name="heal_wait_ms" default="{cfg.heal_wait_ms}"/>
+            <input_port name="hp_cur" default="{hp.cur}"/>
+            <input_port name="hp_max" default="{hp.max}"/>
+            <input_port name="heal_min_ratio" default="{cfg.heal_min_ratio}"/>
+        </Action>
+        <Action ID="RecoveryTimeoutGuard" editable="true">
+            <input_port name="now_ms" default="{time.now_ms}"/>
+            <input_port name="recovery_start_ms" default="{state.recovery_start_ms}"/>
+            <input_port name="timeout_ms" default="{cfg.recovery_timeout_ms}"/>
+            <inout_port name="need_recovery" default="{state.need_recovery}"/>
+        </Action>
         <Condition ID="IsAttaked" editable="true">
             <input_port name="message" default="{robot_status}"/>
         </Condition>
@@ -178,12 +236,30 @@
             <input_port name="message" default="{robot_status}"/>
             <input_port name="hp_threshold" default="100"/>
         </Condition>
-
         <Condition ID="IsModeRight" editable="true">
             <input_port name="decision_num" default="{decision_num}"/>
         </Condition>
         <Condition ID="IsModeLeft" editable="true">
             <input_port name="decision_num" default="{decision_num}"/>
+        </Condition>
+        <Condition ID="IsDead" editable="true">
+            <input_port name="message" default="{robot_status}"/>
+        </Condition>
+        <Condition ID="IsRecoveryNeeded" editable="true">
+            <input_port name="need_recovery" default="{state.need_recovery}"/>
+        </Condition>
+        <Condition ID="IsSupplyCardDetected" editable="true">
+            <input_port name="rfid_status" default="{rfid.status}"/>
+        </Condition>
+        <Condition ID="IsWithinScope" editable="true">
+            <input_port name="pose_x" default="{pose.x}"/>
+            <input_port name="pose_y" default="{pose.y}"/>
+            <input_port name="goal_x" default="{cfg.supply_goal_x}"/>
+            <input_port name="goal_y" default="{cfg.supply_goal_y}"/>
+            <input_port name="arrive_radius" default="{cfg.arrive_radius}"/>
+        </Condition>
+        <Condition ID="NotArrived" editable="true">
+            <input_port name="arrived" default="{nav.arrived}"/>
         </Condition>
     </TreeNodesModel>
 </root>

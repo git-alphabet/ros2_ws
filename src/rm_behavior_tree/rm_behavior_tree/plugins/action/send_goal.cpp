@@ -1,4 +1,6 @@
+
 #include "rm_behavior_tree/plugins/action/send_goal.hpp"
+#include <rclcpp/rclcpp.hpp>
 
 namespace rm_behavior_tree
 {
@@ -14,20 +16,12 @@ bool SendGoalAction::isSameGoal_(const geometry_msgs::msg::PoseStamped & a,
 {
   // Small tolerances to avoid spamming due to tiny floating noise.
   constexpr double kPosEps = 1e-3;
-  constexpr double kOriEps = 1e-4;
-
   auto absd = [](double x) { return std::fabs(x); };
 
-  // If any field is NaN/Inf, treat as "different" to force publish (safer behavior).
-  const double vals_a[] = {
-    a.pose.position.x, a.pose.position.y, a.pose.position.z,
-    a.pose.orientation.x, a.pose.orientation.y, a.pose.orientation.z, a.pose.orientation.w
-  };
-  const double vals_b[] = {
-    b.pose.position.x, b.pose.position.y, b.pose.position.z,
-    b.pose.orientation.x, b.pose.orientation.y, b.pose.orientation.z, b.pose.orientation.w
-  };
-  for (size_t i = 0; i < sizeof(vals_a)/sizeof(vals_a[0]); ++i) {
+  // Only compare position fields. If any position is NaN/Inf, treat as different.
+  const double vals_a[] = {a.pose.position.x, a.pose.position.y, a.pose.position.z};
+  const double vals_b[] = {b.pose.position.x, b.pose.position.y, b.pose.position.z};
+  for (size_t i = 0; i < 3; ++i) {
     if (!isFinite_(vals_a[i]) || !isFinite_(vals_b[i])) {
       return false;
     }
@@ -37,21 +31,37 @@ bool SendGoalAction::isSameGoal_(const geometry_msgs::msg::PoseStamped & a,
   if (absd(a.pose.position.y - b.pose.position.y) > kPosEps) return false;
   if (absd(a.pose.position.z - b.pose.position.z) > kPosEps) return false;
 
-  if (absd(a.pose.orientation.x - b.pose.orientation.x) > kOriEps) return false;
-  if (absd(a.pose.orientation.y - b.pose.orientation.y) > kOriEps) return false;
-  if (absd(a.pose.orientation.z - b.pose.orientation.z) > kOriEps) return false;
-  if (absd(a.pose.orientation.w - b.pose.orientation.w) > kOriEps) return false;
-
   return true;
 }
 
 bool SendGoalAction::setMessage(geometry_msgs::msg::PoseStamped & msg)
 {
+  geometry_msgs::msg::PoseStamped goal;
   auto res = getInput<geometry_msgs::msg::PoseStamped>("goal_pose");
-  if (!res) {
-    throw BT::RuntimeError("error reading port [goal_pose]:", res.error());
+  if (res.has_value()) {
+    goal = res.value();
+  } else {
+    // Use the overload that returns an expected/result and check presence explicitly.
+    double gx = 0.0, gy = 0.0;
+    auto r_gx = getInput<double>("goal_x");
+    auto r_gy = getInput<double>("goal_y");
+    const bool has_x = r_gx.has_value();
+    const bool has_y = r_gy.has_value();
+    if (has_x && has_y) {
+      gx = r_gx.value();
+      gy = r_gy.value();
+      goal.pose.position.x = gx;
+      goal.pose.position.y = gy;
+      goal.pose.position.z = 0.0;
+      goal.pose.orientation.x = 0.0;
+      goal.pose.orientation.y = 0.0;
+      goal.pose.orientation.z = 0.0;
+      goal.pose.orientation.w = 1.0;
+    } else {
+      RCLCPP_DEBUG(rclcpp::get_logger("rm_behavior_tree"), "no goal_pose and goal_x/goal_y not provided");
+      return false;
+    }
   }
-  geometry_msgs::msg::PoseStamped goal = res.value();
 
   // Optional throttle: default 0 keeps old behavior (always publish).
   int min_interval_ms = 0;
@@ -79,27 +89,26 @@ bool SendGoalAction::setMessage(geometry_msgs::msg::PoseStamped & msg)
     }
   }
 
-  msg.header.stamp = now;
-  msg.header.frame_id = "map";
+  // Convert rclcpp::Time -> builtin_interfaces::msg::Time manually (compat with this rclcpp version)
+  {
+    const uint64_t ns = now.nanoseconds();
+    msg.header.stamp.sec = static_cast<int32_t>(ns / 1000000000ULL);
+    msg.header.stamp.nanosec = static_cast<uint32_t>(ns % 1000000000ULL);
+  }
+  msg.header.frame_id = "chassis";
   msg.pose.position.x = goal.pose.position.x;
   msg.pose.position.y = goal.pose.position.y;
   msg.pose.position.z = goal.pose.position.z;
-  msg.pose.orientation.x = goal.pose.orientation.x;
-  msg.pose.orientation.y = goal.pose.orientation.y;
-  msg.pose.orientation.z = goal.pose.orientation.z;
-  msg.pose.orientation.w = goal.pose.orientation.w;
+  // Orientation not required; set to identity quaternion.
+  msg.pose.orientation.x = 0.0;
+  msg.pose.orientation.y = 0.0;
+  msg.pose.orientation.z = 0.0;
+  msg.pose.orientation.w = 1.0;
 
-  // clang-format off
-  std::cout << "Goal: [ "
-    << std::fixed << std::setprecision(1)
-    << goal.pose.position.x << ", "
-    << goal.pose.position.y << ", "
-    << goal.pose.position.z << ", "
-    << goal.pose.orientation.x << ", "
-    << goal.pose.orientation.y << ", "
-    << goal.pose.orientation.z << ", "
-    << goal.pose.orientation.w << " ]\n";
-  // clang-format on
+  RCLCPP_INFO(
+    rclcpp::get_logger("rm_behavior_tree"),
+    "Goal position: [ %.3f, %.3f, %.3f ]",
+    goal.pose.position.x, goal.pose.position.y, goal.pose.position.z);
 
   last_goal_ = goal;
   last_pub_time_ = now;

@@ -62,13 +62,15 @@
       <input_port name="hp_threshold"
                   default="10"/>
     </Action>
-    <Action ID="SendGoal"
-            editable="true">
+        <Action ID="SendGoal"
+        editable="true">
       <input_port name="goal_pose"
-                  default="0;0;0; 0;0;0;1"/>
+          default="{goal_pose}"/>
+      <input_port name="goal_x" default="0.0"/>
+      <input_port name="goal_y" default="0.0"/>
       <input_port name="action_name"
-                  default="navigate_to_pose"/>
-    </Action>
+          default="navigate_to_pose"/>
+        </Action>
     <Action ID="PrintMessage" editable="true">
       <input_port name="message_to_print"
                   default="Hello,World!"/>

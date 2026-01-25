@@ -44,8 +44,9 @@
                 <IsStatusOK message="{robot_status}"
                             hp_threshold="250"
                             heat_threshold="350"/>
+                <!-- Converted from structured goal_pose to goal_x/goal_y -->
                 <SendGoal name="SupplyArea"
-                          goal_pose="{position: {x: -2.5, y: 4.07, z: 0}, orientation: {x: 0, y: 0, z: 0, w: 1}}"
+                          goal_x="-2.5" goal_y="4.07"
                           action_name="navigate_to_pose"/>
 
               </Fallback>
@@ -68,8 +69,9 @@
                               game_progress="4"
                               lower_remain_time="0"
                               higher_remain_time="150"/>
+                  <!-- Converted from structured goal_pose to goal_x/goal_y -->
                   <SendGoal name="BaseFrontWall"
-                            goal_pose="{position: {x: 0.8, y: -2, z: 0}, orientation: {x: 0, y: 0, z: 0, w: 1}}"
+                            goal_x="0.8" goal_y="-2.0"
                             action_name="navigate_to_pose"/>
 
                   <WhileDoElse>
@@ -78,9 +80,10 @@
                                 game_progress="4"
                                 lower_remain_time="200"
                                 higher_remain_time="245"/>
-                    <RateController hz="1">
+                      <RateController hz="1">
+                      <!-- Converted from structured goal_pose to goal_x/goal_y -->
                       <SendGoal name="OccupyCenter"
-                                goal_pose="{position: {x: 3.0, y: 0.4, z: 0}, orientation: {x: 0, y: 0, z: 0, w: 1}}"
+                                goal_x="3.0" goal_y="0.4"
                                 action_name="navigate_to_pose"/>
 
                     </RateController>
@@ -88,14 +91,16 @@
                       <IsFriendOK message="{robot_hp}"
                                   friend_color="red"/>
                       <RateController hz="1">
+                       <!-- Converted from structured goal_pose to goal_x/goal_y -->
                        <SendGoal name="Attack_Left"
-                                 goal_pose="{position: {x: 5.1, y: 1.9, z: 0}, orientation: {x: 0, y: 0, z: 0, w: 1}}"
+                                 goal_x="5.1" goal_y="1.9"
                                  action_name="navigate_to_pose"/>
 
                       </RateController>
                       <RateController hz="1">
+                        <!-- Converted from structured goal_pose to goal_x/goal_y -->
                         <SendGoal name="Center"
-                                  goal_pose="{position: {x: 3, y: 1, z: 0}, orientation: {x: 0, y: 0, z: 0, w: 1}}"
+                                  goal_x="3.0" goal_y="1.0"
                                   action_name="navigate_to_pose"/>
 
                       </RateController>
@@ -105,17 +110,19 @@
               </WhileDoElse>
               <RateController name="Retreat"
                               hz="1">
+                <!-- Converted from structured goal_pose to goal_x/goal_y -->
                 <SendGoal name="SupplyArea"
-                          goal_pose="{position: {x:-2.5 , y:4.07 , z:0 }, orientation: {x:0 , y:0 , z:0 , w:1 }}"
+                          goal_x="-2.5" goal_y="4.07"
                           action_name="navigate_to_pose"/>
               </RateController>
             </WhileDoElse>
           </WhileDoElse>
         </ReactiveSequence>
         <ReactiveSequence>
-          <RateController hz="1">
+            <RateController hz="1">
+            <!-- Converted from structured goal_pose to goal_x/goal_y -->
             <SendGoal name="Home"
-                      goal_pose="{position: {x: 3, y: 1, z: 0}, orientation: {x: 0, y: 0, z: 0, w: 1}}"
+                      goal_x="3.0" goal_y="1.0"
                       action_name="navigate_to_pose"/>
           </RateController>
           <RobotControl stop_gimbal_scan="True"
@@ -188,13 +195,15 @@
       <input_port name="chassis_spin_vel"
                   default="False"/>
     </Action>
-    <Action ID="SendGoal"
-            editable="true">
+        <Action ID="SendGoal"
+        editable="true">
       <input_port name="goal_pose"
-                  default="0;0;0; 0;0;0;1"/>
+          default="{goal_pose}"/>
+      <input_port name="goal_x" default="0.0"/>
+      <input_port name="goal_y" default="0.0"/>
       <input_port name="action_name"
-                  default="navigate_to_pose"/>
-    </Action>
+          default="navigate_to_pose"/>
+        </Action>
     <Action ID="SubAllRobotHP"
             editable="true">
       <input_port name="topic_name"

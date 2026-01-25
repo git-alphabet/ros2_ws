@@ -38,6 +38,9 @@ endfunction()
 ament_auto_add_executable(rm_behavior_tree 
     src/rm_behavior_tree.cpp
 )
+ament_auto_add_executable(rm_behavior_tree_minimal
+    src/rm_behavior_tree_minimal.cpp
+)
 # Controllers
 ament_auto_add_library(decision_switch SHARED
     plugins/control/decision_switch.cpp
@@ -162,6 +165,12 @@ ament_auto_add_library(print_message SHARED
     plugins/action/print_message.cpp
 )
 add_target_dependencies(print_message)
+
+# Sentry follower action plugin (was present in source but missing from build targets)
+ament_auto_add_library(sentry_follower SHARED
+    plugins/action/sentry_follower.cpp
+)
+add_target_dependencies(sentry_follower)
 
 
 
