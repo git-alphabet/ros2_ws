@@ -1,0 +1,5 @@
+<root BTCPP_format="4">
+  <BehaviorTree ID="HighHPCombatLogic">
+    <!-- 先判断是否被攻击，然后分成两种情况，被打和没被打 -->
+  </BehaviorTree>
+</root>

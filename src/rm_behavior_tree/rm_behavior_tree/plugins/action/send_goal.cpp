@@ -9,6 +9,42 @@ SendGoalAction::SendGoalAction(
 {
 }
 
+bool SendGoalAction::isSameGoal_(const geometry_msgs::msg::PoseStamped & a,
+                                const geometry_msgs::msg::PoseStamped & b) const
+{
+  // Small tolerances to avoid spamming due to tiny floating noise.
+  constexpr double kPosEps = 1e-3;
+  constexpr double kOriEps = 1e-4;
+
+  auto absd = [](double x) { return std::fabs(x); };
+
+  // If any field is NaN/Inf, treat as "different" to force publish (safer behavior).
+  const double vals_a[] = {
+    a.pose.position.x, a.pose.position.y, a.pose.position.z,
+    a.pose.orientation.x, a.pose.orientation.y, a.pose.orientation.z, a.pose.orientation.w
+  };
+  const double vals_b[] = {
+    b.pose.position.x, b.pose.position.y, b.pose.position.z,
+    b.pose.orientation.x, b.pose.orientation.y, b.pose.orientation.z, b.pose.orientation.w
+  };
+  for (size_t i = 0; i < sizeof(vals_a)/sizeof(vals_a[0]); ++i) {
+    if (!isFinite_(vals_a[i]) || !isFinite_(vals_b[i])) {
+      return false;
+    }
+  }
+
+  if (absd(a.pose.position.x - b.pose.position.x) > kPosEps) return false;
+  if (absd(a.pose.position.y - b.pose.position.y) > kPosEps) return false;
+  if (absd(a.pose.position.z - b.pose.position.z) > kPosEps) return false;
+
+  if (absd(a.pose.orientation.x - b.pose.orientation.x) > kOriEps) return false;
+  if (absd(a.pose.orientation.y - b.pose.orientation.y) > kOriEps) return false;
+  if (absd(a.pose.orientation.z - b.pose.orientation.z) > kOriEps) return false;
+  if (absd(a.pose.orientation.w - b.pose.orientation.w) > kOriEps) return false;
+
+  return true;
+}
+
 bool SendGoalAction::setMessage(geometry_msgs::msg::PoseStamped & msg)
 {
   auto res = getInput<geometry_msgs::msg::PoseStamped>("goal_pose");
@@ -17,7 +53,33 @@ bool SendGoalAction::setMessage(geometry_msgs::msg::PoseStamped & msg)
   }
   geometry_msgs::msg::PoseStamped goal = res.value();
 
-  msg.header.stamp = rclcpp::Clock().now();
+  // Optional throttle: default 0 keeps old behavior (always publish).
+  int min_interval_ms = 0;
+  auto r_interval = getInput<int>("min_interval_ms");
+  if (r_interval) {
+    min_interval_ms = r_interval.value();
+    if (min_interval_ms < 0) {
+      min_interval_ms = 0;
+    }
+  }
+
+  // Use SYSTEM_TIME to keep consistent with stored last_pub_time_
+  auto now = rclcpp::Clock(RCL_SYSTEM_TIME).now();
+
+  if (min_interval_ms > 0 && has_last_) {
+    const bool same_goal = isSameGoal_(goal, last_goal_);
+    if (same_goal) {
+      const int64_t dt_ns = (now - last_pub_time_).nanoseconds();
+      const int64_t min_dt_ns = static_cast<int64_t>(min_interval_ms) * 1000000LL;
+
+      // If clock jumps backward OR interval not reached, skip publish this tick.
+      if (dt_ns < 0 || dt_ns < min_dt_ns) {
+        return false;
+      }
+    }
+  }
+
+  msg.header.stamp = now;
   msg.header.frame_id = "map";
   msg.pose.position.x = goal.pose.position.x;
   msg.pose.position.y = goal.pose.position.y;
@@ -39,9 +101,12 @@ bool SendGoalAction::setMessage(geometry_msgs::msg::PoseStamped & msg)
     << goal.pose.orientation.w << " ]\n";
   // clang-format on
 
+  last_goal_ = goal;
+  last_pub_time_ = now;
+  has_last_ = true;
+
   return true;
 }
-
 
 }  // namespace rm_behavior_tree
 

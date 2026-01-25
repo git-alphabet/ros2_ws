@@ -21,6 +21,7 @@ find_package(cv_bridge REQUIRED)
 find_package(camera_info_manager REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(CURL REQUIRED)
 
 # Include
 include_directories(include)
@@ -43,6 +44,8 @@ set(dependencies
   OpenCV
 )
 ament_target_dependencies(${PROJECT_NAME} ${dependencies})
+
+target_link_libraries(${PROJECT_NAME} CURL::libcurl)
 
 # usb_cam component
 add_library(usb_cam_component SHARED

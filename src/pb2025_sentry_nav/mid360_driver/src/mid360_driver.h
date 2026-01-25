@@ -7,7 +7,23 @@
 #pragma once
 
 #define ASIO_NO_DEPRECATED
-#include <asio.hpp>
+// Prefer standalone Asio if available, otherwise fall back to Boost.Asio.
+#if defined(__has_include)
+#  if __has_include(<asio.hpp>)
+#    include <asio.hpp>
+#  elif __has_include(<boost/asio.hpp>)
+#    include <boost/asio.hpp>
+#    define RM_USE_BOOST_ASIO 1
+#  else
+#    include <asio.hpp>
+#  endif
+#else
+#  include <asio.hpp>
+#endif
+
+#ifdef RM_USE_BOOST_ASIO
+namespace asio = boost::asio;
+#endif
 #include <atomic>
 #include <functional>
 #include <unordered_map>

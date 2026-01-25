@@ -6,6 +6,10 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "rm_behavior_tree/bt_conversions.hpp"
 
+#include <cmath>
+#include <iomanip>
+#include <limits>
+
 // Allows PoseStamped to be visualized in Groot2
 void PoseStampedToJson(nlohmann::json & j, const geometry_msgs::msg::PoseStamped & p)
 {
@@ -31,10 +35,27 @@ public:
 
   static BT::PortsList providedPorts()
   {
-    return {BT::InputPort<geometry_msgs::msg::PoseStamped>("goal_pose")};
+    return {
+      BT::InputPort<geometry_msgs::msg::PoseStamped>("goal_pose"),
+      // Optional: throttle interval in milliseconds. Default 0 keeps old behavior (publish every tick).
+      BT::InputPort<int>("min_interval_ms", 0)
+    };
   }
-  
+
+private:
+  static bool isFinite_(double v)
+  {
+    return std::isfinite(v);
+  }
+
+  bool isSameGoal_(const geometry_msgs::msg::PoseStamped & a,
+                   const geometry_msgs::msg::PoseStamped & b) const;
+
+  geometry_msgs::msg::PoseStamped last_goal_;
+  rclcpp::Time last_pub_time_{0, 0, RCL_SYSTEM_TIME};
+  bool has_last_{false};
 };
+
 }  // namespace rm_behavior_tree
 
 #endif  // RM_BEHAVIOR_TREE__PLUGINS__ACTION__SEND_GOAL_HPP_

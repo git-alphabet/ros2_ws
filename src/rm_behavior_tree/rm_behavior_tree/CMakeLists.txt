@@ -14,8 +14,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
-find_package(behaviortree_ros2 REQUIRED)
-find_package(tf2_geometry_msgs REQUIRED)
 
 ###########
 ## Build ##
@@ -23,34 +21,23 @@ find_package(tf2_geometry_msgs REQUIRED)
 
 set(PACKAGE_INCLUDE_DEPENDS
     rm_decision_interfaces
+    rm_interfaces
     rclcpp
     std_msgs
-    tf2_geometry_msgs  
     behaviortree_cpp
     behaviortree_ros2
 )
 
-# Define macro function add_target_dependencies
+# 定义宏函数 add_target_dependencies
 function(add_target_dependencies target)
-  target_include_directories(${target} 
-    PRIVATE 
-      $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-  )
-  ament_target_dependencies(${target}
-    rclcpp
-    behaviortree_ros2
-    behaviortree_cpp
-    tf2_geometry_msgs  
-    geometry_msgs
-    rm_decision_interfaces
-  )
-  target_compile_definitions(${target} PRIVATE BT_PLUGIN_EXPORT)
+    target_include_directories(${target} PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>)
+    ament_target_dependencies(${target} ${PACKAGE_INCLUDE_DEPENDS})
+    target_compile_definitions(${target} PRIVATE BT_PLUGIN_EXPORT)
 endfunction()
 
 ament_auto_add_executable(rm_behavior_tree 
     src/rm_behavior_tree.cpp
 )
-
 # Controllers
 ament_auto_add_library(decision_switch SHARED
     plugins/control/decision_switch.cpp
@@ -89,22 +76,44 @@ ament_auto_add_library(is_outpost_ok SHARED
 )
 add_target_dependencies(is_outpost_ok)
 
-# Auto-aim condition temporarily disabled
-# ament_auto_add_library(is_detect_enemy SHARED 
-#     plugins/condition/is_detect_enemy.cpp
-# )
-# add_target_dependencies(is_detect_enemy)
+## is_detect_enemy skipped: depends on external package 'auto_aim_interfaces' not available in this workspace
+
+
+ament_auto_add_library(is_hp_above SHARED 
+    plugins/condition/is_hp_above.cpp
+)
+add_target_dependencies(is_hp_above)
+
+ament_auto_add_library(is_hp_below SHARED 
+    plugins/condition/is_hp_below.cpp
+)
+add_target_dependencies(is_hp_below)
+
+ament_auto_add_library(is_dead SHARED 
+    plugins/condition/is_dead.cpp
+)
+add_target_dependencies(is_dead)
+
+ament_auto_add_library(is_recovery_needed SHARED 
+    plugins/condition/is_recovery_needed.cpp
+)
+add_target_dependencies(is_recovery_needed)
+
+ament_auto_add_library(is_supply_card_detected SHARED 
+    plugins/condition/is_supply_card_detected.cpp
+)
+add_target_dependencies(is_supply_card_detected)
+
+ament_auto_add_library(is_within_scope SHARED 
+    plugins/condition/is_within_scope.cpp
+)
+add_target_dependencies(is_within_scope)
 
 # Actions
 ament_auto_add_library(send_goal SHARED 
     plugins/action/send_goal.cpp
 )
 add_target_dependencies(send_goal)
-
-ament_auto_add_library(sentry_follower SHARED 
-  plugins/action/sentry_follower.cpp
-)
-add_target_dependencies(sentry_follower)
 
 ament_auto_add_library(sub_all_robot_hp SHARED 
     plugins/action/sub_all_robot_hp.cpp
@@ -121,8 +130,10 @@ ament_auto_add_library(sub_game_status SHARED
 )
 add_target_dependencies(sub_game_status)
 
-# Auto-aim subscriber temporarily disabled
-# ament_auto_add_library(sub_armors SHARED 
+## Skipping sub_armors: depends on external package `auto_aim_interfaces` which is
+## not present in this workspace. If you add that package, uncomment the
+## following lines to enable building `sub_armors`.
+# ament_auto_add_library(sub_armors SHARED
 #     plugins/action/sub_armors.cpp
 # )
 # add_target_dependencies(sub_armors)
@@ -151,6 +162,63 @@ ament_auto_add_library(print_message SHARED
     plugins/action/print_message.cpp
 )
 add_target_dependencies(print_message)
+
+
+
+ament_auto_add_library(detect_respawn_and_set_recovery SHARED 
+    plugins/action/detect_respawn_and_set_recovery.cpp
+)
+add_target_dependencies(detect_respawn_and_set_recovery)
+
+ament_auto_add_library(sub_rfid_status SHARED 
+    plugins/action/sub_rfid_status.cpp
+)
+add_target_dependencies(sub_rfid_status)
+
+ament_auto_add_library(init_blackboard_config SHARED 
+    plugins/action/init_blackboard_config.cpp
+)
+add_target_dependencies(init_blackboard_config)
+
+ament_auto_add_library(wait_and_heal SHARED 
+    plugins/action/wait_and_heal.cpp
+)
+add_target_dependencies(wait_and_heal)
+
+ament_auto_add_library(clear_recovery_flag SHARED 
+    plugins/action/clear_recovery_flag.cpp
+)
+add_target_dependencies(clear_recovery_flag)
+
+ament_auto_add_library(navigate_to_goal SHARED 
+    plugins/condition/navigate_to_goal.cpp
+)
+add_target_dependencies(navigate_to_goal)
+
+ament_auto_add_library(sub_robot_position SHARED 
+    plugins/action/sub_robot_position.cpp
+)
+add_target_dependencies(sub_robot_position)
+
+ament_auto_add_library(init_search_timer_if_needed SHARED 
+    plugins/action/init_search_timer_if_needed.cpp
+)
+add_target_dependencies(init_search_timer_if_needed)
+
+ament_auto_add_library(not_arrived SHARED 
+    plugins/condition/not_arrived.cpp
+)
+add_target_dependencies(not_arrived)
+
+ament_auto_add_library(keep_running SHARED 
+    plugins/action/keep_running.cpp
+)
+add_target_dependencies(keep_running)
+
+ament_auto_add_library(cancel_nav_goal SHARED 
+    plugins/action/cancel_nav_goal.cpp
+)
+add_target_dependencies(cancel_nav_goal)
 
 ament_auto_package(
   INSTALL_TO_SHARE
