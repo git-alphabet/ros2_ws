@@ -8,6 +8,9 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <iomanip>
+#include <sstream>
+
 #include <nav_msgs/msg/odometry.hpp>
 #include <nav_msgs/msg/path.hpp>
 
@@ -489,7 +492,44 @@ int main(int argc, char ** argv)
         if (!p_imu->imu_need_init_) {
           V3D tmp_gravity;
           if (imu_en) {
-            tmp_gravity = -p_imu->mean_acc / p_imu->mean_acc.norm() * G_m_s2;
+            if (fix_gravity_direction) {
+              tmp_gravity = -p_imu->mean_acc / p_imu->mean_acc.norm() * G_m_s2;
+              {
+                static bool printed = false;
+                if (!printed) {
+                  printed = true;
+                  std::ostringstream oss;
+                  oss.setf(std::ios::fixed);
+                  oss << std::setprecision(6);
+                  oss << "gravity auto-calibrated (mapping.fix_gravity_direction=true)";
+                  oss << ", gravity_est_body=[" << tmp_gravity.x() << ", " << tmp_gravity.y()
+                      << ", " << tmp_gravity.z() << "]";
+                  oss << ", |gravity_est|=" << tmp_gravity.norm();
+                  oss << ", |gravity_param|=" << G_m_s2;
+                  oss << ", acc_norm=" << acc_norm;
+                  RCLCPP_INFO(LOGGER, "%s", oss.str().c_str());
+                }
+              }
+            } else {
+              tmp_gravity << VEC_FROM_ARRAY(gravity_init);
+              p_imu->after_imu_init_ = true;
+              {
+                static bool printed = false;
+                if (!printed) {
+                  printed = true;
+                  std::ostringstream oss;
+                  oss.setf(std::ios::fixed);
+                  oss << std::setprecision(6);
+                  oss << "gravity init from parameter (mapping.fix_gravity_direction=false)";
+                  oss << ", gravity_init_param=[" << tmp_gravity.x() << ", " << tmp_gravity.y()
+                      << ", " << tmp_gravity.z() << "]";
+                  oss << ", |gravity_init_param|=" << tmp_gravity.norm();
+                  oss << ", |gravity_param|=" << G_m_s2;
+                  oss << ", acc_norm=" << acc_norm;
+                  RCLCPP_INFO(LOGGER, "%s", oss.str().c_str());
+                }
+              }
+            }
           } else {
             tmp_gravity << VEC_FROM_ARRAY(gravity_init);
             p_imu->after_imu_init_ = true;
