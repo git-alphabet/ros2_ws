@@ -14,11 +14,16 @@
 
 
 import os
+from pathlib import Path
+
+import yaml  # type: ignore
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, SetLaunchConfiguration
+from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
+from launch.substitutions import PythonExpression
 from launch_ros.actions import Node
 from launch_ros.descriptions import ParameterFile
 from nav2_common.launch import RewrittenYaml
@@ -35,6 +40,7 @@ def generate_launch_description():
     autostart = LaunchConfiguration("autostart")
     use_respawn = LaunchConfiguration("use_respawn")
     log_level = LaunchConfiguration("log_level")
+    odometry_source = LaunchConfiguration("odometry_source")
 
     # Variables
     lifecycle_nodes = ["map_saver"]
@@ -83,6 +89,51 @@ def generate_launch_description():
 
     declare_log_level_cmd = DeclareLaunchArgument(
         "log_level", default_value="info", description="log level"
+    )
+
+    declare_odometry_source_cmd = DeclareLaunchArgument(
+        "odometry_source",
+        default_value="",
+        description="Override odometry source (point_lio or small_point_lio). Empty means read from pb_navigation_switches.odometry_source.",
+    )
+
+    def _set_slam_switches(
+        context, *, params_file, namespace, odometry_source
+    ):
+        override = odometry_source.perform(context).strip()
+        if override and override.lower() not in {"auto", "default"}:
+            return [SetLaunchConfiguration("odometry_source", override)]
+
+        params_path = Path(params_file.perform(context)).expanduser()
+        ns_value = namespace.perform(context)
+        odometry_selection = "point_lio"
+        if params_path.is_file():
+            try:
+                raw_data = yaml.safe_load(params_path.read_text()) or {}
+                if ns_value and ns_value in raw_data:
+                    raw_data = raw_data.get(ns_value, {}) or {}
+                switches = (raw_data.get("pb_navigation_switches", {}) or {}).get(
+                    "ros__parameters", {}
+                )
+                odom_source_raw = switches.get("odometry_source")
+                if isinstance(odom_source_raw, str) and odom_source_raw.strip():
+                    odometry_selection = odom_source_raw.strip()
+                else:
+                    legacy_enable_small = switches.get("enable_small_point_lio")
+                    if isinstance(legacy_enable_small, bool) and legacy_enable_small:
+                        odometry_selection = "small_point_lio"
+            except Exception:
+                odometry_selection = "point_lio"
+
+        return [SetLaunchConfiguration("odometry_source", odometry_selection)]
+
+    set_switches_cmd = OpaqueFunction(
+        function=_set_slam_switches,
+        kwargs={
+            "params_file": params_file,
+            "namespace": namespace,
+            "odometry_source": odometry_source,
+        },
     )
 
     start_map_saver_server_cmd = Node(
@@ -152,6 +203,23 @@ def generate_launch_description():
             {"pcd_save.pcd_save_en": True},
         ],
         arguments=["--ros-args", "--log-level", log_level],
+        condition=IfCondition(
+            PythonExpression(["'", odometry_source, "' == 'point_lio'"])
+        ),
+    )
+
+    start_small_point_lio_node = Node(
+        package="small_point_lio",
+        executable="small_point_lio_node",
+        name="small_point_lio",
+        output="screen",
+        respawn=use_respawn,
+        respawn_delay=2.0,
+        parameters=[configured_params],
+        arguments=["--ros-args", "--log-level", log_level],
+        condition=IfCondition(
+            PythonExpression(["'", odometry_source, "' == 'small_point_lio'"])
+        ),
     )
 
     start_static_transform_node = Node(
@@ -188,6 +256,10 @@ def generate_launch_description():
     ld.add_action(declare_autostart_cmd)
     ld.add_action(declare_use_respawn_cmd)
     ld.add_action(declare_log_level_cmd)
+    ld.add_action(declare_odometry_source_cmd)
+
+    # Set switches before starting nodes
+    ld.add_action(set_switches_cmd)
 
     # Running Map Saver Server
     ld.add_action(start_map_saver_server_cmd)
@@ -195,6 +267,7 @@ def generate_launch_description():
 
     ld.add_action(start_pointcloud_to_laserscan_node)
     ld.add_action(start_sync_slam_toolbox_node)
+    ld.add_action(start_small_point_lio_node)
     ld.add_action(start_point_lio_node)
     ld.add_action(start_static_transform_node)
 
