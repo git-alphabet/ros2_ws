@@ -53,13 +53,26 @@ namespace small_point_lio {
 
         map_save_trigger = create_service<std_srvs::srv::Trigger>(
                 "map_save",
-                [this, save_pcd, world_frame](const std_srvs::srv::Trigger::Request::SharedPtr req, std_srvs::srv::Trigger::Response::SharedPtr res) {
-                    if (!save_pcd) {
-                        RCLCPP_ERROR(rclcpp::get_logger("small_point_lio"), "pcd save is disabled");
+                [this, world_frame](const std_srvs::srv::Trigger::Request::SharedPtr /*req*/, std_srvs::srv::Trigger::Response::SharedPtr res) {
+                    bool save_pcd_enabled = false;
+                    (void)get_parameter("save_pcd", save_pcd_enabled);
+                    if (!save_pcd_enabled) {
+                        res->success = false;
+                        res->message = "pcd save is disabled (set parameter save_pcd:=true)";
+                        RCLCPP_ERROR(rclcpp::get_logger("small_point_lio"), "%s", res->message.c_str());
                         return;
                     }
+
+                    const std::string output_path = ROOT_DIR + "/pcd/scan.pcd";
+                    res->success = true;
+                    res->message = "pcd saving started: " + output_path;
                     RCLCPP_INFO(rclcpp::get_logger("small_point_lio"), "waiting for pcd saving ...");
-                    auto pointcloud_to_save_copy = std::make_shared<std::vector<Eigen::Vector3f>>(pointcloud_to_save);
+
+                    std::shared_ptr<std::vector<Eigen::Vector3f>> pointcloud_to_save_copy;
+                    {
+                        std::lock_guard<std::mutex> lock(pointcloud_to_save_mutex);
+                        pointcloud_to_save_copy = std::make_shared<std::vector<Eigen::Vector3f>>(pointcloud_to_save);
+                    }
                     std::thread([this, pointcloud_to_save_copy, world_frame]() {
                         voxelgrid_sampling::VoxelgridSampling downsampler;
                         std::vector<Eigen::Vector3f> downsampled;
@@ -81,7 +94,7 @@ namespace small_point_lio {
                         pcl_pointcloud.is_dense = true;
                         pcl::PCDWriter writer;
                         writer.writeBinary(ROOT_DIR + "/pcd/scan.pcd", pcl_pointcloud);
-                        RCLCPP_INFO(rclcpp::get_logger("small_point_lio"), "save pcd success");
+                        RCLCPP_INFO(rclcpp::get_logger("small_point_lio"), "save pcd success: %s", (ROOT_DIR + "/pcd/scan.pcd").c_str());
                     }).detach();
                 });
         small_point_lio->set_odometry_callback([this, world_frame, body_frame](const common::Odometry &odometry) {
@@ -168,6 +181,7 @@ namespace small_point_lio {
                 pointcloud_publisher->publish(msg);
             }
             if (save_pcd) {
+                std::lock_guard<std::mutex> lock(pointcloud_to_save_mutex);
                 pointcloud_to_save.insert(pointcloud_to_save.end(), pointcloud.begin(), pointcloud.end());
             }
         });
