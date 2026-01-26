@@ -96,7 +96,7 @@ ament_target_dependencies(pointlio_mapping
   livox_ros_driver2
 )
 
-target_link_libraries(pointlio_mapping ${PCL_LIBRARIES} ${PYTHON_LIBRARIES})
+target_link_libraries(pointlio_mapping ${PCL_LIBRARIES} ${PYTHON_LIBRARIES} glog::glog)
 target_include_directories(pointlio_mapping PRIVATE ${PYTHON_INCLUDE_DIRS})
 
 # Install the executable
