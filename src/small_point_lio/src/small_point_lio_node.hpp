@@ -21,6 +21,8 @@
 #include <std_srvs/srv/trigger.hpp>
 #include <tf2_ros/transform_broadcaster.hpp>
 
+#include <mutex>
+
 namespace small_point_lio {
 
     class SmallPointLioNode : public rclcpp::Node {
@@ -28,6 +30,7 @@ namespace small_point_lio {
         std::unique_ptr<small_point_lio::SmallPointLio> small_point_lio;
         std::vector<common::Point> pointcloud;
         std::vector<Eigen::Vector3f> pointcloud_to_save;
+        std::mutex pointcloud_to_save_mutex;
         std::unique_ptr<LidarAdapterBase> lidar_adapter;
         std::shared_ptr<rclcpp::Subscription<sensor_msgs::msg::Imu>> imu_subsciber;
         std::shared_ptr<rclcpp::Publisher<nav_msgs::msg::Odometry>> odometry_publisher;
