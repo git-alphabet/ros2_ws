@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Launch simulator and SLAM, enabling the NeuPAN virtualenv only for the controller.
-
+export QT_FONT_DPI=120
 export __NV_PRIME_RENDER_OFFLOAD=1
 export __GLX_VENDOR_LIBRARY_NAME=nvidia
 

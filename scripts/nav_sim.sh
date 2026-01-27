@@ -3,6 +3,7 @@ set -euo pipefail
 
 # Launch simulator and Nav2, enabling the NeuPAN virtualenv only for the controller.
 
+export QT_FONT_DPI=120
 export __NV_PRIME_RENDER_OFFLOAD=1
 export __GLX_VENDOR_LIBRARY_NAME=nvidia
 
@@ -324,7 +325,7 @@ launch_in_terminal() {
 }
 
 GAZEBO_CMD=${GAZEBO_CMD:-"ros2 launch rmu_gazebo_simulator bringup_sim.launch.py"}
-NAV_CMD=${NAV_CMD:-"ros2 launch pb2025_nav_bringup rm_navigation_simulation_launch.py world:=rmul_2026 slam:=False"}
+NAV_CMD=${NAV_CMD:-"ros2 launch pb2025_nav_bringup rm_navigation_simulation_launch.py world:=rmuc_2025 slam:=False"}
 
 launch_in_terminal "Gazebo Sim" "$GAZEBO_CMD" "" "bg"
 sleep 1

@@ -10,7 +10,8 @@
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <pcl/io/pcd_io.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+
+#include <cmath>
 
 namespace small_point_lio {
 
@@ -21,28 +22,50 @@ namespace small_point_lio {
         std::string lidar_type = declare_parameter<std::string>("lidar_type");
         std::string lidar_frame = declare_parameter<std::string>("lidar_frame");
         bool save_pcd = declare_parameter<bool>("save_pcd");
+
+        // Compatibility with point_lio + loam_interface pipeline
+        // - Publish nav_msgs/Odometry on `state_estimation_topic` (default: aft_mapped_to_init)
+        // - Publish PointCloud2 on `registered_scan_topic` (default: cloud_registered)
+        // - Use `world_frame` (default: camera_init) and `body_frame` (default: body)
+        const std::string state_estimation_topic =
+            declare_parameter<std::string>("state_estimation_topic", "aft_mapped_to_init");
+        const std::string registered_scan_topic =
+            declare_parameter<std::string>("registered_scan_topic", "cloud_registered");
+        const std::string world_frame = declare_parameter<std::string>("world_frame", "camera_init");
+        const std::string body_frame = declare_parameter<std::string>("body_frame", "body");
+        const bool publish_tf = declare_parameter<bool>("publish_tf", false);
+
+        // Publish-side point filtering (only affects published PointCloud2, not internal estimation)
+        // This helps reduce near-vehicle dense points in RViz and avoids propagating NaN/Inf points downstream.
+        const double publish_min_distance = declare_parameter<double>("publish_min_distance", 0.0);
+        const double publish_max_distance = declare_parameter<double>("publish_max_distance", 0.0);
+        const double publish_min_distance_sq = publish_min_distance > 0.0 ? publish_min_distance * publish_min_distance : 0.0;
+        const double publish_max_distance_sq = publish_max_distance > 0.0 ? publish_max_distance * publish_max_distance : 0.0;
+
         small_point_lio = std::make_unique<small_point_lio::SmallPointLio>(*this);
-        odometry_publisher = create_publisher<nav_msgs::msg::Odometry>("/Odometry", 1000);
-        pointcloud_publisher = create_publisher<sensor_msgs::msg::PointCloud2>("/cloud_registered", 1000);
-        tf_broadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
-        tf_buffer = std::make_unique<tf2_ros::Buffer>(get_clock());
-        tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
+
+        // Note: do NOT use absolute topic names here (leading '/'), to support multi-robot namespaces.
+        odometry_publisher = create_publisher<nav_msgs::msg::Odometry>(state_estimation_topic, 1000);
+        pointcloud_publisher = create_publisher<sensor_msgs::msg::PointCloud2>(registered_scan_topic, 1000);
+        if (publish_tf) {
+            tf_broadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+        }
 
         map_save_trigger = create_service<std_srvs::srv::Trigger>(
                 "map_save",
-                [this, save_pcd, lidar_frame](const std_srvs::srv::Trigger::Request::SharedPtr req, std_srvs::srv::Trigger::Response::SharedPtr res) {
+                [this, save_pcd, world_frame](const std_srvs::srv::Trigger::Request::SharedPtr req, std_srvs::srv::Trigger::Response::SharedPtr res) {
                     if (!save_pcd) {
                         RCLCPP_ERROR(rclcpp::get_logger("small_point_lio"), "pcd save is disabled");
                         return;
                     }
                     RCLCPP_INFO(rclcpp::get_logger("small_point_lio"), "waiting for pcd saving ...");
                     auto pointcloud_to_save_copy = std::make_shared<std::vector<Eigen::Vector3f>>(pointcloud_to_save);
-                    std::thread([this, pointcloud_to_save_copy, lidar_frame]() {
+                    std::thread([this, pointcloud_to_save_copy, world_frame]() {
                         voxelgrid_sampling::VoxelgridSampling downsampler;
                         std::vector<Eigen::Vector3f> downsampled;
                         downsampler.voxelgrid_sampling_omp(*pointcloud_to_save_copy, downsampled, 0.02);
                         pcl::PointCloud<pcl::PointXYZI> pcl_pointcloud;
-                        pcl_pointcloud.header.frame_id = lidar_frame;
+                        pcl_pointcloud.header.frame_id = world_frame;
                         pcl_pointcloud.header.stamp = static_cast<uint64_t>(last_odometry.timestamp * 1e6);
                         pcl_pointcloud.points.reserve(downsampled.size());
                         for (const auto &point: downsampled) {
@@ -50,6 +73,7 @@ namespace small_point_lio {
                             new_point.x = point.x();
                             new_point.y = point.y();
                             new_point.z = point.z();
+                            new_point.intensity = 0.0f;
                             pcl_pointcloud.points.push_back(new_point);
                         }
                         pcl_pointcloud.width = pcl_pointcloud.points.size();
@@ -60,43 +84,24 @@ namespace small_point_lio {
                         RCLCPP_INFO(rclcpp::get_logger("small_point_lio"), "save pcd success");
                     }).detach();
                 });
-        small_point_lio->set_odometry_callback([this, lidar_frame](const common::Odometry &odometry) {
+        small_point_lio->set_odometry_callback([this, world_frame, body_frame](const common::Odometry &odometry) {
             last_odometry = odometry;
 
             builtin_interfaces::msg::Time time_msg;
             time_msg.sec = std::floor(odometry.timestamp);
             time_msg.nanosec = static_cast<uint32_t>((odometry.timestamp - time_msg.sec) * 1e9);
 
-            geometry_msgs::msg::TransformStamped transform_stamped;
-            transform_stamped.header.stamp = time_msg;
-            transform_stamped.header.frame_id = "odom";
-            transform_stamped.child_frame_id = "base_link";
-            geometry_msgs::msg::TransformStamped base_link_to_lidar_frame_transform;
-            try {
-                base_link_to_lidar_frame_transform = tf_buffer->lookupTransform(lidar_frame, "base_link", time_msg);
-            } catch (tf2::TransformException &ex) {
-                RCLCPP_ERROR(rclcpp::get_logger("small_point_lio"), "Failed to lookup transform from base_link to %s: %s", lidar_frame.c_str(), ex.what());
-                return;
-            }
-            tf2::Transform tf_lidar_odom_to_lidar_frame;
-            tf_lidar_odom_to_lidar_frame.setOrigin(tf2::Vector3(odometry.position.x(), odometry.position.y(), odometry.position.z()));
-            tf_lidar_odom_to_lidar_frame.setRotation(tf2::Quaternion(odometry.orientation.x(), odometry.orientation.y(), odometry.orientation.z(), odometry.orientation.w()));
-            tf2::Transform tf_base_link_to_lidar_frame;
-            tf2::fromMsg(base_link_to_lidar_frame_transform.transform, tf_base_link_to_lidar_frame);
-            tf2::Transform tf_odom_to_base_link = tf_base_link_to_lidar_frame.inverse() * tf_lidar_odom_to_lidar_frame * tf_base_link_to_lidar_frame;
-            transform_stamped.transform = tf2::toMsg(tf_odom_to_base_link);
-
             nav_msgs::msg::Odometry odometry_msg;
             odometry_msg.header.stamp = time_msg;
-            odometry_msg.header.frame_id = "odom";
-            odometry_msg.child_frame_id = "base_link";
-            odometry_msg.pose.pose.position.x = transform_stamped.transform.translation.x;
-            odometry_msg.pose.pose.position.y = transform_stamped.transform.translation.y;
-            odometry_msg.pose.pose.position.z = transform_stamped.transform.translation.z;
-            odometry_msg.pose.pose.orientation.x = transform_stamped.transform.rotation.x;
-            odometry_msg.pose.pose.orientation.y = transform_stamped.transform.rotation.y;
-            odometry_msg.pose.pose.orientation.z = transform_stamped.transform.rotation.z;
-            odometry_msg.pose.pose.orientation.w = transform_stamped.transform.rotation.w;
+            odometry_msg.header.frame_id = world_frame;
+            odometry_msg.child_frame_id = body_frame;
+            odometry_msg.pose.pose.position.x = odometry.position.x();
+            odometry_msg.pose.pose.position.y = odometry.position.y();
+            odometry_msg.pose.pose.position.z = odometry.position.z();
+            odometry_msg.pose.pose.orientation.x = odometry.orientation.x();
+            odometry_msg.pose.pose.orientation.y = odometry.orientation.y();
+            odometry_msg.pose.pose.orientation.z = odometry.orientation.z();
+            odometry_msg.pose.pose.orientation.w = odometry.orientation.w();
 
             // TODO it is lidar_odom->lidar_frame, we need to transform it to odom->base_link
             // odometry_msg.twist.twist.linear.x = odometry.velocity.x();
@@ -106,42 +111,51 @@ namespace small_point_lio {
             // odometry_msg.twist.twist.angular.y = odometry.angular_velocity.y();
             // odometry_msg.twist.twist.angular.z = odometry.angular_velocity.z();
 
-            tf_broadcaster->sendTransform(transform_stamped);
+            if (tf_broadcaster) {
+                geometry_msgs::msg::TransformStamped transform_stamped;
+                transform_stamped.header.stamp = time_msg;
+                transform_stamped.header.frame_id = world_frame;
+                transform_stamped.child_frame_id = body_frame;
+                transform_stamped.transform.translation.x = odometry.position.x();
+                transform_stamped.transform.translation.y = odometry.position.y();
+                transform_stamped.transform.translation.z = odometry.position.z();
+                transform_stamped.transform.rotation.x = odometry.orientation.x();
+                transform_stamped.transform.rotation.y = odometry.orientation.y();
+                transform_stamped.transform.rotation.z = odometry.orientation.z();
+                transform_stamped.transform.rotation.w = odometry.orientation.w();
+                tf_broadcaster->sendTransform(transform_stamped);
+            }
             odometry_publisher->publish(odometry_msg);
         });
-        small_point_lio->set_pointcloud_callback([this, save_pcd, lidar_frame](const std::vector<Eigen::Vector3f> &pointcloud) {
+        small_point_lio->set_pointcloud_callback([this, save_pcd, world_frame, publish_min_distance_sq, publish_max_distance_sq](const std::vector<Eigen::Vector3f> &pointcloud) {
             if (pointcloud_publisher->get_subscription_count() > 0) {
                 builtin_interfaces::msg::Time time_msg;
                 time_msg.sec = std::floor(last_odometry.timestamp);
                 time_msg.nanosec = static_cast<uint32_t>((last_odometry.timestamp - time_msg.sec) * 1e9);
 
-                geometry_msgs::msg::TransformStamped base_link_to_lidar_frame_transform;
-                try {
-                    base_link_to_lidar_frame_transform = tf_buffer->lookupTransform(lidar_frame, "base_link", time_msg);
-                } catch (tf2::TransformException &ex) {
-                    RCLCPP_ERROR(rclcpp::get_logger("small_point_lio"), "Failed to lookup transform from base_link to %s: %s", lidar_frame.c_str(), ex.what());
-                    return;
-                }
-                Eigen::Vector3f base_link_to_lidar_frame_T;
-                base_link_to_lidar_frame_T << static_cast<float>(base_link_to_lidar_frame_transform.transform.translation.x),
-                        static_cast<float>(base_link_to_lidar_frame_transform.transform.translation.y),
-                        static_cast<float>(base_link_to_lidar_frame_transform.transform.translation.z);
-                Eigen::Matrix3f base_link_to_lidar_frame_R =
-                        Eigen::Quaternionf(
-                                static_cast<float>(base_link_to_lidar_frame_transform.transform.rotation.w),
-                                static_cast<float>(base_link_to_lidar_frame_transform.transform.rotation.x),
-                                static_cast<float>(base_link_to_lidar_frame_transform.transform.rotation.y),
-                                static_cast<float>(base_link_to_lidar_frame_transform.transform.rotation.z))
-                                .toRotationMatrix();
                 pcl::PointCloud<pcl::PointXYZI> pcl_pointcloud;
                 pcl_pointcloud.points.reserve(pointcloud.size());
-                Eigen::Vector3f transformed_point;
                 for (const auto &point: pointcloud) {
-                    transformed_point = base_link_to_lidar_frame_R * point + base_link_to_lidar_frame_T;
+                    if (!std::isfinite(point.x()) || !std::isfinite(point.y()) || !std::isfinite(point.z())) {
+                        continue;
+                    }
+                    const double dist_sq = static_cast<double>(point.x()) * point.x() +
+                                           static_cast<double>(point.y()) * point.y() +
+                                           static_cast<double>(point.z()) * point.z();
+                    if (!std::isfinite(dist_sq)) {
+                        continue;
+                    }
+                    if (publish_min_distance_sq > 0.0 && dist_sq < publish_min_distance_sq) {
+                        continue;
+                    }
+                    if (publish_max_distance_sq > 0.0 && dist_sq > publish_max_distance_sq) {
+                        continue;
+                    }
                     pcl::PointXYZI new_point;
-                    new_point.x = transformed_point.x();
-                    new_point.y = transformed_point.y();
-                    new_point.z = transformed_point.z();
+                    new_point.x = point.x();
+                    new_point.y = point.y();
+                    new_point.z = point.z();
+                    new_point.intensity = 0.0f;
                     pcl_pointcloud.points.push_back(new_point);
                 }
                 pcl_pointcloud.width = pcl_pointcloud.points.size();
@@ -150,7 +164,7 @@ namespace small_point_lio {
                 sensor_msgs::msg::PointCloud2 msg;
                 pcl::toROSMsg(pcl_pointcloud, msg);
                 msg.header.stamp = time_msg;
-                msg.header.frame_id = "odom";
+                msg.header.frame_id = world_frame;
                 pointcloud_publisher->publish(msg);
             }
             if (save_pcd) {
