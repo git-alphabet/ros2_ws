@@ -494,6 +494,11 @@ int main(int argc, char ** argv)
           if (imu_en) {
             if (fix_gravity_direction) {
               tmp_gravity = -p_imu->mean_acc / p_imu->mean_acc.norm() * G_m_s2;
+              // Make auto-calibrated gravity effective for subsequent init/propagation.
+              // This mirrors the behavior of manually setting mapping.gravity/gravity_init to the calibrated value.
+              p_imu->gravity_ = tmp_gravity;
+              kf_input.x_.gravity = tmp_gravity;
+              kf_output.x_.gravity = tmp_gravity;
               {
                 static bool printed = false;
                 if (!printed) {
