@@ -1,11 +1,3 @@
-# Nav2 参数（仿真）
-#
-# 约定：
-# - 顶层 key 是节点名（node name），每个节点下用 ros__parameters 配置参数。
-# - 仿真一般需要 use_sim_time: True（使用 /clock），实车文件通常为 False。
-# - TF 的“frame 名”不是 topic；frame 是否带 namespace 取决于各节点如何发布。
-# - 本文件里出现的 <robot_namespace> 是占位符，launch 中会替换。
-#
 # 点云工具：把仿真点云转换/裁剪成后续算法期望的扫描结构
 ign_sim_pointcloud_tool:
   ros__parameters:
@@ -15,16 +7,16 @@ ign_sim_pointcloud_tool:
     ang_bottom: 7.0
     ang_res_y: 1.84375  # (7+52) / 32
 
-# 导航“开关/选择器”：统一选择控制器插件、里程计来源、行为树
+
 pb_navigation_switches:
   ros__parameters:
     controller_plugin: "pb_omni_pid_pursuit_controller"   # 控制器插件选择：neupan_nav2_controller / pb_omni_pid_pursuit_controller
-    odometry_source: "small_point_lio"     #point_lio / small_point_lio / loam_interface
+    odometry_source: "point_lio"     #point_lio / small_point_lio / loam_interface
     behavior_tree: "default"   # .xml or default,none
 
-# Nav2 Controller Server：轨迹跟随控制
-# 标注：NeuPAN 控制器参数（如 neupan_config_path / dune_model_path / laser_topic / debug_*）只在这里维护。
-# 说明：launch 会根据 pb_navigation_switches.controller_plugin 选择是否用 pb_controller_profiles 覆盖 FollowPath。
+
+# NeuPAN 控制器参数（如 neupan_config_path / dune_model_path / laser_topic / debug_*）只在这里维护。
+
 controller_server:
   ros__parameters:
     use_sim_time: True
@@ -116,7 +108,7 @@ small_point_lio:
     imu_topic: livox/imu
     lidar_type: unilidar
     lidar_frame: front_mid360
-    save_pcd: false
+    save_pcd: true
 
     # 点云逐点时间戳：类似 point_lio.preprocess.timestamp_unit 的“时间语义”问题（但实现方式不同）
     # Simulator pointcloud `time` field may be unreliable; disabling it reduces stationary jitter.
@@ -226,10 +218,8 @@ point_lio:
       plane_thr: 0.1                                    # 0.05, the threshold for plane criteria, the smaller, the flatter a plane
       match_s: 81.0
       ivox_grid_resolution: 0.5
-      gravity: [ 0.0, -4.9, -8.487047153776548 ]        # gravity to be aligned # rpy = [0, pi/6, 0]
-      gravity_init: [ 0.0, -4.9, -8.487047153776548 ]   # preknown gravity in the first IMU body frame, use when imu_en is False or start from a non-stationary state
-      # NOTE: YAML 同 key 重复时通常以后者为准；这里出现两次 extrinsic_T 只是配置冗余
-      extrinsic_T: [ 0.0, 0.0, 0.0 ]
+      gravity: [ 0.0, 0.0, 0.0 ]        # point_lio已实现自动重力校准，这里仅作标识
+      gravity_init: [ 0.0, 0.0, 0.0 ]
       extrinsic_T: [ 0.0, 0.0, 0.0 ]
       extrinsic_R: [ 1.0, 0.0, 0.0,
                      0.0, 1.0, 0.0,
@@ -337,7 +327,7 @@ fake_vel_transform:
     input_cmd_vel_topic: "cmd_vel_nav2_result"
     output_cmd_vel_topic: "cmd_vel"
     cmd_spin_topic: "cmd_spin"
-    init_spin_speed: 3.14
+    init_spin_speed: 0.0
 
 # 重定位：GICP 基于点云的全局重定位/初始化
 small_gicp_relocalization:
