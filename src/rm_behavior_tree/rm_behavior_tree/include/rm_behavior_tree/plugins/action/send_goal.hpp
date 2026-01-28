@@ -9,6 +9,7 @@
 #include <cmath>
 #include <iomanip>
 #include <limits>
+#include <string>
 
 // PoseStamped -> JSON for Groot2 (defined inline to avoid ODR)
 
@@ -43,6 +44,8 @@ public:
       // Alternatively pass coordinates directly in XML: goal_x and goal_y
       BT::InputPort<double>("goal_x", 0.0, "goal x coordinate"),
       BT::InputPort<double>("goal_y", 0.0, "goal y coordinate"),
+      // Compatibility: accept action_name from XML even though this node publishes to a topic.
+      BT::InputPort<std::string>("action_name", "navigate_to_pose"),
       // Optional: throttle interval in milliseconds. Default 0 keeps old behavior (publish every tick).
       BT::InputPort<int>("min_interval_ms", 0, "minimum publish interval in ms")
     };
@@ -58,8 +61,11 @@ private:
                    const geometry_msgs::msg::PoseStamped & b) const;
 
   geometry_msgs::msg::PoseStamped last_goal_;
+  geometry_msgs::msg::PoseStamped last_log_goal_;
   rclcpp::Time last_pub_time_{0, 0, RCL_SYSTEM_TIME};
   bool has_last_{false};
+  bool has_log_goal_{false};
+  int log_count_{0};
 };
 
 }  // namespace rm_behavior_tree

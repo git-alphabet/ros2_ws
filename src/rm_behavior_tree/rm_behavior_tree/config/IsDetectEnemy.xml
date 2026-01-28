@@ -1,8 +1,8 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="IsDetectEnemy">
-    <!-- 是否检测到敌人 -->
     <Sequence>
-        <IsDetectEnemy message="{armors}"/>
+        <!-- 是否检测到敌人 -->
+      <IsAttaked message="{robot_status}"/>
         <RobotControl stop_gimbal_scan="True"
                         chassis_spin_vel="0.5"/>
     </Sequence>

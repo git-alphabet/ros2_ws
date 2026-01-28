@@ -5,87 +5,90 @@
     <include path="HighHP_combat_logic.xml"/>
     <include path="MediumHP_combat_logic.xml"/>
     <include path="LowHP_combat_logic.xml"/>
-    <include path="attack_right_new.xml"/>
+    <include path="attack_right.xml"/>
     <include path="perception_and_blackboard.xml"/>
     <include path="IsDetectEnemy.xml"/>
     <include path="IsDeadAndDispelDebuff.xml"/>
 
     <BehaviorTree ID="MainBehaviorTree">
-        <!-- 订阅数据并写入黑板 -->
-        <SubTree ID="PerceptionAndBlackboard"/>
-        <WhileDoElse>
-            <IsGameTime name="IsGameStart"
-                    message="{game_status}"
-                    game_progress="4"
-                    lower_remain_time="0"
-                    higher_remain_time="300"/>
-            <Fallback>
-                <!--判断战亡，若战亡，执行解除虚弱状态操作 -->
-                <SubTree ID="IsDeadAndDispelDebuff"/>
-                <!-- 处于存活状态则进入战斗逻辑 -->
+        <Sequence>
+            <!-- 用Sequence包裹所有节点，确保BehaviorTree只有1个子节点（解决核心报错） -->
+            <!-- 订阅数据并写入黑板 -->
+            <SubTree ID="PerceptionAndBlackboard"/>
+            <WhileDoElse>
+                <IsGameTime name="IsGameStart"
+                        message="{game_status}"
+                        game_progress="4"
+                        lower_remain_time="0"
+                        higher_remain_time="300"/>
                 <Fallback>
-                    <!-- 检测到敌人进行战斗逻辑 -->
-                    <SubTree ID="IsDetectEnemy"/>
+                    <!--判断战亡，若战亡，执行解除虚弱状态操作 -->
+                    <SubTree ID="IsDeadAndDispelDebuff"/>
+                    <!-- 处于存活状态则进入战斗逻辑 -->
                     <Fallback>
-                        <!-- 高血量战斗逻辑 -->
-                        <SubTree ID="HighHPCombatLogic"/>
-                        <!-- 中血量战斗逻辑 -->
-                        <SubTree ID="MediumHPCombatLogic"/>
+                        <!-- 检测到敌人进行战斗逻辑 -->
+                        <SubTree ID="IsDetectEnemy"/>
+                        <Fallback>
+                            <!-- 高血量战斗逻辑 -->
+                            <SubTree ID="HighHPCombatLogic"/>
+                            <!-- 中血量战斗逻辑 -->
+                            <SubTree ID="MediumHPCombatLogic"/>
+                        </Fallback>
+
+                        <!-- 非战斗时刻占点逻辑 -->
+                        <ReactiveFallback>
+                            <!-- 低血量：回补给区回血（补给区占领：每秒回 25% 上限血量） -->
+                            <ReactiveSequence>
+                                <IsHPBelow message="{robot_status}" hp_threshold="200"/>
+
+                                <RateController hz="1">
+                                    <!-- Converted from goal_pose to goal_x/goal_y -->
+                                    <SendGoal name="GoSupplyToHeal"
+                                            goal_x="{ally_supply_pose_x}"
+                                            goal_y="{ally_supply_pose_y}"
+                                            action_name="navigate_to_pose"/>
+                                </RateController>
+
+                                <!-- 点内微动，持续“接触/检测”补给区卡 -->
+                                <RobotControl stop_gimbal_scan="False"
+                                              chassis_spin_vel="0.2"/>
+                            </ReactiveSequence>
+
+                            <!-- 3) 抢控制区：对方每秒-1胜利点；离开后延迟2s失效 -->
+                            <ReactiveSequence>
+                                <RateController hz="1">
+                                    <!-- Converted from goal_pose to goal_x/goal_y -->
+                                    <SendGoal name="GoControlZone"
+                                            goal_x="{control_zone_pose_x}"
+                                            goal_y="{control_zone_pose_y}"
+                                            action_name="navigate_to_pose"/>
+                                </RateController>
+
+                                <!-- 控制区内巡航/微动，避免点卡死区导致“以为站住了但读不到卡” -->
+                                <RobotControl stop_gimbal_scan="False"
+                                            chassis_spin_vel="0.5"/>
+                            </ReactiveSequence>
+
+                        </ReactiveFallback>
+
                     </Fallback>
-
-                    <!-- 非战斗时刻占点逻辑 -->
-                    <ReactiveFallback>
-                        <!-- 低血量：回补给区回血（补给区占领：每秒回 25% 上限血量） -->
-                        <ReactiveSequence>
-                            <IsHPBelow message="{robot_status}" hp_threshold="200"/>
-
-                            <RateController hz="1">
-                                <!-- Converted from goal_pose to goal_x/goal_y -->
-                                <SendGoal name="GoSupplyToHeal"
-                                        goal_x="{ally_supply_pose_x}"
-                                        goal_y="{ally_supply_pose_y}"
-                                        action_name="navigate_to_pose"/>
-                            </RateController>
-
-                            <!-- 点内微动，持续“接触/检测”补给区卡 -->
-                            <RobotControl stop_gimbal_scan="False"
-                                          chassis_spin_vel="0.2"/>
-                        </ReactiveSequence>
-
-                        <!-- 3) 抢控制区：对方每秒-1胜利点；离开后延迟2s失效 -->
-                        <ReactiveSequence>
-                            <RateController hz="1">
-                                <!-- Converted from goal_pose to goal_x/goal_y -->
-                                <SendGoal name="GoControlZone"
-                                        goal_x="{control_zone_pose_x}"
-                                        goal_y="{control_zone_pose_y}"
-                                        action_name="navigate_to_pose"/>
-                            </RateController>
-
-                            <!-- 控制区内巡航/微动，避免点卡死区导致“以为站住了但读不到卡” -->
-                            <RobotControl stop_gimbal_scan="False"
-                                        chassis_spin_vel="0.5"/>
-                        </ReactiveSequence>
-
-                    </ReactiveFallback>
-
                 </Fallback>
-            </Fallback>
-            <!-- 非比赛阶段停止云台和旋转，回家 -->
-            <ReactiveSequence>
-                    <RateController hz="1">
-                    <!-- TODO: set goal_x and goal_y -->
-                    <SendGoal name="Home"
-                        goal_x="0.0"
-                        goal_y="0.0"
-                        action_name="navigate_to_pose"/>
-                </RateController>
-                <RobotControl stop_gimbal_scan="True"
-                                chassis_spin_vel="0.0"/>
-            </ReactiveSequence>
-        </WhileDoElse>
-        
+                <!-- 非比赛阶段停止云台和旋转，回家 -->
+                <ReactiveSequence>
+                        <RateController hz="1">
+                        <!-- TODO: set goal_x and goal_y -->
+                        <SendGoal name="Home"
+                            goal_x="0.0"
+                            goal_y="0.0"
+                            action_name="navigate_to_pose"/>
+                    </RateController>
+                    <RobotControl stop_gimbal_scan="True"
+                                    chassis_spin_vel="0.0"/>
+                </ReactiveSequence>
+            </WhileDoElse>
+        </Sequence>
     </BehaviorTree>
+    
     <!-- Description of Node Models (used by Groot) -->
     <TreeNodesModel>
         <Action ID="GetCurrentLocation" editable="true">
@@ -107,6 +110,8 @@
             <input_port name="goal_pose" default="{goal_pose}"/>
             <input_port name="goal_x" default="0.0"/>
             <input_port name="goal_y" default="0.0"/>
+            <!-- 补充action_name输入端口（解决GoSupplyToHeal端口不匹配报错） -->
+            <input_port name="action_name" default="navigate_to_pose"/>
         </Action>
         <Action ID="SetGoal" editable="true">
             <input_port name="goal" default="0;0;0;0;0;0;1"/>
@@ -213,6 +218,11 @@
             <input_port name="timeout_ms" default="{cfg.recovery_timeout_ms}"/>
             <inout_port name="need_recovery" default="{state.need_recovery}"/>
         </Action>
+        <!-- 补充缺失的RobotControl Action节点定义（解决找不到RobotControl报错） -->
+        <Action ID="RobotControl" editable="true">
+            <input_port name="stop_gimbal_scan" default="False"/>
+            <input_port name="chassis_spin_vel" default="0.0"/>
+        </Action>
         <Condition ID="IsAttaked" editable="true">
             <input_port name="message" default="{robot_status}"/>
         </Condition>
@@ -222,6 +232,13 @@
         </Condition>
         <Condition ID="IsGameStart" editable="true">
             <input_port name="message" default="{game_status}"/>
+        </Condition>
+        <!-- 补充缺失的IsGameTime Condition节点定义（解决找不到IsGameTime报错） -->
+        <Condition ID="IsGameTime" editable="true">
+            <input_port name="message" default="{game_status}"/>
+            <input_port name="game_progress" default="4"/>
+            <input_port name="lower_remain_time" default="0"/>
+            <input_port name="higher_remain_time" default="300"/>
         </Condition>
         <Condition ID="IsStatusOK" editable="true">
             <input_port name="message" default="{robot_status}"/>
@@ -261,5 +278,9 @@
         <Condition ID="NotArrived" editable="true">
             <input_port name="arrived" default="{nav.arrived}"/>
         </Condition>
+        <!-- 补充缺失的RateController Decorator节点定义（解决找不到RateController报错） -->
+        <Decorator ID="RateController" editable="true">
+            <input_port name="hz" default="1.0"/>
+        </Decorator>
     </TreeNodesModel>
 </root>

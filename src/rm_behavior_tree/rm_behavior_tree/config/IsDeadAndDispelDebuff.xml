@@ -1,6 +1,7 @@
 <root BTCPP_format="4">
-  <BehaviorTree ID="IsDeadAndDispelDebuff">
-   <!-- A. 战亡：只停车等待复活读条结束 -->
+    <BehaviorTree ID="IsDeadAndDispelDebuff">
+        <Sequence>
+     <!-- A. 战亡：只停车等待复活读条结束 -->
         <Sequence name="IfDead_StopAndWait">
           <IsDead message="{robot_status}"/>
           <RobotControl stop_gimbal_scan="True"
@@ -12,11 +13,11 @@
 
           <!-- 检测复活沿：dead -> alive 时置 need_recovery=true -->
           <DetectRespawnAndSetRecovery
+              topic_name="/robot_status"
               was_dead="{was_dead}"
               hp_cur="{hp_cur}"
-              now_ms="{now_ms}"
               need_recovery="{need_recovery}"
-              recovery_start_ms="recovery_start_ms}"
+              recovery_start_ms="{state.recovery_start_ms}"
               search_start_ms="{search_start_ms}"/>
 
           <IsRecoveryNeeded need_recovery="{need_recovery}"/>
@@ -120,8 +121,9 @@
 
           </Fallback>
 
+          </Sequence>
         </Sequence>
-  </BehaviorTree>
+      </BehaviorTree>
 
   <TreeNodesModel>
 

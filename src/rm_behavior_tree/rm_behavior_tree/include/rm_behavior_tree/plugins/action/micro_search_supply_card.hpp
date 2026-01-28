@@ -16,6 +16,7 @@
 
 #include "behaviortree_cpp/action_node.h"
 #include "behaviortree_ros2/ros_node_params.hpp"
+#include "rm_decision_interfaces/msg/rfid.hpp"
 
 namespace rm_behavior_tree
 {
@@ -32,9 +33,11 @@ public:
   {
     return {
       // 你们树里是 inout_port
-      BT::BidirectionalPort<int64_t>("search_start_ms"),
+      BT::BidirectionalPort<std::uint64_t>("search_start_ms"),
 
       BT::InputPort<int>("timeout_ms"),
+
+      BT::InputPort<rm_decision_interfaces::msg::RFID>("rfid_status"),
 
       // ✅ 只用这个 bool，彻底不要 bitfield
       BT::InputPort<bool>("rfid_supply_arrived")
@@ -46,7 +49,7 @@ public:
   void onHalted() override;
 
 private:
-  int64_t nowMs_() const;
+  std::uint64_t nowMs_() const;
 
   bool getCurrentPose_(geometry_msgs::msg::PoseStamped& out_pose);
   void publishNextGoal_(const geometry_msgs::msg::PoseStamped& cur);

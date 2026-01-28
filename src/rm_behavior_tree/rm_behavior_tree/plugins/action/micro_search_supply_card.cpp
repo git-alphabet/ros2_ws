@@ -50,10 +50,10 @@ MicroSearchSupplyCardAction::MicroSearchSupplyCardAction(
   ring_idx_ = 0;
 }
 
-int64_t MicroSearchSupplyCardAction::nowMs_() const
+std::uint64_t MicroSearchSupplyCardAction::nowMs_() const
 {
   const auto now = node_->get_clock()->now();
-  return static_cast<int64_t>(now.nanoseconds() / 1000000LL);
+  return static_cast<std::uint64_t>(now.nanoseconds() / 1000000ULL);
 }
 
 bool MicroSearchSupplyCardAction::getCurrentPose_(geometry_msgs::msg::PoseStamped& out_pose)
@@ -85,13 +85,22 @@ BT::NodeStatus MicroSearchSupplyCardAction::onStart()
   if (getInput<bool>("rfid_supply_arrived", arrived) && arrived) {
     return BT::NodeStatus::SUCCESS;
   }
+  if (!arrived) {
+    auto rfid_msg = getInput<rm_decision_interfaces::msg::RFID>("rfid_status");
+    if (rfid_msg && rfid_msg.value().rfid_supply_arrived) {
+      arrived = true;
+    }
+  }
+  if (arrived) {
+    return BT::NodeStatus::SUCCESS;
+  }
 
   // 初始化 search_start_ms（首次进入写入）
-  int64_t start_ms = 0;
-  (void)getInput<int64_t>("search_start_ms", start_ms);
+  std::uint64_t start_ms = 0;
+  (void)getInput<std::uint64_t>("search_start_ms", start_ms);
   if (start_ms <= 0) {
     start_ms = nowMs_();
-    setOutput<int64_t>("search_start_ms", start_ms);
+    setOutput<std::uint64_t>("search_start_ms", start_ms);
   }
 
   last_pub_ms_ = 0;
@@ -139,34 +148,43 @@ BT::NodeStatus MicroSearchSupplyCardAction::onRunning()
   if (getInput<bool>("rfid_supply_arrived", arrived) && arrived) {
     return BT::NodeStatus::SUCCESS;
   }
+  if (!arrived) {
+    auto rfid_msg = getInput<rm_decision_interfaces::msg::RFID>("rfid_status");
+    if (rfid_msg && rfid_msg.value().rfid_supply_arrived) {
+      arrived = true;
+    }
+  }
+  if (arrived) {
+    return BT::NodeStatus::SUCCESS;
+  }
 
   // 读取 timeout 与 search_start_ms
   int timeout_ms = 0;
   (void)getInput<int>("timeout_ms", timeout_ms);
   timeout_ms = std::max(0, timeout_ms);
 
-  int64_t start_ms = 0;
-  (void)getInput<int64_t>("search_start_ms", start_ms);
+  std::uint64_t start_ms = 0;
+  (void)getInput<std::uint64_t>("search_start_ms", start_ms);
   if (start_ms <= 0) {
     start_ms = nowMs_();
-    setOutput<int64_t>("search_start_ms", start_ms);
+    setOutput<std::uint64_t>("search_start_ms", start_ms);
   }
 
-  const int64_t now_ms = nowMs_();
+  const std::uint64_t now_ms = nowMs_();
 
   // 超时：扩圈 + 重置计时（不返回 FAILURE，避免回到导航分支抖动）
   if (timeout_ms > 0) {
-    const int64_t elapsed = now_ms - start_ms;
+    const std::uint64_t elapsed = now_ms - start_ms;
     if (elapsed >= timeout_ms) {
       ring_idx_ = std::min(ring_idx_ + 1, 6);
-      setOutput<int64_t>("search_start_ms", now_ms);
+      setOutput<std::uint64_t>("search_start_ms", now_ms);
       // 可选：重置步进，让扩圈从第一个点开始
       // step_idx_ = 0;
     }
   }
 
   // 节流发布：每 250ms 发一次 goal
-  constexpr int64_t kPubIntervalMs = 250;
+  constexpr std::uint64_t kPubIntervalMs = 250;
   if (last_pub_ms_ != 0 && (now_ms - last_pub_ms_) < kPubIntervalMs) {
     return BT::NodeStatus::RUNNING;
   }

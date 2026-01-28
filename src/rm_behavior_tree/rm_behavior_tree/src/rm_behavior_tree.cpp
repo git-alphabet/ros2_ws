@@ -43,6 +43,20 @@ int main(int argc, char ** argv)
     "sub_all_robot_hp",
     "sub_robot_status",
     "sub_game_status",
+    "sub_decision_num",
+    "sub_rfid_status",
+    "sub_robot_position",
+    "init_blackboard_config",
+    "detect_respawn_and_set_recovery",
+    "clear_recovery_flag",
+    "init_search_timer_if_needed",
+    "micro_search_supply_card",
+    "wait_and_heal",
+    "set_nav_goal_from_config",
+    "cancel_nav_goal",
+    "is_recovery_needed",
+    "is_supply_card_detected",
+    "is_within_scope",
     
   };
 
@@ -53,16 +67,16 @@ int main(int argc, char ** argv)
     "is_hp_above",
     "is_hp_below",
     "is_dead",
-    "is_recovery_needed",
     "is_status_ok",
     "is_attacked",
     "is_friend_ok",
     "is_outpost_ok",
     "get_current_location",
     "move_around",
+    "keep_running",
+    "not_arrived",
+    "navigate_to_goal",
     "print_message",
-    "is_supply_card_detected",
-    "is_within_scope",
 
     
   };

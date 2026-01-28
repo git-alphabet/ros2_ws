@@ -2,6 +2,7 @@
 #define RM_BEHAVIOR_TREE__PLUGINS__CONDITION__IS_DEAD_HPP_
 
 #include <string>
+#include <memory>
 #include "behaviortree_cpp/condition_node.h"
 #include "rm_decision_interfaces/msg/robot_status.hpp"
 
@@ -25,7 +26,7 @@ public:
   static BT::PortsList providedPorts()
   {
     return {
-      BT::InputPort<rm_decision_interfaces::msg::RobotStatus>("message")
+      BT::InputPort<std::shared_ptr<rm_decision_interfaces::msg::RobotStatus>>("message")
     };
   }
 };

@@ -199,6 +199,16 @@ ament_auto_add_library(clear_recovery_flag SHARED
 )
 add_target_dependencies(clear_recovery_flag)
 
+ament_auto_add_library(set_nav_goal_from_config SHARED
+    plugins/action/set_nav_goal_from_config.cpp
+)
+add_target_dependencies(set_nav_goal_from_config)
+
+ament_auto_add_library(micro_search_supply_card SHARED
+    plugins/action/micro_search_supply_card.cpp
+)
+add_target_dependencies(micro_search_supply_card)
+
 ament_auto_add_library(navigate_to_goal SHARED 
     plugins/condition/navigate_to_goal.cpp
 )

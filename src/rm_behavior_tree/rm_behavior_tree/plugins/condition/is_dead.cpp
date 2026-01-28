@@ -13,15 +13,15 @@ IsDeadCondition::IsDeadCondition(const std::string & name, const BT::NodeConfig 
 BT::NodeStatus IsDeadCondition::checkDead()
 {
   // 获取机器人状态消息输入
-  auto msg = getInput<rm_decision_interfaces::msg::RobotStatus>("message");
+   auto msg = getInput<std::shared_ptr<rm_decision_interfaces::msg::RobotStatus>>("message");
 
   // 缺消息：保守返回失败（未获取到状态则无法判定死亡）
   if (!msg) {
     return BT::NodeStatus::FAILURE;
   }
 
-  // 判断血量是否为0
-  if (msg->current_hp == 0) {
+   // 判断血量是否为0
+   if ((*msg)->current_hp <= 0) {
     return BT::NodeStatus::SUCCESS;
   } else {
     return BT::NodeStatus::FAILURE;
