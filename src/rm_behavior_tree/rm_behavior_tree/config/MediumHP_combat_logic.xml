@@ -13,7 +13,8 @@
 
       <!-- 保持云台扫描； -->
       <RobotControl stop_gimbal_scan="False"
-            chassis_spin="True"/>
+        chassis_spin="True"/>
+      <NavControlCmd cmd_type="3" emergency_stop="False"/>
 
     </ReactiveSequence>
   </BehaviorTree>

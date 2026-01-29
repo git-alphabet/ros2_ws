@@ -6,6 +6,7 @@
           <IsDead message="{robot_status}"/>
           <RobotControl stop_gimbal_scan="True"
                         chassis_spin="False"/>
+                    <NavControlCmd cmd_type="3" emergency_stop="False"/>
         </Sequence>
  
         <!-- B. 恢复模式：复活后强制回补给区刷卡解除虚弱并回血 -->
@@ -84,6 +85,7 @@
                                 <!-- 到达后先刹车，保证微搜动作可控 -->
                                 <RobotControl stop_gimbal_scan="True"
                                             chassis_spin="False"/>
+                                <NavControlCmd cmd_type="3" emergency_stop="False"/>
 
                                 <!-- 初始化搜卡计时器（内部自己取ROS时间，不需要now_ms） -->
                                 <InitSearchTimerIfNeeded search_start_ms="{search_start_ms}"/>
