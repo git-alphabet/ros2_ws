@@ -2,7 +2,9 @@ joint_state_publisher:
   ros__parameters:
     use_sim_time: false
     rate: 200
-    source_list: ["serial/gimbal_joint_state"]
+    # 兼容两种来源：历史上串口模块常用 serial/gimbal_joint_state；本仓库 bridge 默认用 gimbal_joint_state。
+    # 两个都填，谁发布就用谁（joint_state_publisher 会订阅多个来源并合流）。
+    source_list: ["serial/gimbal_joint_state", "gimbal_joint_state"]
     offset_timestamp: 0.0
 
 robot_state_publisher:
