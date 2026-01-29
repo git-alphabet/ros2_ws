@@ -19,7 +19,7 @@ public:
 
   static BT::PortsList providedPorts()
   {
-    return {BT::InputPort<bool>("stop_gimbal_scan"), BT::InputPort<float>("chassis_spin_vel")};
+    return {BT::InputPort<bool>("stop_gimbal_scan"), BT::InputPort<bool>("chassis_spin")};
   }
 };
 }  // namespace rm_behavior_tree

@@ -17,7 +17,7 @@
 
         <!-- 没被打：站着不动（保持云台扫描可选） -->
         <RobotControl stop_gimbal_scan="False"
-                      chassis_spin_vel="3.5"/>
+                chassis_spin="True"/>
 
       </Fallback>
 

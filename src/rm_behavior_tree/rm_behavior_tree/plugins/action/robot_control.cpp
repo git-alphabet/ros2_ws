@@ -11,11 +11,14 @@ RobotControlAction::RobotControlAction(
 
 bool RobotControlAction::setMessage(rm_decision_interfaces::msg::RobotControl & msg)
 {
+  msg.stop_gimbal_scan = false;
+  msg.chassis_spin = false;
+
   getInput("stop_gimbal_scan", msg.stop_gimbal_scan);
-  getInput("chassis_spin_vel", msg.chassis_spin_vel);
+  getInput("chassis_spin", msg.chassis_spin);
 
   // std::cout << "stop_gimbal_scan: " << msg.stop_gimbal_scan << '\n';
-  // std::cout << "chassis_spin_vel: " << msg.chassis_spin_vel << '\n';
+  // std::cout << "chassis_spin: " << msg.chassis_spin << '\n';
 
   return true;
 }

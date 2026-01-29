@@ -21,8 +21,8 @@
           <!-- 云台控制模块 -->
           <WhileDoElse name="GimbalControl">
             <IsDetectEnemy message="{armors}"/>
-            <RobotControl stop_gimbal_scan="True" chassis_spin="True"/>
-            <RobotControl stop_gimbal_scan="False" chassis_spin="True"/>
+            <RobotControl stop_gimbal_scan="True" chassis_spin_vel="0.5"/>
+            <RobotControl stop_gimbal_scan="False" chassis_spin_vel="0.5"/>
           </WhileDoElse>
 
           <!-- 主决策逻辑 -->
@@ -101,7 +101,7 @@
             <SendGoal name="HomePosition" 
                      goal_x="0.0" goal_y="0.0"/>
           </RateController>
-          <RobotControl stop_gimbal_scan="True" chassis_spin="False"/>
+          <RobotControl stop_gimbal_scan="True" chassis_spin_vel="0.0"/>
         </ReactiveSequence>
       </WhileDoElse>
     </ReactiveSequence>
@@ -153,7 +153,7 @@
     </Decorator>
     <Action ID="RobotControl">
       <input_port name="stop_gimbal_scan" default="True"/>
-      <input_port name="chassis_spin" default="False"/>
+      <input_port name="chassis_spin_vel" default="False"/>
     </Action>
     <Action ID="SendGoal">
       <input_port name="goal_pose" default="{goal_pose}"/>

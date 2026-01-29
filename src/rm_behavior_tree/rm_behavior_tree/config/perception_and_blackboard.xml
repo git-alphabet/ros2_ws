@@ -1,13 +1,13 @@
 <root BTCPP_format="4">
     <BehaviorTree ID="PerceptionAndBlackboard">
         <Sequence>
-            <SubAllRobotHP topic_name="robot_hp"
+            <SubAllRobotHP topic_name="/robot_hp"
                          robot_hp="{robot_hp}"/>
-            <SubRobotStatus topic_name="robot_status"
+            <SubRobotStatus topic_name="/robot_status"
                             robot_status="{robot_status}"/>
             <SubGameStatus topic_name="/game_status"
                            game_status="{game_status}"/>
-            <SubDecisionNum topic_name="decision_num"
+            <SubDecisionNum topic_name="/decision_num"
                             decision_num="{decision_num}"/>
             <SubRFIDStatus topic_name="/rfid_status"
                            rfid_status="{rfid.status}"/>

@@ -13,7 +13,7 @@
 
       <!-- 保持云台扫描； -->
       <RobotControl stop_gimbal_scan="False"
-                    chassis_spin_vel="3.5"/>
+            chassis_spin="True"/>
 
     </ReactiveSequence>
   </BehaviorTree>

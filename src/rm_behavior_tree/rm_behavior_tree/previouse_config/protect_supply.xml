@@ -21,9 +21,9 @@
           <WhileDoElse name="Whether gimbal_scan/chassis_spin">
             <IsDetectEnemy message="{armors}"/>
             <RobotControl stop_gimbal_scan="True"
-                          chassis_spin="True"/>
+                          chassis_spin_vel="0.5"/>
             <RobotControl stop_gimbal_scan="False"
-                          chassis_spin="True"/>
+                          chassis_spin_vel="0.5"/>
           </WhileDoElse>
           <WhileDoElse>
             <Sequence>
@@ -44,11 +44,10 @@
                 <IsStatusOK message="{robot_status}"
                             hp_threshold="250"
                             heat_threshold="350"/>
-                <!-- Converted from structured goal_pose to goal_x/goal_y -->
+                <!-- Converted from goal_pose to goal_x/goal_y -->
                 <SendGoal name="SupplyArea"
                           goal_x="-2.5" goal_y="4.07"
                           action_name="navigate_to_pose"/>
-
               </Fallback>
             </WhileDoElse>
             <WhileDoElse>
@@ -57,60 +56,47 @@
                           heat_threshold="350"/>
               <WhileDoElse>
                 <IsAttaked message="{robot_status}"/>
-                <AsyncSequence>
+                <AsyncSequence name="Dodge">
                   <GetCurrentLocation current_location="{current_location}"/>
                   <MoveAround expected_nearby_goal_count="3"
                               expected_dis="0.3"
                               message="{current_location}"/>
                 </AsyncSequence>
                 <WhileDoElse>
-                  <IsGameTime name="0:00~1:30"
+                  <IsGameTime name="4:30-5:00"
                               message="{game_status}"
                               game_progress="4"
-                              lower_remain_time="0"
-                              higher_remain_time="150"/>
-                  <!-- Converted from structured goal_pose to goal_x/goal_y -->
-                  <SendGoal name="BaseFrontWall"
-                            goal_x="0.8" goal_y="-2.0"
-                            action_name="navigate_to_pose"/>
-
+                              lower_remain_time="250"
+                              higher_remain_time="300"/>
+                    <RateController hz="1">
+                    <!-- Converted from goal_pose to goal_x/goal_y -->
+                    <SendGoal name="ProtectSupply"
+                              goal_x="-1.1" goal_y="3.4"
+                              action_name="navigate_to_pose"/>
+                  </RateController>
                   <WhileDoElse>
-                    <IsGameTime name="3:20-4:05"
-                                message="{game_status}"
-                                game_progress="4"
-                                lower_remain_time="200"
-                                higher_remain_time="245"/>
-                      <RateController hz="1">
-                      <!-- Converted from structured goal_pose to goal_x/goal_y -->
-                      <SendGoal name="OccupyCenter"
-                                goal_x="3.0" goal_y="0.4"
-                                action_name="navigate_to_pose"/>
-
-                    </RateController>
-                    <WhileDoElse name="GoOutAttack">
+                    <Sequence>
+                      <IsGameTime name="3:20-4:05"
+                                  message="{game_status}"
+                                  game_progress="4"
+                                  lower_remain_time="200"
+                                  higher_remain_time="245"/>
                       <IsFriendOK message="{robot_hp}"
                                   friend_color="red"/>
-                      <RateController hz="1">
-                       <!-- Converted from structured goal_pose to goal_x/goal_y -->
-                       <SendGoal name="Attack_Left"
-                                 goal_x="5.1" goal_y="1.9"
-                                 action_name="navigate_to_pose"/>
-
-                      </RateController>
-                      <RateController hz="1">
-                        <!-- Converted from structured goal_pose to goal_x/goal_y -->
-                        <SendGoal name="Center"
-                                  goal_x="3.0" goal_y="1.0"
-                                  action_name="navigate_to_pose"/>
-
-                      </RateController>
-                    </WhileDoElse>
+                    </Sequence>
+                    <!-- Converted from goal_pose to goal_x/goal_y -->
+                    <SendGoal name="OccupyCenter"
+                              goal_x="3.0" goal_y="0.4"
+                              action_name="navigate_to_pose"/>
+                    <SendGoal name="BaseLeft"
+                              goal_x="-2.2" goal_y="0.3"
+                              action_name="navigate_to_pose"/>
                   </WhileDoElse>
                 </WhileDoElse>
               </WhileDoElse>
-              <RateController name="Retreat"
-                              hz="1">
-                <!-- Converted from structured goal_pose to goal_x/goal_y -->
+                <RateController name="Retreat"
+                                hz="1">
+                <!-- Converted from goal_pose to goal_x/goal_y -->
                 <SendGoal name="SupplyArea"
                           goal_x="-2.5" goal_y="4.07"
                           action_name="navigate_to_pose"/>
@@ -120,13 +106,13 @@
         </ReactiveSequence>
         <ReactiveSequence>
             <RateController hz="1">
-            <!-- Converted from structured goal_pose to goal_x/goal_y -->
+            <!-- TODO: set goal_x and goal_y -->
             <SendGoal name="Home"
-                      goal_x="3.0" goal_y="1.0"
+                      goal_x="0.0" goal_y="0.0"
                       action_name="navigate_to_pose"/>
           </RateController>
           <RobotControl stop_gimbal_scan="True"
-                        chassis_spin="False"/>
+                        chassis_spin_vel="0.0"/>
         </ReactiveSequence>
       </WhileDoElse>
     </ReactiveSequence>
@@ -192,8 +178,8 @@
             editable="true">
       <input_port name="stop_gimbal_scan"
                   default="True"/>
-      <input_port name="chassis_spin"
-          default="False"/>
+      <input_port name="chassis_spin_vel"
+                  default="False"/>
     </Action>
         <Action ID="SendGoal"
         editable="true">

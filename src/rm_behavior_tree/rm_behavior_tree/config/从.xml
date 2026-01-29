@@ -61,7 +61,7 @@
                 <ReactiveFallback name="CardFirst_ThenNavOrSearch">
 
                     <!-- 0) 最高优先级：刷到补给卡就立刻让本子树SUCCESS（上层下一拍进入回血/清flag） -->
-                    <IsSupplyCardDetected rfid_status="{rfid.status}"/>
+                    <IsSupplyCardDetected rfid_status="{status}"/>
 
                     <!-- 1) 没刷到卡：继续执行“导航到点->微搜卡”流程（持续RUNNING直到刷到卡） -->
                     <Sequence name="NavThenSearchUntilCard">

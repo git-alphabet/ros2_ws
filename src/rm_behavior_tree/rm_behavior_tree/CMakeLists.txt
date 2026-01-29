@@ -161,6 +161,11 @@ ament_auto_add_library(robot_control SHARED
 )
 add_target_dependencies(robot_control)
 
+ament_auto_add_library(nav_control_cmd SHARED
+    plugins/action/nav_control_cmd.cpp
+)
+add_target_dependencies(nav_control_cmd)
+
 ament_auto_add_library(print_message SHARED 
     plugins/action/print_message.cpp
 )

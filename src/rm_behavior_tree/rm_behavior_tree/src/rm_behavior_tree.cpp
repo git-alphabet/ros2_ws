@@ -36,6 +36,10 @@ int main(int argc, char ** argv)
   params_sentry_follower.nh = std::make_shared<rclcpp::Node>("sentry_follower");
   params_sentry_follower.default_port_value = "current_goal";
 
+  BT::RosNodeParams params_nav_control;
+  params_nav_control.nh = std::make_shared<rclcpp::Node>("nav_control_cmd");
+  params_nav_control.default_port_value = "/nav_control_cmd";
+
  
 
   // clang-format off
@@ -101,6 +105,8 @@ int main(int argc, char ** argv)
   RegisterRosNode(factory, BT::SharedLibrary::getOSName("send_goal"), params_send_goal);
 
   RegisterRosNode(factory, BT::SharedLibrary::getOSName("robot_control"), params_robot_control);
+
+  RegisterRosNode(factory, BT::SharedLibrary::getOSName("nav_control_cmd"), params_nav_control);
 
   RegisterRosNode(factory, BT::SharedLibrary::getOSName("sentry_follower"), params_sentry_follower);
 

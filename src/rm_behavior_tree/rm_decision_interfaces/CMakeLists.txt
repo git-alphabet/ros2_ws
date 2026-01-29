@@ -21,6 +21,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/RFID.msg"
   "msg/RobotControl.msg"
   "msg/DecisionNum.msg"
+  "msg/NavControlCmd.msg"
   "msg/Target.msg"
   DEPENDENCIES
     std_msgs

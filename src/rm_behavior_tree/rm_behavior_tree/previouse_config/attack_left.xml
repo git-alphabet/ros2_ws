@@ -101,8 +101,8 @@
             editable="true">
       <input_port name="stop_gimbal_scan"
                   default="True"/>
-        <input_port name="chassis_spin"
-                default="False"/>
+      <input_port name="chassis_spin_vel"
+                  default="False"/>
     </Action>
         <Action ID="SendGoal"
             editable="true">
