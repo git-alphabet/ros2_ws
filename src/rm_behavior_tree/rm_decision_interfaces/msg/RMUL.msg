@@ -1,4 +1,7 @@
 # v1.6.1 0x0001 比赛状态数据
+# 新增：标准ROS头文件，包含时间戳（stamp）和坐标系（frame_id），用于数据时间戳对齐
+std_msgs/Header header
+
 uint8 game_progress # 当前比赛阶段
 uint16 stage_remain_time # 当前阶段剩余时间
 

@@ -10,7 +10,7 @@ IsDetectEnemyAction::IsDetectEnemyAction(const std::string & name, const BT::Nod
 
 BT::NodeStatus IsDetectEnemyAction::detectEnemyStatus()
 {
-  // 关键修改1：获取输入端口的消息类型改为 RMUL
+  // 1. 获取输入的RMUL.msg数据
   auto msg = getInput<auto_aim_interfaces::msg::RMUL>("message");
 
   if (!msg) {
@@ -18,11 +18,27 @@ BT::NodeStatus IsDetectEnemyAction::detectEnemyStatus()
     return BT::NodeStatus::FAILURE;
   }
 
-  // 关键修改2：直接判断 RMUL.msg 中的 bool 字段 is_detect_enemy
-  // true = 检测到敌人（返回SUCCESS），false = 未检测到敌人（返回FAILURE）
+  // 2. 数据时间戳对齐：判断数据是否在有效时间范围内（核心新增逻辑）
+  // 2.1 获取当前时刻（ROS2当前时间）
+  rclcpp::Time current_time = rclcpp::Clock().now();
+  // 2.2 获取msg的生成时间戳（从header.stamp中提取）
+  rclcpp::Time msg_time(msg->header.stamp.sec, msg->header.stamp.nanosec);
+  // 2.3 计算时间差（单位：毫秒ms），此处设置有效阈值为100ms（可根据你的系统调整）
+  const int64_t valid_time_threshold = 100; // 有效数据超时时间：100毫秒
+  int64_t time_diff_ms = (current_time - msg_time).nanoseconds() / 1000000;
+
+  // 2.4 过滤过期数据：如果时间差超过阈值，直接返回FAILURE，不使用该数据
+  if (time_diff_ms > valid_time_threshold || time_diff_ms < 0) {
+    std::cerr << "RMUL data is expired! Time diff: " << time_diff_ms << "ms (threshold: " << valid_time_threshold << "ms)" << '\n';
+    return BT::NodeStatus::FAILURE;
+  }
+
+  // 3. 原有逻辑：判断是否检测到敌人（仅使用有效时间范围内的数据）
   if (msg->is_detect_enemy) {
+    // 检测到敌人（且数据未过期）
     return BT::NodeStatus::SUCCESS;
   } else {
+    // 未检测到敌人
     return BT::NodeStatus::FAILURE;
   }
 }
