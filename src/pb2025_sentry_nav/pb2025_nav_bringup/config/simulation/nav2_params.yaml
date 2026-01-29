@@ -14,6 +14,11 @@ pb_navigation_switches:
     odometry_source: "point_lio"                   #point_lio / small_point_lio / loam_interface
     behavior_tree: "default"                       # .xml or default,none
 
+    # Gazebo 真值底盘里程计桥接开关（/<ns>/chassis_odometry_gt）：
+    # - true: 从仿真桥接底盘真值里程计，方便调试/对比
+    # - false: 不桥接真值里程计，用于模拟“实车只有雷达+雷达IMU”的极端场景，验证云台转动是否会污染定位/规划
+    enable_chassis_odometry_gt: false
+
     #订阅 /auto_aim_yaw,生成 chassis -> gimbal_yaw 的 TF
     # 仿真默认由 Gazebo 发布 gimbal_yaw 相关 TF，不需要启用该 bridge；需要时可手动打开做联调
     enable_auto_aim_yaw_bridge: true
