@@ -27,6 +27,7 @@ double laser_point_cov = 0.01, acc_norm;
 double vel_cov, acc_cov_input, gyr_cov_input;
 double gyr_cov_output, acc_cov_output, b_gyr_cov, b_acc_cov;
 double imu_meas_acc_cov, imu_meas_omg_cov;
+bool fix_gravity_direction = true;
 int lidar_type, pcd_save_interval;
 std::vector<double> gravity_init, gravity;
 bool runtime_pos_log, pcd_save_en, path_en, extrinsic_est_en = true;
@@ -77,6 +78,9 @@ void readParameters(std::shared_ptr<rclcpp::Node> & nh)
 
     nh->declare_parameter<double>("mapping.acc_norm", 1.0);
     nh->get_parameter("mapping.acc_norm", acc_norm);
+
+    nh->declare_parameter<bool>("mapping.fix_gravity_direction", true);
+    nh->get_parameter("mapping.fix_gravity_direction", fix_gravity_direction);
 
     nh->declare_parameter<float>("mapping.plane_thr", 0.05f);
     nh->get_parameter("mapping.plane_thr", plane_thr);

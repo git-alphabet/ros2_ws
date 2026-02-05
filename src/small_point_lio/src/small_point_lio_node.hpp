@@ -19,9 +19,9 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <small_point_lio/pch.h>
 #include <std_srvs/srv/trigger.hpp>
-#include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_broadcaster.hpp>
-#include <tf2_ros/transform_listener.h>
+
+#include <mutex>
 
 namespace small_point_lio {
 
@@ -30,13 +30,12 @@ namespace small_point_lio {
         std::unique_ptr<small_point_lio::SmallPointLio> small_point_lio;
         std::vector<common::Point> pointcloud;
         std::vector<Eigen::Vector3f> pointcloud_to_save;
+        std::mutex pointcloud_to_save_mutex;
         std::unique_ptr<LidarAdapterBase> lidar_adapter;
         std::shared_ptr<rclcpp::Subscription<sensor_msgs::msg::Imu>> imu_subsciber;
         std::shared_ptr<rclcpp::Publisher<nav_msgs::msg::Odometry>> odometry_publisher;
         std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>> pointcloud_publisher;
         std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster;
-        std::unique_ptr<tf2_ros::Buffer> tf_buffer;
-        std::shared_ptr<tf2_ros::TransformListener> tf_listener;
         rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr map_save_trigger;
         common::Odometry last_odometry;
 

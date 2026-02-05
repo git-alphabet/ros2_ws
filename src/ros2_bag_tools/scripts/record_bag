@@ -1,0 +1,133 @@
+done
+#!/usr/bin/env python3
+
+from __future__ import annotations
+
+import argparse
+import datetime as _dt
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+
+def _ws_root() -> Path:
+    # this file: <ws>/src/ros2_bag_tools/scripts/record_bag
+    return Path(__file__).resolve().parents[3]
+
+
+def _ros2_in_path() -> bool:
+    return shutil.which("ros2") is not None
+
+
+def _pkg_prefix(pkg: str) -> Path | None:
+    try:
+        out = subprocess.check_output(["ros2", "pkg", "prefix", pkg], text=True).strip()
+    except Exception:
+        return None
+    return Path(out) if out else None
+
+
+def _find_topics_file(mode: str) -> Path:
+    ws_root = _ws_root()
+    name = f"bag_topics_{mode}.txt"
+    source_path = ws_root / "src" / "ros2_bag_tools" / "topics" / name
+    if source_path.is_file():
+        return source_path
+
+    prefix = _pkg_prefix("ros2_bag_tools")
+    if prefix is not None:
+        installed = prefix / "share" / "ros2_bag_tools" / "topics" / name
+        if installed.is_file():
+            return installed
+
+    raise FileNotFoundError(
+        f"找不到话题列表文件（mode={mode}）。期望存在：{source_path}（或已安装 share 目录）"
+    )
+
+
+def _read_topics(path: Path) -> list[str]:
+    topics: list[str] = []
+    for raw in path.read_text().splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        topics.append(line)
+    return topics
+
+
+def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(
+        prog="record_bag",
+        description=(
+            "ros2 bag 录制（默认按时间命名输出目录）。"
+            "建议先 source /opt/ros/humble/setup.bash 和工作空间 install/setup.bash。"
+        ),
+    )
+    parser.add_argument("--mode", choices=["basic", "full"], default="basic")
+    parser.add_argument("--out-dir", default="", help="输出根目录（默认工作区 src/ros2_bag_tools/bags）")
+    parser.add_argument("--max-bag-size-mb", type=int, default=2048)
+    parser.add_argument("--compress", choices=["", "zstd"], default="")
+    parser.add_argument("--storage", choices=["sqlite3", "mcap"], default="sqlite3")
+    args = parser.parse_args(argv)
+
+    if not _ros2_in_path():
+        print(
+            "找不到 ros2 命令。请先 source ROS2 环境（如 /opt/ros/humble/setup.bash）以及工作空间 install/setup.bash",
+            file=sys.stderr,
+        )
+        return 1
+
+    ws_root = _ws_root()
+    default_out = ws_root / "src" / "ros2_bag_tools" / "bags"
+    if not default_out.is_dir():
+        default_out = ws_root / "bags"
+    out_dir = Path(args.out_dir).expanduser() if args.out_dir else default_out
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    topics_file = _find_topics_file(args.mode)
+    topics = _read_topics(topics_file)
+    if not topics:
+        print(f"话题列表为空: {topics_file}", file=sys.stderr)
+        return 1
+
+    ts = _dt.datetime.now().strftime("%F_%H-%M-%S")
+    bag_path = out_dir / ts
+
+    max_bag_size_bytes = int(args.max_bag_size_mb) * 1024 * 1024
+
+    record_cmd: list[str] = [
+        "ros2",
+        "bag",
+        "record",
+        "-o",
+        str(bag_path),
+        "--storage",
+        args.storage,
+        "--max-bag-size",
+        str(max_bag_size_bytes),
+    ]
+
+    if args.compress:
+        if args.compress == "zstd":
+            record_cmd += ["--compression-mode", "file", "--compression-format", "zstd"]
+
+    record_cmd += topics
+
+    print(f"录包模式: {args.mode}")
+    print(f"话题列表: {topics_file}（{len(topics)} 个）")
+    print(f"输出目录: {bag_path}")
+    print(f"storage: {args.storage}")
+    print(f"分包大小: {args.max_bag_size_mb} MB")
+    if args.compress:
+        print(f"压缩: {args.compress}")
+    print("开始录包...（Ctrl+C 停止）")
+
+    # 让 Ctrl+C 行为与 ros2 bag 一致
+    os.execvp(record_cmd[0], record_cmd)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

@@ -1,4 +1,8 @@
 import os
+import tempfile
+import re
+
+import yaml  # type: ignore
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchContext, LaunchDescription
@@ -11,10 +15,21 @@ from launch.actions import (
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, TextSubstitution
 from launch_ros.actions import Node
-from launch_ros.descriptions import ParameterFile
-from nav2_common.launch import RewrittenYaml
 from sdformat_tools.urdf_generator import UrdfGenerator
 from xmacro.xmacro4sdf import XMLMacro4sdf
+
+
+def _make_urdf_mesh_uris_portable(urdf_xml: str) -> str:
+        """Rewrite absolute file:// URIs produced on another machine into package:// URIs.
+
+        Example from remote robot_description:
+            file:///.../install/rmoss_gz_resources/share/rmoss_gz_resources/resource/... ->
+            package://rmoss_gz_resources/resource/...
+        """
+
+        # Match: file:///.../install/<pkg>/share/<pkg>/
+        pattern = re.compile(r"file:///(?:(?!\s).)*/install/([^/\s]+)/share/\1/")
+        return pattern.sub(r"package://\1/", urdf_xml)
 
 
 def launch_setup(context: LaunchContext) -> list:
@@ -42,20 +57,36 @@ def launch_setup(context: LaunchContext) -> list:
     # Generate URDF from SDF
     urdf_generator = UrdfGenerator()
     urdf_generator.parse_from_sdf_string(robot_xml)
-    robot_urdf_xml = urdf_generator.to_string()
+    robot_urdf_xml = _make_urdf_mesh_uris_portable(urdf_generator.to_string())
 
-    # Create our own temporary YAML files that include substitutions
-    param_substitutions = {"use_sim_time": use_sim_time}
+    # Resolve params file to a concrete path. When `namespace` is empty (common
+    # on the real robot), passing a LaunchConfiguration directly to ParameterFile
+    # can result in parameters not being applied.
+    params_file_value = (context.launch_configurations.get("params_file") or "").strip()
+    if not params_file_value:
+        raise RuntimeError("params_file launch argument resolved to an empty path")
 
-    configured_params = ParameterFile(
-        RewrittenYaml(
-            source_file=params_file,
-            root_key=namespace,
-            param_rewrites=param_substitutions,
-            convert_types=True,
-        ),
-        allow_substs=True,
-    )
+    # NOTE:
+    # `launch_ros` may pass an empty namespace as "__ns:=/". In that case the resolved
+    # value becomes "/". Also, many stacks pass namespaces with a leading '/'.
+    # nav2_common.launch.RewrittenYaml + ParameterFile may generate a temporary YAML file
+    # that can be cleaned up early; if that happens, nodes fall back to default params.
+    #
+    # Here we avoid that failure mode by:
+    # - Using the real params YAML path directly when no namespace is requested.
+    # - When a namespace is requested, wrapping the YAML under that root key and writing
+    #   a delete=False temporary file ourselves.
+    namespace_value = (context.launch_configurations.get("namespace") or "").strip()
+    normalized_root_key = namespace_value.lstrip("/")
+    if normalized_root_key:
+        with open(params_file_value, "r", encoding="utf-8") as f:
+            raw_yaml = yaml.safe_load(f) or {}
+        namespaced_yaml = {normalized_root_key: raw_yaml}
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".yaml") as tmp_file:
+            yaml.safe_dump(namespaced_yaml, tmp_file, default_flow_style=False)
+            configured_params = tmp_file.name
+    else:
+        configured_params = params_file_value
 
     stdout_linebuf_envvar = SetEnvironmentVariable(
         "RCUTILS_LOGGING_BUFFERED_STREAM", "1"
@@ -72,7 +103,7 @@ def launch_setup(context: LaunchContext) -> list:
                 output="screen",
                 respawn=use_respawn,
                 respawn_delay=2.0,
-                parameters=[configured_params],
+                parameters=[configured_params, {"use_sim_time": use_sim_time}],
                 arguments=["--ros-args", "--log-level", log_level],
             ),
             Node(
@@ -83,7 +114,7 @@ def launch_setup(context: LaunchContext) -> list:
                 respawn_delay=2.0,
                 parameters=[
                     configured_params,
-                    {"robot_description": robot_urdf_xml},
+                    {"use_sim_time": use_sim_time, "robot_description": robot_urdf_xml},
                 ],
                 arguments=["--ros-args", "--log-level", log_level],
             ),

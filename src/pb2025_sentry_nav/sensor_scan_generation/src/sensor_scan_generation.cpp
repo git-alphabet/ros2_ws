@@ -17,8 +17,39 @@
 #include "pcl_ros/transforms.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
+#include "tf2/LinearMath/Matrix3x3.h"
+
 namespace sensor_scan_generation
 {
+
+namespace
+{
+
+bool isNearIdentity(const tf2::Transform & t, const double eps = 1e-9)
+{
+  const auto & o = t.getOrigin();
+  if (std::abs(o.x()) > eps || std::abs(o.y()) > eps || std::abs(o.z()) > eps) {
+    return false;
+  }
+
+  const auto & q = t.getRotation();
+  if (std::abs(q.x()) > eps || std::abs(q.y()) > eps || std::abs(q.z()) > eps) {
+    return false;
+  }
+  // identity quaternion is (0,0,0,1)
+  return std::abs(q.w() - 1.0) <= eps;
+}
+
+double yawFromQuat(const tf2::Quaternion & q)
+{
+  double roll = 0.0;
+  double pitch = 0.0;
+  double yaw = 0.0;
+  tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
+  return yaw;
+}
+
+}  // namespace
 
 SensorScanGenerationNode::SensorScanGenerationNode(const rclcpp::NodeOptions & options)
 : Node("sensor_scan_generation", options)
@@ -26,10 +57,16 @@ SensorScanGenerationNode::SensorScanGenerationNode(const rclcpp::NodeOptions & o
   this->declare_parameter<std::string>("lidar_frame", "");
   this->declare_parameter<std::string>("base_frame", "");
   this->declare_parameter<std::string>("robot_base_frame", "");
+  this->declare_parameter<bool>("freeze_lidar_mount_tf", false);
+  this->declare_parameter<bool>("debug_tf", false);
+  this->declare_parameter<int>("debug_tf_throttle_ms", 1000);
 
   this->get_parameter("lidar_frame", lidar_frame_);
   this->get_parameter("base_frame", base_frame_);
   this->get_parameter("robot_base_frame", robot_base_frame_);
+  this->get_parameter("freeze_lidar_mount_tf", freeze_lidar_mount_tf_);
+  this->get_parameter("debug_tf", debug_tf_);
+  this->get_parameter("debug_tf_throttle_ms", debug_tf_throttle_ms_);
 
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_);
@@ -69,8 +106,57 @@ void SensorScanGenerationNode::laserCloudAndOdometryHandler(
   tf2::Transform tf_odom_to_lidar;
 
   tf2::fromMsg(odometry_msg->pose.pose, tf_odom_to_lidar);
-  tf_lidar_to_robot_base_ = getTransform(lidar_frame_, robot_base_frame_, pcd_msg->header.stamp);
-  tf_lidar_to_chassis = getTransform(lidar_frame_, base_frame_, pcd_msg->header.stamp);
+
+  if (freeze_lidar_mount_tf_ && !mount_tf_cached_) {
+    try {
+      const auto lidar_to_base = tf_buffer_->lookupTransform(
+        lidar_frame_, base_frame_, pcd_msg->header.stamp, rclcpp::Duration::from_seconds(0.5));
+      const auto lidar_to_robot_base = tf_buffer_->lookupTransform(
+        lidar_frame_, robot_base_frame_, pcd_msg->header.stamp,
+        rclcpp::Duration::from_seconds(0.5));
+      tf2::fromMsg(lidar_to_base.transform, cached_lidar_to_base_);
+      tf2::fromMsg(lidar_to_robot_base.transform, cached_lidar_to_robot_base_);
+      mount_tf_cached_ = true;
+      RCLCPP_INFO(
+        this->get_logger(),
+        "freeze_lidar_mount_tf=true: cached lidar mount TFs at t=%.3f (lidar='%s', base='%s', robot_base='%s')",
+        rclcpp::Time(pcd_msg->header.stamp).seconds(), lidar_frame_.c_str(), base_frame_.c_str(),
+        robot_base_frame_.c_str());
+    } catch (tf2::TransformException & ex) {
+      RCLCPP_WARN_THROTTLE(
+        this->get_logger(), *this->get_clock(), 2000,
+        "freeze_lidar_mount_tf=true: waiting for TF (%s -> %s, %s -> %s): %s",
+        base_frame_.c_str(), lidar_frame_.c_str(), robot_base_frame_.c_str(), lidar_frame_.c_str(),
+        ex.what());
+      return;
+    }
+  }
+
+  if (freeze_lidar_mount_tf_) {
+    tf_lidar_to_robot_base_ = cached_lidar_to_robot_base_;
+    tf_lidar_to_chassis = cached_lidar_to_base_;
+  } else {
+    tf_lidar_to_robot_base_ = getTransform(lidar_frame_, robot_base_frame_, pcd_msg->header.stamp);
+    tf_lidar_to_chassis = getTransform(lidar_frame_, base_frame_, pcd_msg->header.stamp);
+  }
+
+  if (debug_tf_) {
+    const tf2::Transform tf_chassis_to_robot_base = tf_lidar_to_chassis.inverse() * tf_lidar_to_robot_base_;
+    const double yaw = yawFromQuat(tf_chassis_to_robot_base.getRotation());
+    const double yaw_deg = yaw * 180.0 / M_PI;
+
+    const bool id_lidar_to_chassis = isNearIdentity(tf_lidar_to_chassis);
+    const bool id_lidar_to_robot_base = isNearIdentity(tf_lidar_to_robot_base_);
+
+    RCLCPP_INFO_THROTTLE(
+      this->get_logger(), *this->get_clock(),
+      static_cast<uint64_t>(std::max(1, debug_tf_throttle_ms_)),
+      "TF debug: got '%s'->'%s'=%s, '%s'->'%s'=%s; derived '%s'->'%s' yaw=%.6f rad (%.2f deg) at t=%.3f",
+      base_frame_.c_str(), lidar_frame_.c_str(), id_lidar_to_chassis ? "IDENTITY" : "OK",
+      robot_base_frame_.c_str(), lidar_frame_.c_str(), id_lidar_to_robot_base ? "IDENTITY" : "OK",
+      base_frame_.c_str(), robot_base_frame_.c_str(), yaw, yaw_deg,
+      rclcpp::Time(pcd_msg->header.stamp).seconds());
+  }
 
   tf_odom_to_chassis = tf_odom_to_lidar * tf_lidar_to_chassis;
   tf_odom_to_robot_base = tf_odom_to_lidar * tf_lidar_to_robot_base_;
@@ -95,7 +181,10 @@ tf2::Transform SensorScanGenerationNode::getTransform(
     tf2::fromMsg(transform_stamped.transform, transform);
     return transform;
   } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN(this->get_logger(), "TF lookup failed: %s. Returning identity.", ex.what());
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(), 2000,
+      "TF lookup failed (%s -> %s) at t=%.3f: %s. Returning identity.",
+      source_frame.c_str(), target_frame.c_str(), time.seconds(), ex.what());
     return tf2::Transform::getIdentity();
   }
 }

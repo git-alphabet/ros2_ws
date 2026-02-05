@@ -7,6 +7,8 @@
 #include "preprocess.h"
 #include "parameters.h"
 
+#include <cmath>
+
 namespace small_point_lio {
 
     void Preprocess::reset() {
@@ -25,6 +27,18 @@ namespace small_point_lio {
         filtered_points.reserve(pointcloud.size());
         for (size_t i = 0; i < pointcloud.size(); i++) {
             const auto &point = pointcloud[i];
+            if (!std::isfinite(point.position.x()) || !std::isfinite(point.position.y()) || !std::isfinite(point.position.z())) {
+                continue;
+            }
+
+            const float dist = point.position.squaredNorm();
+            if (!std::isfinite(dist)) {
+                continue;
+            }
+            if (dist < parameters->min_distance_squared || dist > parameters->max_distance_squared) {
+                continue;
+            }
+
             if (point.timestamp >= last_timestamp_dense_point) {
                 dense_points.push_back(point);
             }
@@ -34,12 +48,15 @@ namespace small_point_lio {
             if (point.timestamp < last_timestamp_lidar) {
                 continue;
             }
-            float dist = point.position.squaredNorm();
-            if (dist < parameters->min_distance_squared || dist > parameters->max_distance_squared) {
-                continue;
-            }
             filtered_points.push_back(point);
         }
+
+        if (parameters->space_downsample && !dense_points.empty()) {
+            std::vector<common::Point> dense_downsampled;
+            downsampler.voxelgrid_sampling(dense_points, dense_downsampled, parameters->space_downsample_leaf_size);
+            dense_points = std::move(dense_downsampled);
+        }
+
         if (parameters->space_downsample) {
             downsampler.voxelgrid_sampling(filtered_points, processed_pointcloud, parameters->space_downsample_leaf_size);
         } else {

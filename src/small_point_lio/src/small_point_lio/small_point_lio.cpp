@@ -6,6 +6,9 @@
 
 #include "small_point_lio.h"
 
+#include <iomanip>
+#include <sstream>
+
 namespace small_point_lio {
 
     SmallPointLio::SmallPointLio(rclcpp::Node &node) {
@@ -58,8 +61,37 @@ namespace small_point_lio {
                     }
                     state::value_type scale = -static_cast<state::value_type>(parameters.gravity.norm()) / estimator.kf.x.gravity.norm();
                     estimator.kf.x.gravity *= scale;
+
+                    {
+                        std::ostringstream oss;
+                        oss.setf(std::ios::fixed);
+                        oss << std::setprecision(6);
+                        oss << "gravity auto-calibrated (fix_gravity_direction=true)";
+                        oss << ", gravity_est=[" << estimator.kf.x.gravity.x() << ", "
+                            << estimator.kf.x.gravity.y() << ", "
+                            << estimator.kf.x.gravity.z() << "]";
+                        oss << ", |gravity_est|=" << estimator.kf.x.gravity.norm();
+                        oss << ", |gravity_param|=" << parameters.gravity.norm();
+                        oss << ", acc_norm=" << parameters.acc_norm;
+                        oss << ", imu_acc_scale=" << estimator.imu_acceleration_scale;
+                        RCLCPP_INFO(rclcpp::get_logger("small_point_lio"), "%s", oss.str().c_str());
+                    }
                 } else {
                     estimator.kf.x.gravity = parameters.gravity.cast<state::value_type>();
+
+                    {
+                        std::ostringstream oss;
+                        oss.setf(std::ios::fixed);
+                        oss << std::setprecision(6);
+                        oss << "gravity init from parameter (fix_gravity_direction=false)";
+                        oss << ", gravity_param=[" << parameters.gravity.x() << ", "
+                            << parameters.gravity.y() << ", "
+                            << parameters.gravity.z() << "]";
+                        oss << ", |gravity_param|=" << parameters.gravity.norm();
+                        oss << ", acc_norm=" << parameters.acc_norm;
+                        oss << ", imu_acc_scale=" << estimator.imu_acceleration_scale;
+                        RCLCPP_INFO(rclcpp::get_logger("small_point_lio"), "%s", oss.str().c_str());
+                    }
                 }
                 estimator.kf.x.acceleration = -estimator.kf.x.gravity;
                 // init time
