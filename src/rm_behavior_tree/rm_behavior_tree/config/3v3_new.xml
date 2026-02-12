@@ -64,8 +64,9 @@
                                 </RateController>
 
                                 <!-- 控制区内巡航/微动，避免点卡死区导致“以为站住了但读不到卡” -->
-                                <RobotControl stop_gimbal_scan="False"
-                                            chassis_spin="True"/>
+                                <MoveAround expected_nearby_goal_count="5"
+                                            expected_dis="0.3"
+                                            message="{current_location}"/>
                             </ReactiveSequence>
 
                         </ReactiveFallback>
