@@ -398,7 +398,7 @@ nonlinear_spin_publisher:
     use_sim_time: True
 
     # 总开关：true 才会开始发布 cmd_spin
-    enabled: true
+    enabled: false
 
     # 触发策略：满足“发布第一条 nav2_goal 再开始转”
     # 这里不直接监听 action goal（实现复杂且不同客户端可能不同），而是监听 Nav2 的速度输出。

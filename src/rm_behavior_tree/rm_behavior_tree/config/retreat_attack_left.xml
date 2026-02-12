@@ -47,6 +47,7 @@
                 <!-- Converted from structured goal_pose to goal_x/goal_y -->
                 <SendGoal name="SupplyArea"
                           goal_x="-2.5" goal_y="4.07"
+                          frame_id="map"
                           action_name="navigate_to_pose"/>
 
               </Fallback>
@@ -72,6 +73,7 @@
                   <!-- Converted from structured goal_pose to goal_x/goal_y -->
                   <SendGoal name="BaseFrontWall"
                             goal_x="0.8" goal_y="-2.0"
+                            frame_id="map"
                             action_name="navigate_to_pose"/>
 
                   <WhileDoElse>
@@ -84,6 +86,7 @@
                       <!-- Converted from structured goal_pose to goal_x/goal_y -->
                       <SendGoal name="OccupyCenter"
                                 goal_x="3.0" goal_y="0.4"
+                                frame_id="map"
                                 action_name="navigate_to_pose"/>
 
                     </RateController>
@@ -94,6 +97,7 @@
                        <!-- Converted from structured goal_pose to goal_x/goal_y -->
                        <SendGoal name="Attack_Left"
                                  goal_x="5.1" goal_y="1.9"
+                                 frame_id="map"
                                  action_name="navigate_to_pose"/>
 
                       </RateController>
@@ -101,6 +105,7 @@
                         <!-- Converted from structured goal_pose to goal_x/goal_y -->
                         <SendGoal name="Center"
                                   goal_x="3.0" goal_y="1.0"
+                                  frame_id="map"
                                   action_name="navigate_to_pose"/>
 
                       </RateController>
@@ -113,6 +118,7 @@
                 <!-- Converted from structured goal_pose to goal_x/goal_y -->
                 <SendGoal name="SupplyArea"
                           goal_x="-2.5" goal_y="4.07"
+                          frame_id="map"
                           action_name="navigate_to_pose"/>
               </RateController>
             </WhileDoElse>
@@ -123,6 +129,7 @@
             <!-- Converted from structured goal_pose to goal_x/goal_y -->
             <SendGoal name="Home"
                       goal_x="3.0" goal_y="1.0"
+                      frame_id="map"
                       action_name="navigate_to_pose"/>
           </RateController>
           <RobotControl stop_gimbal_scan="True"
@@ -201,6 +208,7 @@
           default="{goal_pose}"/>
       <input_port name="goal_x" default="0.0"/>
       <input_port name="goal_y" default="0.0"/>
+      <input_port name="frame_id" default="map"/>
       <input_port name="action_name"
           default="navigate_to_pose"/>
         </Action>

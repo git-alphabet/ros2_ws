@@ -104,6 +104,7 @@
                                 <SendGoal name="GoSupplyToHeal"
                                     goal_x="{nav.goal_x}"
                                     goal_y="{nav.goal_y}"
+                                    frame_id="map"
                                     min_interval_ms="200"/>
 
                                 <!-- 这里不再放 IsWithinScope，避免“到达瞬间”还多发一拍导航 -->
@@ -139,6 +140,7 @@
             <input_port name="goal_pose" default="{goal_pose}"/>
             <input_port name="goal_x" default="0.0"/>
             <input_port name="goal_y" default="0.0"/>
+            <input_port name="frame_id" default="map"/>
             <input_port name="action_name" default="navigate_to_pose"/>
         </Action>
 

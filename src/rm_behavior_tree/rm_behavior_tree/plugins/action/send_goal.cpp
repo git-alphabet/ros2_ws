@@ -37,6 +37,14 @@ bool SendGoalAction::isSameGoal_(const geometry_msgs::msg::PoseStamped & a,
 bool SendGoalAction::setMessage(geometry_msgs::msg::PoseStamped & msg)
 {
   geometry_msgs::msg::PoseStamped goal;
+  std::string frame_id = "map";
+  {
+    auto r_frame = getInput<std::string>("frame_id");
+    if (r_frame && !r_frame.value().empty()) {
+      frame_id = r_frame.value();
+    }
+  }
+
   auto res = getInput<geometry_msgs::msg::PoseStamped>("goal_pose");
   if (res.has_value()) {
     goal = res.value();
@@ -63,6 +71,11 @@ bool SendGoalAction::setMessage(geometry_msgs::msg::PoseStamped & msg)
     }
   }
 
+  // If goal_pose has a valid frame_id, prefer it. Otherwise fall back to input port.
+  if (!goal.header.frame_id.empty()) {
+    frame_id = goal.header.frame_id;
+  }
+
   // Optional throttle: default 0 keeps old behavior (always publish).
   int min_interval_ms = 0;
   auto r_interval = getInput<int>("min_interval_ms");
@@ -73,8 +86,8 @@ bool SendGoalAction::setMessage(geometry_msgs::msg::PoseStamped & msg)
     }
   }
 
-  // Use SYSTEM_TIME to keep consistent with stored last_pub_time_
-  auto now = rclcpp::Clock(RCL_SYSTEM_TIME).now();
+  // Use node clock (ROS time) so simulation (/clock) works correctly.
+  auto now = node_->get_clock()->now();
 
   if (min_interval_ms > 0 && has_last_) {
     const bool same_goal = isSameGoal_(goal, last_goal_);
@@ -89,13 +102,13 @@ bool SendGoalAction::setMessage(geometry_msgs::msg::PoseStamped & msg)
     }
   }
 
-  // Convert rclcpp::Time -> builtin_interfaces::msg::Time manually (compat with this rclcpp version)
+  // Convert rclcpp::Time -> builtin_interfaces::msg::Time manually
   {
     const uint64_t ns = now.nanoseconds();
     msg.header.stamp.sec = static_cast<int32_t>(ns / 1000000000ULL);
     msg.header.stamp.nanosec = static_cast<uint32_t>(ns % 1000000000ULL);
   }
-  msg.header.frame_id = "chassis";
+  msg.header.frame_id = frame_id;
   msg.pose.position.x = goal.pose.position.x;
   msg.pose.position.y = goal.pose.position.y;
   msg.pose.position.z = goal.pose.position.z;

@@ -47,6 +47,7 @@
                 <!-- Converted from goal_pose to goal_x/goal_y -->
                 <SendGoal name="SupplyArea"
                           goal_x="-2.5" goal_y="4.07"
+                          frame_id="map"
                           action_name="navigate_to_pose"/>
               </Fallback>
             </WhileDoElse>
@@ -72,6 +73,7 @@
                     <!-- Converted from goal_pose to goal_x/goal_y -->
                     <SendGoal name="ProtectSupply"
                               goal_x="-1.1" goal_y="3.4"
+                              frame_id="map"
                               action_name="navigate_to_pose"/>
                   </RateController>
                   <WhileDoElse>
@@ -87,9 +89,11 @@
                     <!-- Converted from goal_pose to goal_x/goal_y -->
                     <SendGoal name="OccupyCenter"
                               goal_x="3.0" goal_y="0.4"
+                              frame_id="map"
                               action_name="navigate_to_pose"/>
                     <SendGoal name="BaseLeft"
                               goal_x="-2.2" goal_y="0.3"
+                              frame_id="map"
                               action_name="navigate_to_pose"/>
                   </WhileDoElse>
                 </WhileDoElse>
@@ -99,6 +103,7 @@
                 <!-- Converted from goal_pose to goal_x/goal_y -->
                 <SendGoal name="SupplyArea"
                           goal_x="-2.5" goal_y="4.07"
+                          frame_id="map"
                           action_name="navigate_to_pose"/>
               </RateController>
             </WhileDoElse>
@@ -109,6 +114,7 @@
             <!-- TODO: set goal_x and goal_y -->
             <SendGoal name="Home"
                       goal_x="0.0" goal_y="0.0"
+                      frame_id="map"
                       action_name="navigate_to_pose"/>
           </RateController>
           <RobotControl stop_gimbal_scan="True"
@@ -187,6 +193,7 @@
           default="{goal_pose}"/>
       <input_port name="goal_x" default="0.0"/>
       <input_port name="goal_y" default="0.0"/>
+      <input_port name="frame_id" default="map"/>
       <input_port name="action_name"
           default="navigate_to_pose"/>
         </Action>

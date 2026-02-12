@@ -44,6 +44,8 @@ public:
       // Alternatively pass coordinates directly in XML: goal_x and goal_y
       BT::InputPort<double>("goal_x", 0.0, "goal x coordinate"),
       BT::InputPort<double>("goal_y", 0.0, "goal y coordinate"),
+      // Frame of goal_x/goal_y (and fallback for goal_pose if header.frame_id is empty)
+      BT::InputPort<std::string>("frame_id", "map", "frame_id for the goal (e.g. map/odom/chassis)"),
       // Compatibility: accept action_name from XML even though this node publishes to a topic.
       BT::InputPort<std::string>("action_name", "navigate_to_pose"),
       // Optional: throttle interval in milliseconds. Default 0 keeps old behavior (publish every tick).
@@ -62,7 +64,7 @@ private:
 
   geometry_msgs::msg::PoseStamped last_goal_;
   geometry_msgs::msg::PoseStamped last_log_goal_;
-  rclcpp::Time last_pub_time_{0, 0, RCL_SYSTEM_TIME};
+  rclcpp::Time last_pub_time_{0, 0, RCL_ROS_TIME};
   bool has_last_{false};
   bool has_log_goal_{false};
   int log_count_{0};

@@ -48,6 +48,7 @@
               <SendGoal name="SupplyArea"
                     goal_x="-3.3"
                     goal_y="-7.1"
+                  frame_id="map"
                     action_name="navigate_to_pose"/>
               </Fallback>
             </WhileDoElse>
@@ -71,10 +72,12 @@
                   <SendGoal name="ProtectFeiPo"
                             goal_x="7.1"
                             goal_y="6.8"
+                            frame_id="map"
                             action_name="navigate_to_pose"/>
                   <SendGoal name="Home"
                             goal_x="0.0"
                             goal_y="0.0"
+                            frame_id="map"
                             action_name="navigate_to_pose"/>
                 </WhileDoElse>
               </WhileDoElse>
@@ -82,6 +85,7 @@
               <SendGoal name="SupplyArea"
                         goal_x="-3.3"
                         goal_y="-7.1"
+                        frame_id="map"
                         action_name="navigate_to_pose"/>
             </WhileDoElse>
           </WhileDoElse>
@@ -90,6 +94,7 @@
         <SendGoal name="Home"
             goal_x="0.0"
             goal_y="0.0"
+          frame_id="map"
             action_name="navigate_to_pose"/>
       </WhileDoElse>
     </ReactiveSequence>
@@ -163,6 +168,7 @@
           default="{goal_pose}"/>
       <input_port name="goal_x" default="0.0"/>
       <input_port name="goal_y" default="0.0"/>
+          <input_port name="frame_id" default="map"/>
       <input_port name="action_name"
           default="navigate_to_pose"/>
         </Action>

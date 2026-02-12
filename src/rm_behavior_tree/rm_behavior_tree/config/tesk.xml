@@ -58,7 +58,7 @@
                              heat_threshold="350"/>
                   <!-- Converted from goal_pose to goal_x/goal_y -->
                   <SendGoal name="GotoSupply" 
-                           goal_x="-2.5" goal_y="4.07"/>
+                           goal_x="-2.5" goal_y="4.07" frame_id="map"/>
                 </Fallback>
               </WhileDoElse>
             </ReactiveSequence>
@@ -74,19 +74,19 @@
                   <RateController hz="1">
                   <!-- Converted from goal_pose to goal_x/goal_y -->
                   <SendGoal name="OccupyCenter" 
-                           goal_x="3.0" goal_y="0.4"/>
+                           goal_x="3.0" goal_y="0.4" frame_id="map"/>
                 </RateController>
                 <WhileDoElse name="PatrolLogic">
                   <IsFriendOK message="{robot_hp}" friend_color="red"/>
                     <RateController hz="1">
                     <!-- Converted from goal_pose to goal_x/goal_y -->
                     <SendGoal name="PatrolLeft" 
-                             goal_x="5.1" goal_y="1.9"/>
+                             goal_x="5.1" goal_y="1.9" frame_id="map"/>
                   </RateController>
                     <RateController hz="1">
                     <!-- Converted from goal_pose to goal_x/goal_y -->
                     <SendGoal name="PatrolCenter" 
-                             goal_x="3.0" goal_y="1.0"/>
+                             goal_x="3.0" goal_y="1.0" frame_id="map"/>
                   </RateController>
                 </WhileDoElse>
               </WhileDoElse>
@@ -99,7 +99,7 @@
           <RateController hz="1">
             <!-- TODO: set goal_x and goal_y -->
             <SendGoal name="HomePosition" 
-                     goal_x="0.0" goal_y="0.0"/>
+                     goal_x="0.0" goal_y="0.0" frame_id="map"/>
           </RateController>
           <RobotControl stop_gimbal_scan="True" chassis_spin="False"/>
         </ReactiveSequence>
@@ -159,6 +159,7 @@
       <input_port name="goal_pose" default="{goal_pose}"/>
       <input_port name="goal_x" default="0.0"/>
       <input_port name="goal_y" default="0.0"/>
+      <input_port name="frame_id" default="map"/>
     </Action>
     <Action ID="SubAllRobotHP">
       <input_port name="topic_name" default="/robot_hp"/>

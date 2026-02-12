@@ -18,10 +18,10 @@
                             heat_threshold="9999"/>
               </Inverter>
               <!-- Converted from goal_pose to goal_x/goal_y -->
-              <SendGoal goal_x="-0.35" goal_y="-7.77"/>
+              <SendGoal goal_x="-0.35" goal_y="-7.77" frame_id="map"/>
             </Sequence>
             <SendGoal name="AttackedGoToAggressivePos"
-                      goal_x="-2.94" goal_y="3.43"/>
+                      goal_x="-2.94" goal_y="3.43" frame_id="map"/>
           </Fallback>
         </Sequence>
         <Sequence name="OriginalComplexLogic">
@@ -60,7 +60,7 @@
                                       heat_threshold="9999"/>
                         </Inverter>
                         <!-- Converted from goal_pose to goal_x/goal_y -->
-                        <SendGoal goal_x="1.0" goal_y="1.0"/>
+                        <SendGoal goal_x="1.0" goal_y="1.0" frame_id="map"/>
                       </Sequence>
                       <Sequence name="Post1Min_HighHP_GoTo_222">
                         <IsStatusOK message="{robot_status}"
@@ -68,10 +68,10 @@
                                     blue_outpost_hp_threshold="0"
                                     red_outpost_hp_threshold="0"
                                     heat_threshold="9999"/>
-                        <SendGoal goal_x="-6.94" goal_y="5.36"/>
+                        <SendGoal goal_x="-6.94" goal_y="5.36" frame_id="map"/>
                       </Sequence>
                       <SendGoal name="Post1Min_Default_GoTo_000"
-                                goal_x="-6.94" goal_y="5.36"/>
+                                goal_x="-6.94" goal_y="5.36" frame_id="map"/>
                     </Fallback>
                   </Sequence>
                   <Sequence name="NormalGoHomeLowHP">
@@ -82,7 +82,7 @@
                                   red_outpost_hp_threshold="0"
                                   heat_threshold="9999"/>
                     </Inverter>
-                    <SendGoal goal_x="3.83" goal_y="1.49"/>
+                    <SendGoal goal_x="3.83" goal_y="1.49" frame_id="map"/>
                   </Sequence>
                   <Sequence name="NormalRandomWalkMediumHP">
                     <IsStatusOK message="{robot_status}"
@@ -110,7 +110,7 @@
                                 blue_outpost_hp_threshold="0"
                                 red_outpost_hp_threshold="1"
                                 heat_threshold="9999"/>
-                    <SendGoal goal_x="-8.15" goal_y="11.22"/>
+                    <SendGoal goal_x="-8.15" goal_y="11.22" frame_id="map"/>
                   </Sequence>
                   <Sequence name="GoTacticalB_RedDead_BlueStrong">
                     <IsStatusOK message="{robot_status}"
@@ -130,7 +130,7 @@
                                 blue_outpost_hp_threshold="501"
                                 red_outpost_hp_threshold="0"
                                 heat_threshold="9999"/>
-                    <SendGoal goal_x="-12.47" goal_y="10.87"/>
+                    <SendGoal goal_x="-12.47" goal_y="10.87" frame_id="map"/>
                   </Sequence>
                   <Sequence name="GoTacticalC_RedDead_BlueWeak">
                     <IsStatusOK message="{robot_status}"
@@ -152,9 +152,9 @@
                                   red_outpost_hp_threshold="0"
                                   heat_threshold="9999"/>
                     </Inverter>
-                    <SendGoal goal_x="-2.80" goal_y="9.58"/>
+                    <SendGoal goal_x="-2.80" goal_y="9.58" frame_id="map"/>
                   </Sequence>
-                  <SendGoal goal_x="-8.15" goal_y="11.22"/>
+                  <SendGoal goal_x="-8.15" goal_y="11.22" frame_id="map"/>
                 </Fallback>
               </RateController>
             </Sequence>
@@ -225,6 +225,7 @@
           default="{goal_pose}"/>
       <input_port name="goal_x" default="0.0"/>
       <input_port name="goal_y" default="0.0"/>
+      <input_port name="frame_id" default="map"/>
         </Action>
     <Action ID="SubGameStatus"
             editable="true">

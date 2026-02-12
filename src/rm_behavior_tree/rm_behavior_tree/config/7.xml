@@ -18,10 +18,10 @@
                             heat_threshold="9999"/>
               </Inverter>
               <!-- Converted from goal_pose to goal_x/goal_y -->
-              <SendGoal goal_x="-0.35" goal_y="-7.77"/>
+              <SendGoal goal_x="-0.35" goal_y="-7.77" frame_id="map"/>
             </Sequence>
             <SendGoal name="AttackedGoToAggressivePos"
-                      goal_x="-2.94" goal_y="3.43"/>
+                      goal_x="-2.94" goal_y="3.43" frame_id="map"/>
           </Fallback>
         </Sequence>
         <Sequence name="OriginalComplexLogic">
@@ -53,7 +53,7 @@
                                   red_outpost_hp_threshold="0"
                                   heat_threshold="9999"/>
                     </Inverter>
-                        <SendGoal goal_x="3.64" goal_y="1.36"/>
+                        <SendGoal goal_x="3.64" goal_y="1.36" frame_id="map"/>
                   </Sequence>
                   <Sequence name="HighHPGoAggressivePoint">
                     <IsStatusOK message="{robot_status}"
@@ -61,10 +61,10 @@
                                 blue_outpost_hp_threshold="0"
                                 red_outpost_hp_threshold="0"
                                 heat_threshold="9999"/>
-                    <SendGoal goal_x="-7.63" goal_y="5.60"/>
+                    <SendGoal goal_x="-7.63" goal_y="5.60" frame_id="map"/>
                   </Sequence>
                   <SendGoal name="DefaultOrMediumHPGoInitialPoint"
-                            goal_x="-7.63" goal_y="5.60"/>
+                            goal_x="-7.63" goal_y="5.60" frame_id="map"/>
                 </Fallback>
               </RateController>
             </Sequence>
@@ -121,6 +121,7 @@
           default="{goal_pose}"/>
       <input_port name="goal_x" default="0.0"/>
       <input_port name="goal_y" default="0.0"/>
+      <input_port name="frame_id" default="map"/>
         </Action>
     <Action ID="SubGameStatus"
             editable="true">

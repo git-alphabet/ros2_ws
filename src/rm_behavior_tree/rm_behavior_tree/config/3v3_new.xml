@@ -44,8 +44,9 @@
                                 <RateController hz="1">
                                     <!-- Converted from goal_pose to goal_x/goal_y -->
                                     <SendGoal name="GoSupplyToHeal"
-                                            goal_x="{ally_supply_pose_x}"
-                                            goal_y="{ally_supply_pose_y}"
+                                            goal_x="0.21"
+                                            goal_y="-0.32"
+                                            frame_id="map"
                                             action_name="navigate_to_pose"/>
                                 </RateController>
 
@@ -59,8 +60,9 @@
                                 <RateController hz="1">
                                     <!-- Converted from goal_pose to goal_x/goal_y -->
                                     <SendGoal name="GoControlZone"
-                                            goal_x="{control_zone_pose_x}"
-                                            goal_y="{control_zone_pose_y}"
+                                            goal_x="5.13"
+                                            goal_y="-3.94"
+                                            frame_id="map"
                                             action_name="navigate_to_pose"/>
                                 </RateController>
 
@@ -80,6 +82,7 @@
                         <SendGoal name="Home"
                             goal_x="0.0"
                             goal_y="0.0"
+                            frame_id="map"
                             action_name="navigate_to_pose"/>
                     </RateController>
                     <RobotControl stop_gimbal_scan="True"
@@ -110,6 +113,7 @@
             <input_port name="goal_pose" default="{goal_pose}"/>
             <input_port name="goal_x" default="0.0"/>
             <input_port name="goal_y" default="0.0"/>
+            <input_port name="frame_id" default="map"/>
             <!-- 补充action_name输入端口（解决GoSupplyToHeal端口不匹配报错） -->
             <input_port name="action_name" default="navigate_to_pose"/>
         </Action>
