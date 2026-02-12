@@ -44,10 +44,7 @@
                                     <SendGoal name="GoSupplyToHeal"
                                             goal_x="0.21"
                                             goal_y="-0.32"
-<<<<<<< HEAD
                                             frame_id="map"
-=======
->>>>>>> e45b740b421e05683422001c2e29f4e515db59fd
                                             action_name="navigate_to_pose"/>
                                 </RateController>
 
@@ -64,10 +61,7 @@
                                     <SendGoal name="GoControlZone"
                                             goal_x="5.13"
                                             goal_y="-3.94"
-<<<<<<< HEAD
                                             frame_id="map"
-=======
->>>>>>> e45b740b421e05683422001c2e29f4e515db59fd
                                             action_name="navigate_to_pose"/>
                                 </RateController>
 
@@ -114,11 +108,8 @@
             <input_port name="goal_pose" default="{goal_pose}"/>
             <input_port name="goal_x" default="0.0"/>
             <input_port name="goal_y" default="0.0"/>
-<<<<<<< HEAD
             <input_port name="frame_id" default="map"/>
             <!-- 补充action_name输入端口（解决GoSupplyToHeal端口不匹配报错） -->
-=======
->>>>>>> e45b740b421e05683422001c2e29f4e515db59fd
             <input_port name="action_name" default="navigate_to_pose"/>
         </Action>
         <Action ID="SubArmors" editable="true">

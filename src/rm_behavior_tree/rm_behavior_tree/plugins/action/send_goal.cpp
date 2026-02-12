@@ -108,11 +108,7 @@ bool SendGoalAction::setMessage(geometry_msgs::msg::PoseStamped & msg)
     msg.header.stamp.sec = static_cast<int32_t>(ns / 1000000000ULL);
     msg.header.stamp.nanosec = static_cast<uint32_t>(ns % 1000000000ULL);
   }
-<<<<<<< HEAD
   msg.header.frame_id = frame_id;
-=======
-  msg.header.frame_id = "map";
->>>>>>> e45b740b421e05683422001c2e29f4e515db59fd
   msg.pose.position.x = goal.pose.position.x;
   msg.pose.position.y = goal.pose.position.y;
   msg.pose.position.z = goal.pose.position.z;

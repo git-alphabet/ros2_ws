@@ -4,20 +4,15 @@
    <BehaviorTree ID="BehaviorTree">
         <!-- 并行处理数据订阅与主逻辑 -->
         <Parallel>
-            <!-- 订阅机器人状态数�?-->
+            <!-- 订阅机器人状态数�?-->
             <SubRobotStatus/>
             <SubGameStatus/>
             <SubAllRobotHP/>
 
             <!-- 主逻辑序列 -->
             <Sequence>
-<<<<<<< HEAD:src/rm_behavior_tree/rm_behavior_tree/config/attack_left.xml
                 <!-- 初始化阶段 (converted to goal_x/goal_y) -->
                 <SendGoal goal_x="0.0" goal_y="0.0" frame_id="map"/>
-=======
-                <!-- 初始化阶�?(converted to goal_x/goal_y) -->
-                <SendGoal goal_x="0.0" goal_y="0.0"/>
->>>>>>> e45b740b421e05683422001c2e29f4e515db59fd:src/rm_behavior_tree/rm_behavior_tree/config/archive/attack_left.xml
                 
                 <!-- 持续监测循环 -->
                 <RepeatUntilSuccess _failureLimit="-1">
@@ -37,13 +32,8 @@
                                 </Fallback>
                             </Sequence>
                             
-<<<<<<< HEAD:src/rm_behavior_tree/rm_behavior_tree/config/attack_left.xml
                             <!-- 比赛未开始保持待机 -->
                             <SendGoal goal_x="0.0" goal_y="0.0" frame_id="map"/>
-=======
-                            <!-- 比赛未开始保持待�?-->
-                            <SendGoal goal_x="0.0" goal_y="0.0"/>
->>>>>>> e45b740b421e05683422001c2e29f4e515db59fd:src/rm_behavior_tree/rm_behavior_tree/config/archive/attack_left.xml
                         </Fallback>
                     </RateController>
                 </RepeatUntilSuccess>
