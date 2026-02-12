@@ -16,7 +16,7 @@
 
 #include "behaviortree_cpp/action_node.h"
 #include "behaviortree_ros2/ros_node_params.hpp"
-#include "rm_decision_interfaces/msg/rfid.hpp"
+#include "rm_decision_interfaces/msg/rmul.hpp"
 
 namespace rm_behavior_tree
 {
@@ -37,7 +37,7 @@ public:
 
       BT::InputPort<int>("timeout_ms"),
 
-      BT::InputPort<rm_decision_interfaces::msg::RFID>("rfid_status"),
+      BT::InputPort<rm_decision_interfaces::msg::RMUL>("rfid_status"),
 
       // ✅ 只用这个 bool，彻底不要 bitfield
       BT::InputPort<bool>("rfid_supply_arrived")

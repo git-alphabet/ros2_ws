@@ -27,24 +27,21 @@ SubRobotPositionAction::SubRobotPositionAction(
   rclcpp::QoS qos(10);
   qos.reliable();
 
-  sub_ = node_->create_subscription<rm_interfaces::msg::RobotPosition>(
+  sub_ = node_->create_subscription<rm_decision_interfaces::msg::RMUL>(
     topic,
     qos,
-    [this](const rm_interfaces::msg::RobotPosition::SharedPtr msg) {
+    [this](const rm_decision_interfaces::msg::RMUL::SharedPtr msg) {
       this->robot_position_callback(msg);
     });
 }
 
 void SubRobotPositionAction::robot_position_callback(
-  const rm_interfaces::msg::RobotPosition::SharedPtr msg)
+  const rm_decision_interfaces::msg::RMUL::SharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
-  // 假定 rm_interfaces::msg::RobotPosition 有成员 x, y, yaw
-  // 如果你的消息字段不同，请在这里替换为正确字段名
   pose_x_ = msg->x;
   pose_y_ = msg->y;
-  pose_yaw_ = msg->yaw;
 
   // 记录接收时间（如果消息带时间戳并且你希望使用它，可以改为使用 msg->header.stamp）
   last_stamp_ = node_->now();
@@ -64,7 +61,6 @@ BT::NodeStatus SubRobotPositionAction::tick()
   // 将最新位置写入输出端口
   setOutput("pose_x", pose_x_);
   setOutput("pose_y", pose_y_);
-  setOutput("pose_yaw", pose_yaw_);
 
   return BT::NodeStatus::SUCCESS;
 }

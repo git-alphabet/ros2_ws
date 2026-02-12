@@ -10,12 +10,12 @@ WaitAndHealAction::WaitAndHealAction(
   const std::string & name,
   const BT::NodeConfig & conf,
   const BT::RosNodeParams & params)
-: BT::RosTopicSubNode<rm_decision_interfaces::msg::RobotStatus>(name, conf, params)
+: BT::RosTopicSubNode<rm_decision_interfaces::msg::RMUL>(name, conf, params)
 {
 }
 
 BT::NodeStatus WaitAndHealAction::onTick(
-  const std::shared_ptr<rm_decision_interfaces::msg::RobotStatus> & last_msg)
+  const std::shared_ptr<rm_decision_interfaces::msg::RMUL> & last_msg)
 {
   // 1) 更新血量缓存（仅当有新消息）
   if (last_msg) {
@@ -26,7 +26,7 @@ BT::NodeStatus WaitAndHealAction::onTick(
     has_hp_cache_ = true;
 
     RCLCPP_DEBUG(
-      logger(), "[%s] new RobotStatus, current_hp=%d", name().c_str(), last_hp_cache_);
+      logger(), "[%s] new RMUL msg, current_hp=%d", name().c_str(), last_hp_cache_);
   }
 
   // 2) 若还没有任何血量数据，无法判断 -> 继续等待

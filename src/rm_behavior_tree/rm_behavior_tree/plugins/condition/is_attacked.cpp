@@ -10,7 +10,7 @@ IsAttackedAction::IsAttackedAction(const std::string & name, const BT::NodeConfi
 
 BT::NodeStatus IsAttackedAction::checkRobotAttacked()
 {
-  auto msg = getInput<std::shared_ptr<rm_decision_interfaces::msg::RobotStatus>>("message");
+  auto msg = getInput<std::shared_ptr<rm_decision_interfaces::msg::RMUL>>("message");
 
   if (!msg) {
     return BT::NodeStatus::FAILURE;

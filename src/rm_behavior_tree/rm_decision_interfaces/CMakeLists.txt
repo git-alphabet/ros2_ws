@@ -22,7 +22,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/RobotControl.msg"
   "msg/DecisionNum.msg"
   "msg/NavControlCmd.msg"
+  "msg/RobotPosition.msg"
   "msg/Target.msg"
+  "msg/RMUL.msg"
   DEPENDENCIES
     std_msgs
     geometry_msgs

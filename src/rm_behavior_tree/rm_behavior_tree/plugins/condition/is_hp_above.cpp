@@ -19,7 +19,7 @@ BT::NodeStatus IsHPAboveCondition::checkHPAbove()
     hp_threshold = 0;
   }
 
-  auto msg = getInput<std::shared_ptr<rm_decision_interfaces::msg::RobotStatus>>("message");
+  auto msg = getInput<std::shared_ptr<rm_decision_interfaces::msg::RMUL>>("message");
   if (!msg) {
     // 缺消息：保守失败
     return BT::NodeStatus::FAILURE;

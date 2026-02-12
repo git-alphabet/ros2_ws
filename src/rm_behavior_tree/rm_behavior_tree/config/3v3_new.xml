@@ -107,10 +107,6 @@
             <input_port name="goal_y" default="0.0"/>
             <input_port name="action_name" default="navigate_to_pose"/>
         </Action>
-        <Action ID="SubAllRobotHP" editable="true">
-            <input_port name="topic_name" default="/robot_hp"/>
-            <output_port name="robot_hp" default="{robot_hp}"/>
-        </Action>
         <Action ID="SubArmors" editable="true">
             <input_port name="topic_name" default="/detector/armors"/>
             <output_port name="armors" default="{armors}"/>
@@ -123,10 +119,6 @@
         <Action ID="SubRobotStatus" editable="true">
             <input_port name="topic_name" default="/robot_status"/>
             <output_port name="robot_status" default="{robot_status}"/>
-        </Action>
-        <Action ID="SubDecisionNum" editable="true">
-            <input_port name="topic_name" default="/decision_num"/>
-            <output_port name="decision_num" default="{decision_num}"/>
         </Action>
         <Action ID="SubRFIDStatus" editable="true">
             <input_port  name="topic_name" default="/rfid_status"/>
@@ -145,7 +137,6 @@
             <input_port name="topic_name" default="/robot_position"/>
             <output_port name="pose_x" default="{pose_x}"/>
             <output_port name="pose_y" default="{pose_y}"/>
-            <output_port name="pose_yaw" default="{pose_yaw}"/>
         </Action>
         <Action ID="KeepRunning" editable="true"/>
         <Action ID="CancelNavGoal" editable="true">
@@ -178,6 +169,7 @@
         <Action ID="MicroSearchSupplyCard" editable="true">
             <inout_port name="search_start_ms" default="{state.search_start_ms}"/>
             <input_port name="timeout_ms" default="{cfg.search_timeout_ms}"/>
+            <input_port name="rfid_status" default="{rfid.status}"/>
             <input_port name="rfid_supply_arrived" default="{rfid.supply_arrived}"/>
         </Action>
         <Action ID="WaitAndHeal" editable="true">
@@ -200,8 +192,7 @@
             <input_port name="message" default="{robot_status}"/>
         </Condition>
         <Condition ID="IsFriendOK" editable="true">
-            <input_port name="message" default="{robot_hp}"/>
-            <input_port name="friend_color" default="red"/>
+            <input_port name="message" default="{robot_status}"/>
         </Condition>
         <Condition ID="IsGameTime" editable="true">
             <input_port name="message" default="{game_status}"/>
@@ -212,8 +203,6 @@
         <Condition ID="IsStatusOK" editable="true">
             <input_port name="message" default="{robot_status}"/>
             <input_port name="hp_threshold" default="0"/>
-            <input_port name="blue_outpost_hp_threshold" default="0"/>
-            <input_port name="red_outpost_hp_threshold" default="0"/>
             <input_port name="heat_threshold" default="9999"/>
         </Condition>
         <Condition ID="IsHPAbove" editable="true">
