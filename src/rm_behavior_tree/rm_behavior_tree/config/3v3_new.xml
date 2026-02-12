@@ -4,7 +4,6 @@
     
     <include path="HighHP_combat_logic.xml"/>
     <include path="MediumHP_combat_logic.xml"/>
-    <include path="LowHP_combat_logic.xml"/>
     <include path="attack_right.xml"/>
     <include path="perception_and_blackboard.xml"/>
     <include path="IsDetectEnemy.xml"/>
@@ -44,14 +43,15 @@
                                 <RateController hz="1">
                                     <!-- Converted from goal_pose to goal_x/goal_y -->
                                     <SendGoal name="GoSupplyToHeal"
-                                            goal_x="{ally_supply_pose_x}"
-                                            goal_y="{ally_supply_pose_y}"
+                                            goal_x="0.21"
+                                            goal_y="-0.32"
                                             action_name="navigate_to_pose"/>
                                 </RateController>
 
                                 <!-- 点内微动，持续“接触/检测”补给区卡 -->
-                                <RobotControl stop_gimbal_scan="False"
-                                              chassis_spin="True"/>
+                                <MoveAround expected_nearby_goal_count="5"
+                                            expected_dis="0.3"
+                                            message="{current_location}"/>
                             </ReactiveSequence>
 
                             <!-- 3) 抢控制区：对方每秒-1胜利点；离开后延迟2s失效 -->
@@ -59,8 +59,8 @@
                                 <RateController hz="1">
                                     <!-- Converted from goal_pose to goal_x/goal_y -->
                                     <SendGoal name="GoControlZone"
-                                            goal_x="{control_zone_pose_x}"
-                                            goal_y="{control_zone_pose_y}"
+                                            goal_x="5.13"
+                                            goal_y="-3.94"
                                             action_name="navigate_to_pose"/>
                                 </RateController>
 
@@ -76,7 +76,6 @@
                 <!-- 非比赛阶段停止云台和旋转，回家 -->
                 <ReactiveSequence>
                         <RateController hz="1">
-                        <!-- TODO: set goal_x and goal_y -->
                         <SendGoal name="Home"
                             goal_x="0.0"
                             goal_y="0.0"
