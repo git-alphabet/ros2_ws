@@ -4,14 +4,14 @@
    <BehaviorTree ID="BehaviorTree">
         <!-- 并行处理数据订阅与主逻辑 -->
         <Parallel>
-            <!-- 订阅机器人状态数据 -->
+            <!-- 订阅机器人状态数�?-->
             <SubRobotStatus/>
             <SubGameStatus/>
             <SubAllRobotHP/>
 
             <!-- 主逻辑序列 -->
             <Sequence>
-                <!-- 初始化阶段 (converted to goal_x/goal_y) -->
+                <!-- 初始化阶�?(converted to goal_x/goal_y) -->
                 <SendGoal goal_x="0.0" goal_y="0.0"/>
                 
                 <!-- 持续监测循环 -->
@@ -32,7 +32,7 @@
                                 </Fallback>
                             </Sequence>
                             
-                            <!-- 比赛未开始保持待机 -->
+                            <!-- 比赛未开始保持待�?-->
                             <SendGoal goal_x="0.0" goal_y="0.0"/>
                         </Fallback>
                     </RateController>
@@ -48,7 +48,7 @@
       <output_port name="current_location"
                    default="{current_location}"/>
     </Action>
-    <Action ID="IsAttaked"
+    <Action ID="IsAttacked"
             editable="true">
       <input_port name="message"
                   default="{robot_status}"/>

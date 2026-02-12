@@ -50,20 +50,6 @@ void SubRobotPositionAction::robot_position_callback(
   last_stamp_ = node_->now();
 
   has_data_ = true;
-
-  // 尝试将最新位姿直接写入行为树全局黑板，以降低从订阅到黑板更新的延迟。
-  // 注意：不同版本的 BehaviorTree.CPP 对黑板并发访问的支持可能不同，请确保在你的环境中这样做是安全的。
-  try {
-    auto bb = this->config().blackboard;
-    if (bb) {
-      // 黑板 key 使用 perception 配置中的命名：pose.x, pose.y, pose.yaw
-      bb->set("pose.x", pose_x_);
-      bb->set("pose.y", pose_y_);
-      bb->set("pose.yaw", pose_yaw_);
-    }
-  } catch (const std::exception & e) {
-    RCLCPP_WARN(node_->get_logger(), "SubRobotPositionAction: failed to write to blackboard: %s", e.what());
-  }
 }
 
 BT::NodeStatus SubRobotPositionAction::tick()

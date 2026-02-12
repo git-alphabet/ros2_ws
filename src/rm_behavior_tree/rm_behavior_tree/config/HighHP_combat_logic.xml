@@ -7,8 +7,8 @@
       <Fallback>
 
         <ReactiveSequence>
-          <!-- 待定控制区坐标 -->
-          <IsAttaked message="{robot_status}"/>
+          <!-- 待定控制区坐�?-->
+          <IsAttacked message="{robot_status}"/>
           <GetCurrentLocation current_location="{current_location}"/>
           <MoveAround expected_nearby_goal_count="5"
                       expected_dis="0.35"

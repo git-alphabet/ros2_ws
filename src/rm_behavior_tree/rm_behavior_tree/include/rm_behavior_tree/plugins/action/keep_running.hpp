@@ -19,7 +19,7 @@ namespace rm_behavior_tree
  *  - 不依赖 ROS
  *  - 不维护任何内部状态
  */
-class KeepRunningAction : public BT::SyncActionNode
+class KeepRunningAction : public BT::StatefulActionNode
 {
 public:
   KeepRunningAction(
@@ -31,7 +31,9 @@ public:
     return {};
   }
 
-  BT::NodeStatus tick() override;
+  BT::NodeStatus onStart() override;
+  BT::NodeStatus onRunning() override;
+  void onHalted() override;
 };
 
 }  // namespace rm_behavior_tree

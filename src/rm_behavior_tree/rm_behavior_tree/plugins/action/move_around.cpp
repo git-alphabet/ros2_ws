@@ -53,6 +53,7 @@ BT::NodeStatus MoveAroundAction::onStart()
     return BT::NodeStatus::SUCCESS;
   } else {
     // once the expected_nearby_goal_count is reached, we will return SUCCESS.
+    last_goal_time_ = std::chrono::high_resolution_clock::now() - std::chrono::milliseconds(1000);  // allow immediate first goal
     return BT::NodeStatus::RUNNING;
   }
 }
@@ -66,10 +67,16 @@ BT::NodeStatus MoveAroundAction::onRunning()
   if (expected_nearby_goal_count == goal_count) {
     return BT::NodeStatus::SUCCESS;
   } else {
+    // Non-blocking: check if enough time has passed since last goal
+    auto now = std::chrono::high_resolution_clock::now();
+    auto elapsed = std::chrono::duration_cast<milliseconds>(now - last_goal_time_).count();
+    if (elapsed < 1000) {
+      return BT::NodeStatus::RUNNING;  // Wait without blocking the BT thread
+    }
     goal_count++;
     generatePoints(current_location, expected_dis, nearby_random_point);
     sendGoalPose(nearby_random_point);
-    std::this_thread::sleep_for(milliseconds(1000));  // 这是不太文明的做法...
+    last_goal_time_ = now;
     return BT::NodeStatus::RUNNING;
   }
 }

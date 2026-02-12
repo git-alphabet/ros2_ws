@@ -6,13 +6,23 @@ namespace rm_behavior_tree
 KeepRunningAction::KeepRunningAction(
   const std::string & name,
   const BT::NodeConfig & config)
-: BT::SyncActionNode(name, config)
+: BT::StatefulActionNode(name, config)
 {
 }
 
-BT::NodeStatus KeepRunningAction::tick()
+BT::NodeStatus KeepRunningAction::onStart()
 {
   return BT::NodeStatus::RUNNING;
+}
+
+BT::NodeStatus KeepRunningAction::onRunning()
+{
+  return BT::NodeStatus::RUNNING;
+}
+
+void KeepRunningAction::onHalted()
+{
+  // nothing to do
 }
 
 }  // namespace rm_behavior_tree

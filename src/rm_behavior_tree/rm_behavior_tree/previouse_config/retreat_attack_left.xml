@@ -33,7 +33,7 @@
                           heat_threshold="350"/>
             </Sequence>
             <WhileDoElse>
-              <IsAttaked message="{robot_status}"/>
+              <IsAttacked message="{robot_status}"/>
               <AsyncSequence>
                 <GetCurrentLocation current_location="{current_location}"/>
                 <MoveAround expected_nearby_goal_count="3"
@@ -56,7 +56,7 @@
                           hp_threshold="400"
                           heat_threshold="350"/>
               <WhileDoElse>
-                <IsAttaked message="{robot_status}"/>
+                <IsAttacked message="{robot_status}"/>
                 <AsyncSequence>
                   <GetCurrentLocation current_location="{current_location}"/>
                   <MoveAround expected_nearby_goal_count="3"
@@ -139,7 +139,7 @@
       <output_port name="current_location"
                    default="{current_location}"/>
     </Action>
-    <Action ID="IsAttaked"
+    <Action ID="IsAttacked"
             editable="true">
       <input_port name="message"
                   default="{robot_status}"/>

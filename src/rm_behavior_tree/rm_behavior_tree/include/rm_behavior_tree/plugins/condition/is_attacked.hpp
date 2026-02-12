@@ -11,12 +11,11 @@ namespace rm_behavior_tree
  * @brief condition节点，用于判断机器人是否被攻击掉血
  * @param[in] message 机器人状态话题id
  */
-class IsAttakedAction : public BT::SimpleConditionNode
+class IsAttackedAction : public BT::SimpleConditionNode
 {
 public:
-  IsAttakedAction(const std::string & name, const BT::NodeConfig & config);
+  IsAttackedAction(const std::string & name, const BT::NodeConfig & config);
 
-  // BT::NodeStatus checkGameStart(BT::TreeNode & self_node)
   BT::NodeStatus checkRobotAttacked();
 
   static BT::PortsList providedPorts()
