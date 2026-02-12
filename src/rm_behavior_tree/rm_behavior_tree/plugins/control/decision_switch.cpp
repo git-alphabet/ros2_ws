@@ -18,21 +18,30 @@ namespace rm_behavior_tree
             return BT::NodeStatus::FAILURE;
         }
 
+        const size_t num_children = children_nodes_.size();
+
         switch (msg->decision_num)
         {
             case 1:
+                if(num_children < 1) {
+                    std::cout << "DecisionSwitch: not enough children for case 1 (need >= 1, have " << num_children << ")" << '\n';
+                    return BT::NodeStatus::FAILURE;
+                }
                 if(children_nodes_[0]->executeTick() == BT::NodeStatus::SUCCESS)
                 {
                     return BT::NodeStatus::SUCCESS;
                 }
                 break;
             case 2:
+                if(num_children < 2) {
+                    std::cout << "DecisionSwitch: not enough children for case 2 (need >= 2, have " << num_children << ")" << '\n';
+                    return BT::NodeStatus::FAILURE;
+                }
                 if(children_nodes_[1]->executeTick() == BT::NodeStatus::SUCCESS)
                 {
                     return BT::NodeStatus::SUCCESS;
                 }
                 break;
-            // 可以添加更多分支
             default:
                 return BT::NodeStatus::FAILURE;
         }

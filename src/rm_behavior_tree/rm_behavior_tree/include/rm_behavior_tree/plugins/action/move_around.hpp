@@ -51,6 +51,7 @@ private:
   geometry_msgs::msg::TransformStamped current_location;
   geometry_msgs::msg::PoseStamped nearby_random_point;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr publisher_goal_pose;
+  std::chrono::time_point<std::chrono::high_resolution_clock> last_goal_time_;
 };
 }  // namespace rm_behavior_tree
 

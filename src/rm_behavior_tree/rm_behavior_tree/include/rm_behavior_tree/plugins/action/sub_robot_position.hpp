@@ -10,7 +10,7 @@
 #include "behaviortree_cpp/action_node.h"
 #include "behaviortree_ros2/ros_node_params.hpp"
 
-#include "rm_interfaces/msg/robot_position.hpp"
+#include "rm_decision_interfaces/msg/rmul.hpp"
 
 namespace rm_behavior_tree
 {
@@ -29,8 +29,7 @@ public:
     return {
       BT::InputPort<std::string>("topic_name", std::string("/red_standard_robot1"), "订阅的话题名"),
       BT::OutputPort<double>("pose_x"),
-      BT::OutputPort<double>("pose_y"),
-      BT::OutputPort<double>("pose_yaw")
+      BT::OutputPort<double>("pose_y")
     };
   }
 
@@ -38,17 +37,16 @@ public:
 
 private:
   void robot_position_callback(
-    const rm_interfaces::msg::RobotPosition::SharedPtr msg);
+    const rm_decision_interfaces::msg::RMUL::SharedPtr msg);
 
   rclcpp::Node::SharedPtr node_;
-  rclcpp::Subscription<rm_interfaces::msg::RobotPosition>::SharedPtr sub_;
+  rclcpp::Subscription<rm_decision_interfaces::msg::RMUL>::SharedPtr sub_;
 
   mutable std::mutex mutex_;
 
   // 最新一次接收到的数据
   double pose_x_{0.0};
   double pose_y_{0.0};
-  double pose_yaw_{0.0};
   rclcpp::Time last_stamp_;
 
   bool has_data_{false};

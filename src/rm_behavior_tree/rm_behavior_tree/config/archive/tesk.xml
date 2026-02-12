@@ -9,7 +9,7 @@
       <SubGameStatus topic_name="/game_status" game_status="{game_status}"/>
 
       <WhileDoElse>
-        <!-- 比赛状态判断 -->
+        <!-- 比赛状态判�?-->
         <IsGameTime name="IsGameStart" 
                    message="{game_status}"
                    game_progress="4"
@@ -34,7 +34,7 @@
                          heat_threshold="350"/>
             </Sequence>
 
-            <!-- 主动模式：跟随攻击 -->
+            <!-- 主动模式：跟随攻�?-->
             <ReactiveSequence name="ActiveMode">
               <!-- 动态跟随逻辑 -->
               <RateController hz="5">
@@ -43,9 +43,9 @@
                                follow_distance="2.0"/>
               </RateController>
 
-              <!-- 应急响应模块 -->
+              <!-- 应急响应模�?-->
               <WhileDoElse>
-                <IsAttaked message="{robot_status}"/>
+                <IsAttacked message="{robot_status}"/>
                 <AsyncSequence name="EmergencyDodge">
                   <GetCurrentLocation current_location="{current_location}"/>
                   <MoveAround expected_nearby_goal_count="3"
@@ -63,7 +63,7 @@
               </WhileDoElse>
             </ReactiveSequence>
 
-            <!-- 被动模式：巡逻/占点 -->
+            <!-- 被动模式：巡�?占点 -->
             <ReactiveSequence name="PassiveMode">
               <WhileDoElse>
                 <IsGameTime name="FinalStage" 
@@ -122,7 +122,7 @@
     </Action>
 
     <!-- 其他节点保持原有定义 -->
-    <Action ID="IsAttaked">
+    <Action ID="IsAttacked">
       <input_port name="message" default="{robot_status}"/>
     </Action>
     <Action ID="IsDetectEnemy">

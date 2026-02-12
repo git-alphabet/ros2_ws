@@ -23,6 +23,13 @@ BT::NodeStatus RateController::tick()
     first_time_ = true;
   }
 
+  // Re-read hz each tick to support dynamic frequency changes
+  double hz = 1.0;
+  getInput("hz", hz);
+  if (hz > 0.0) {
+    period_ = 1.0 / hz;
+  }
+
   setStatus(BT::NodeStatus::RUNNING);
 
   // Determine how long its been since we've started this iteration

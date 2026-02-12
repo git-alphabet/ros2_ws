@@ -5,12 +5,12 @@
 #include <string>
 
 #include "behaviortree_ros2/bt_topic_sub_node.hpp"
-#include "rm_decision_interfaces/msg/robot_status.hpp"
+#include "rm_decision_interfaces/msg/rmul.hpp"
 
 namespace rm_behavior_tree
 {
 
-class WaitAndHealAction : public BT::RosTopicSubNode<rm_decision_interfaces::msg::RobotStatus>
+class WaitAndHealAction : public BT::RosTopicSubNode<rm_decision_interfaces::msg::RMUL>
 {
 public:
   WaitAndHealAction(
@@ -21,7 +21,7 @@ public:
   static BT::PortsList providedPorts()
   {
     return {
-      // 订阅 RobotStatus
+      // 订阅 RMUL
       BT::InputPort<std::string>("topic_name"),
 
       // 为兼容你现有 XML：保留但不使用（你要求 now_ms 不从黑板/消息取）
@@ -37,7 +37,7 @@ public:
   }
 
   BT::NodeStatus onTick(
-    const std::shared_ptr<rm_decision_interfaces::msg::RobotStatus> & last_msg) override;
+    const std::shared_ptr<rm_decision_interfaces::msg::RMUL> & last_msg) override;
 
 private:
   static constexpr int MAX_HP_FIXED = 400;

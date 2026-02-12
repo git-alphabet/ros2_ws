@@ -41,8 +41,8 @@ private:
   static constexpr double        HEAL_MIN_RATIO_DEFAULT      = 0.60;
   static constexpr std::uint64_t SEARCH_TIMEOUT_MS_DEFAULT   = 3000ULL;
   static constexpr std::uint64_t RECOVERY_TIMEOUT_MS_DEFAULT = 15000ULL;
-  static constexpr double        SUPPLY_GOAL_X_DEFAULT       = 0.0;
-  static constexpr double        SUPPLY_GOAL_Y_DEFAULT       = 0.0;
+  static constexpr double        SUPPLY_GOAL_X_DEFAULT       = 0.21;
+  static constexpr double        SUPPLY_GOAL_Y_DEFAULT       = -0.32;
   static constexpr double        ARRIVE_RADIUS_DEFAULT       = 0.6;
 };
 

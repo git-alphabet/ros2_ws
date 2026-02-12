@@ -7,7 +7,7 @@
                       robot_status="{robot_status}"/>
       <Fallback name="PrioritizeAttackOrNormalLogic">
         <Sequence name="ExecuteAttackLogic">
-          <IsAttaked message="{robot_status}"/>
+          <IsAttacked message="{robot_status}"/>
           <Fallback name="AttackedHPBasedAction">
             <Sequence name="AttackedGoHomeLowHP">
               <Inverter>
@@ -76,7 +76,7 @@
 
   <!-- Description of Node Models (used by Groot) -->
   <TreeNodesModel>
-    <Action ID="IsAttaked"
+    <Action ID="IsAttacked"
             editable="true">
       <input_port name="message"
                   default="{robot_status}"/>

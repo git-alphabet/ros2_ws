@@ -21,9 +21,9 @@
           <WhileDoElse name="Whether gimbal_scan/chassis_spin">
             <IsDetectEnemy message="{armors}"/>
             <RobotControl stop_gimbal_scan="True"
-                          chassis_spin_vel="0.5"/>
+                          chassis_spin="True"/>
             <RobotControl stop_gimbal_scan="False"
-                          chassis_spin_vel="0.5"/>
+                          chassis_spin="True"/>
           </WhileDoElse>
           <WhileDoElse>
             <Sequence>
@@ -33,7 +33,7 @@
                           heat_threshold="350"/>
             </Sequence>
             <WhileDoElse>
-              <IsAttaked message="{robot_status}"/>
+              <IsAttacked message="{robot_status}"/>
               <AsyncSequence>
                 <GetCurrentLocation current_location="{current_location}"/>
                 <MoveAround expected_nearby_goal_count="3"
@@ -47,6 +47,7 @@
                 <!-- Converted from structured goal_pose to goal_x/goal_y -->
                 <SendGoal name="SupplyArea"
                           goal_x="-2.5" goal_y="4.07"
+                          frame_id="map"
                           action_name="navigate_to_pose"/>
 
               </Fallback>
@@ -56,7 +57,7 @@
                           hp_threshold="400"
                           heat_threshold="350"/>
               <WhileDoElse>
-                <IsAttaked message="{robot_status}"/>
+                <IsAttacked message="{robot_status}"/>
                 <AsyncSequence>
                   <GetCurrentLocation current_location="{current_location}"/>
                   <MoveAround expected_nearby_goal_count="3"
@@ -72,6 +73,7 @@
                   <!-- Converted from structured goal_pose to goal_x/goal_y -->
                   <SendGoal name="BaseFrontWall"
                             goal_x="0.8" goal_y="-2.0"
+                            frame_id="map"
                             action_name="navigate_to_pose"/>
 
                   <WhileDoElse>
@@ -84,6 +86,7 @@
                       <!-- Converted from structured goal_pose to goal_x/goal_y -->
                       <SendGoal name="OccupyCenter"
                                 goal_x="3.0" goal_y="0.4"
+                                frame_id="map"
                                 action_name="navigate_to_pose"/>
 
                     </RateController>
@@ -94,6 +97,7 @@
                        <!-- Converted from structured goal_pose to goal_x/goal_y -->
                        <SendGoal name="Attack_Left"
                                  goal_x="5.1" goal_y="1.9"
+                                 frame_id="map"
                                  action_name="navigate_to_pose"/>
 
                       </RateController>
@@ -101,6 +105,7 @@
                         <!-- Converted from structured goal_pose to goal_x/goal_y -->
                         <SendGoal name="Center"
                                   goal_x="3.0" goal_y="1.0"
+                                  frame_id="map"
                                   action_name="navigate_to_pose"/>
 
                       </RateController>
@@ -113,6 +118,7 @@
                 <!-- Converted from structured goal_pose to goal_x/goal_y -->
                 <SendGoal name="SupplyArea"
                           goal_x="-2.5" goal_y="4.07"
+                          frame_id="map"
                           action_name="navigate_to_pose"/>
               </RateController>
             </WhileDoElse>
@@ -123,10 +129,11 @@
             <!-- Converted from structured goal_pose to goal_x/goal_y -->
             <SendGoal name="Home"
                       goal_x="3.0" goal_y="1.0"
+                      frame_id="map"
                       action_name="navigate_to_pose"/>
           </RateController>
           <RobotControl stop_gimbal_scan="True"
-                        chassis_spin_vel="0.0"/>
+                        chassis_spin="False"/>
         </ReactiveSequence>
       </WhileDoElse>
     </ReactiveSequence>
@@ -139,7 +146,7 @@
       <output_port name="current_location"
                    default="{current_location}"/>
     </Action>
-    <Action ID="IsAttaked"
+    <Action ID="IsAttacked"
             editable="true">
       <input_port name="message"
                   default="{robot_status}"/>
@@ -192,8 +199,8 @@
             editable="true">
       <input_port name="stop_gimbal_scan"
                   default="True"/>
-      <input_port name="chassis_spin_vel"
-                  default="False"/>
+      <input_port name="chassis_spin"
+          default="False"/>
     </Action>
         <Action ID="SendGoal"
         editable="true">
@@ -201,6 +208,7 @@
           default="{goal_pose}"/>
       <input_port name="goal_x" default="0.0"/>
       <input_port name="goal_y" default="0.0"/>
+      <input_port name="frame_id" default="map"/>
       <input_port name="action_name"
           default="navigate_to_pose"/>
         </Action>

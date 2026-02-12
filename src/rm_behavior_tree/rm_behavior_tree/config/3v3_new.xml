@@ -4,8 +4,6 @@
     
     <include path="HighHP_combat_logic.xml"/>
     <include path="MediumHP_combat_logic.xml"/>
-    <include path="LowHP_combat_logic.xml"/>
-    <include path="attack_right.xml"/>
     <include path="perception_and_blackboard.xml"/>
     <include path="IsDetectEnemy.xml"/>
     <include path="IsDeadAndDispelDebuff.xml"/>
@@ -46,13 +44,17 @@
                                     <SendGoal name="GoSupplyToHeal"
                                             goal_x="0.21"
                                             goal_y="-0.32"
+<<<<<<< HEAD
                                             frame_id="map"
+=======
+>>>>>>> e45b740b421e05683422001c2e29f4e515db59fd
                                             action_name="navigate_to_pose"/>
                                 </RateController>
 
                                 <!-- 点内微动，持续“接触/检测”补给区卡 -->
-                                <RobotControl stop_gimbal_scan="False"
-                                              chassis_spin="True"/>
+                                <MoveAround expected_nearby_goal_count="5"
+                                            expected_dis="0.3"
+                                            message="{current_location}"/>
                             </ReactiveSequence>
 
                             <!-- 3) 抢控制区：对方每秒-1胜利点；离开后延迟2s失效 -->
@@ -62,13 +64,17 @@
                                     <SendGoal name="GoControlZone"
                                             goal_x="5.13"
                                             goal_y="-3.94"
+<<<<<<< HEAD
                                             frame_id="map"
+=======
+>>>>>>> e45b740b421e05683422001c2e29f4e515db59fd
                                             action_name="navigate_to_pose"/>
                                 </RateController>
 
                                 <!-- 控制区内巡航/微动，避免点卡死区导致“以为站住了但读不到卡” -->
-                                <RobotControl stop_gimbal_scan="False"
-                                            chassis_spin="True"/>
+                                <MoveAround expected_nearby_goal_count="5"
+                                            expected_dis="0.3"
+                                            message="{current_location}"/>
                             </ReactiveSequence>
 
                         </ReactiveFallback>
@@ -78,7 +84,6 @@
                 <!-- 非比赛阶段停止云台和旋转，回家 -->
                 <ReactiveSequence>
                         <RateController hz="1">
-                        <!-- TODO: set goal_x and goal_y -->
                         <SendGoal name="Home"
                             goal_x="0.0"
                             goal_y="0.0"
@@ -105,25 +110,16 @@
             <input_port name="expected_dis" default="0.3"/>
             <input_port name="message" default="{current_location}"/>
         </Action>
-        <Action ID="Rotate" editable="true"/>
-        <Action ID="ScanStatus" editable="true">
-            <input_port name="scan_status" default="False"/>
-        </Action>
         <Action ID="SendGoal" editable="true">
             <input_port name="goal_pose" default="{goal_pose}"/>
             <input_port name="goal_x" default="0.0"/>
             <input_port name="goal_y" default="0.0"/>
+<<<<<<< HEAD
             <input_port name="frame_id" default="map"/>
             <!-- 补充action_name输入端口（解决GoSupplyToHeal端口不匹配报错） -->
+=======
+>>>>>>> e45b740b421e05683422001c2e29f4e515db59fd
             <input_port name="action_name" default="navigate_to_pose"/>
-        </Action>
-        <Action ID="SetGoal" editable="true">
-            <input_port name="goal" default="0;0;0;0;0;0;1"/>
-            <input_port name="message" default="{current_location}"/>
-        </Action>
-        <Action ID="SubAllRobotHP" editable="true">
-            <input_port name="topic_name" default="/robot_hp"/>
-            <output_port name="robot_hp" default="{robot_hp}"/>
         </Action>
         <Action ID="SubArmors" editable="true">
             <input_port name="topic_name" default="/detector/armors"/>
@@ -134,21 +130,9 @@
             <output_port name="game_status" default="{game_status}"/>
             <output_port name="now_ms" default="{time.now_ms}"/>
         </Action>
-        <Action ID="SubHP" editable="true">
-            <input_port name="topic_name" default="/sentry_hp"/>
-            <output_port name="sentry_hp" default="{sentry_hp}"/>
-        </Action>
         <Action ID="SubRobotStatus" editable="true">
             <input_port name="topic_name" default="/robot_status"/>
             <output_port name="robot_status" default="{robot_status}"/>
-        </Action>
-        <Action ID="SelectBattleMode" editable="true">
-            <input_port name="robot_status" default="{robot_status}"/>
-            <output_port name="decision_num" default="{decision_num}"/>
-        </Action>
-        <Action ID="SubDecisionNum" editable="true">
-            <input_port name="topic_name" default="/decision_num"/>
-            <output_port name="decision_num" default="{decision_num}"/>
         </Action>
         <Action ID="SubRFIDStatus" editable="true">
             <input_port  name="topic_name" default="/rfid_status"/>
@@ -167,17 +151,10 @@
             <input_port name="topic_name" default="/robot_position"/>
             <output_port name="pose_x" default="{pose_x}"/>
             <output_port name="pose_y" default="{pose_y}"/>
-            <output_port name="pose_yaw" default="{pose_yaw}"/>
         </Action>
-        <Action ID="RefSerialBlackboardSync" editable="true"/>
-        <Action ID="StopMotion" editable="true"/>
         <Action ID="KeepRunning" editable="true"/>
         <Action ID="CancelNavGoal" editable="true">
             <input_port name="action_name" default="navigate_to_pose"/>
-        </Action>
-        <Action ID="UpdateWasDead" editable="true">
-            <input_port  name="hp_cur" default="{hp.cur}"/>
-            <inout_port  name="was_dead" default="{state.was_dead}"/>
         </Action>
         <Action ID="DetectRespawnAndSetRecovery" editable="true">
             <inout_port name="was_dead" default="{state.was_dead}"/>
@@ -206,6 +183,7 @@
         <Action ID="MicroSearchSupplyCard" editable="true">
             <inout_port name="search_start_ms" default="{state.search_start_ms}"/>
             <input_port name="timeout_ms" default="{cfg.search_timeout_ms}"/>
+            <input_port name="rfid_status" default="{rfid.status}"/>
             <input_port name="rfid_supply_arrived" default="{rfid.supply_arrived}"/>
         </Action>
         <Action ID="WaitAndHeal" editable="true">
@@ -216,13 +194,6 @@
             <input_port name="hp_max" default="{hp.max}"/>
             <input_port name="heal_min_ratio" default="{cfg.heal_min_ratio}"/>
         </Action>
-        <Action ID="RecoveryTimeoutGuard" editable="true">
-            <input_port name="now_ms" default="{time.now_ms}"/>
-            <input_port name="recovery_start_ms" default="{state.recovery_start_ms}"/>
-            <input_port name="timeout_ms" default="{cfg.recovery_timeout_ms}"/>
-            <inout_port name="need_recovery" default="{state.need_recovery}"/>
-        </Action>
-        <!-- 补充缺失的RobotControl Action节点定义（解决找不到RobotControl报错） -->
         <Action ID="RobotControl" editable="true">
             <input_port name="stop_gimbal_scan" default="False"/>
             <input_port name="chassis_spin" default="False"/>
@@ -231,17 +202,12 @@
             <input_port name="cmd_type" default="0"/>
             <input_port name="emergency_stop" default="False"/>
         </Action>
-        <Condition ID="IsAttaked" editable="true">
+        <Condition ID="IsAttacked" editable="true">
             <input_port name="message" default="{robot_status}"/>
         </Condition>
         <Condition ID="IsFriendOK" editable="true">
-            <input_port name="message" default="{robot_hp}"/>
-            <input_port name="friend_color" default="red"/>
+            <input_port name="message" default="{robot_status}"/>
         </Condition>
-        <Condition ID="IsGameStart" editable="true">
-            <input_port name="message" default="{game_status}"/>
-        </Condition>
-        <!-- 补充缺失的IsGameTime Condition节点定义（解决找不到IsGameTime报错） -->
         <Condition ID="IsGameTime" editable="true">
             <input_port name="message" default="{game_status}"/>
             <input_port name="game_progress" default="4"/>
@@ -250,8 +216,8 @@
         </Condition>
         <Condition ID="IsStatusOK" editable="true">
             <input_port name="message" default="{robot_status}"/>
-            <input_port name="sentry_hp" default="{sentry_hp}"/>
-            <input_port name="hp_threshold" default="200"/>
+            <input_port name="hp_threshold" default="0"/>
+            <input_port name="heat_threshold" default="9999"/>
         </Condition>
         <Condition ID="IsHPAbove" editable="true">
             <input_port name="message" default="{robot_status}"/>
@@ -260,12 +226,6 @@
         <Condition ID="IsHPBelow" editable="true">
             <input_port name="message" default="{robot_status}"/>
             <input_port name="hp_threshold" default="100"/>
-        </Condition>
-        <Condition ID="IsModeRight" editable="true">
-            <input_port name="decision_num" default="{decision_num}"/>
-        </Condition>
-        <Condition ID="IsModeLeft" editable="true">
-            <input_port name="decision_num" default="{decision_num}"/>
         </Condition>
         <Condition ID="IsDead" editable="true">
             <input_port name="message" default="{robot_status}"/>
@@ -284,9 +244,8 @@
             <input_port name="arrive_radius" default="{cfg.arrive_radius}"/>
         </Condition>
         <Condition ID="NotArrived" editable="true">
-            <input_port name="arrived" default="{nav.arrived}"/>
+            <input_port name="rfid_status" default="{rfid.status}"/>
         </Condition>
-        <!-- 补充缺失的RateController Decorator节点定义（解决找不到RateController报错） -->
         <Decorator ID="RateController" editable="true">
             <input_port name="hz" default="1.0"/>
         </Decorator>
