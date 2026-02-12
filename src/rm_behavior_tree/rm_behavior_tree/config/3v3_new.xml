@@ -4,7 +4,6 @@
     
     <include path="HighHP_combat_logic.xml"/>
     <include path="MediumHP_combat_logic.xml"/>
-    <include path="attack_right.xml"/>
     <include path="perception_and_blackboard.xml"/>
     <include path="IsDetectEnemy.xml"/>
     <include path="IsDeadAndDispelDebuff.xml"/>
@@ -101,26 +100,12 @@
             <input_port name="expected_dis" default="0.3"/>
             <input_port name="message" default="{current_location}"/>
         </Action>
-        <!-- REMOVED: Rotate - no source file -->
-        <!-- <Action ID="Rotate" editable="true"/> -->
-        <!-- REMOVED: ScanStatus - no source file
-        <Action ID="ScanStatus" editable="true">
-            <input_port name="scan_status" default="False"/>
-        </Action>
-        -->
         <Action ID="SendGoal" editable="true">
             <input_port name="goal_pose" default="{goal_pose}"/>
             <input_port name="goal_x" default="0.0"/>
             <input_port name="goal_y" default="0.0"/>
-            <!-- 补充action_name输入端口（解决GoSupplyToHeal端口不匹配报错） -->
             <input_port name="action_name" default="navigate_to_pose"/>
         </Action>
-        <!-- REMOVED: SetGoal - no source file
-        <Action ID="SetGoal" editable="true">
-            <input_port name="goal" default="0;0;0;0;0;0;1"/>
-            <input_port name="message" default="{current_location}"/>
-        </Action>
-        -->
         <Action ID="SubAllRobotHP" editable="true">
             <input_port name="topic_name" default="/robot_hp"/>
             <output_port name="robot_hp" default="{robot_hp}"/>
@@ -134,22 +119,10 @@
             <output_port name="game_status" default="{game_status}"/>
             <output_port name="now_ms" default="{time.now_ms}"/>
         </Action>
-        <!-- REMOVED: SubHP - no source file
-        <Action ID="SubHP" editable="true">
-            <input_port name="topic_name" default="/sentry_hp"/>
-            <output_port name="sentry_hp" default="{sentry_hp}"/>
-        </Action>
-        -->
         <Action ID="SubRobotStatus" editable="true">
             <input_port name="topic_name" default="/robot_status"/>
             <output_port name="robot_status" default="{robot_status}"/>
         </Action>
-        <!-- REMOVED: SelectBattleMode - no source file
-        <Action ID="SelectBattleMode" editable="true">
-            <input_port name="robot_status" default="{robot_status}"/>
-            <output_port name="decision_num" default="{decision_num}"/>
-        </Action>
-        -->
         <Action ID="SubDecisionNum" editable="true">
             <input_port name="topic_name" default="/decision_num"/>
             <output_port name="decision_num" default="{decision_num}"/>
@@ -173,20 +146,10 @@
             <output_port name="pose_y" default="{pose_y}"/>
             <output_port name="pose_yaw" default="{pose_yaw}"/>
         </Action>
-        <!-- REMOVED: RefSerialBlackboardSync - no source file -->
-        <!-- <Action ID="RefSerialBlackboardSync" editable="true"/> -->
-        <!-- REMOVED: StopMotion - no source file -->
-        <!-- <Action ID="StopMotion" editable="true"/> -->
         <Action ID="KeepRunning" editable="true"/>
         <Action ID="CancelNavGoal" editable="true">
             <input_port name="action_name" default="navigate_to_pose"/>
         </Action>
-        <!-- REMOVED: UpdateWasDead - no source file
-        <Action ID="UpdateWasDead" editable="true">
-            <input_port  name="hp_cur" default="{hp.cur}"/>
-            <inout_port  name="was_dead" default="{state.was_dead}"/>
-        </Action>
-        -->
         <Action ID="DetectRespawnAndSetRecovery" editable="true">
             <inout_port name="was_dead" default="{state.was_dead}"/>
             <input_port name="hp_cur" default="{hp.cur}"/>
@@ -224,15 +187,6 @@
             <input_port name="hp_max" default="{hp.max}"/>
             <input_port name="heal_min_ratio" default="{cfg.heal_min_ratio}"/>
         </Action>
-        <!-- REMOVED: RecoveryTimeoutGuard - no source file
-        <Action ID="RecoveryTimeoutGuard" editable="true">
-            <input_port name="now_ms" default="{time.now_ms}"/>
-            <input_port name="recovery_start_ms" default="{state.recovery_start_ms}"/>
-            <input_port name="timeout_ms" default="{cfg.recovery_timeout_ms}"/>
-            <inout_port name="need_recovery" default="{state.need_recovery}"/>
-        </Action>
-        -->
-        <!-- 补充缺失的RobotControl Action节点定义（解决找不到RobotControl报错） -->
         <Action ID="RobotControl" editable="true">
             <input_port name="stop_gimbal_scan" default="False"/>
             <input_port name="chassis_spin" default="False"/>
@@ -248,12 +202,6 @@
             <input_port name="message" default="{robot_hp}"/>
             <input_port name="friend_color" default="red"/>
         </Condition>
-        <!-- REMOVED: IsGameStart - no source file
-        <Condition ID="IsGameStart" editable="true">
-            <input_port name="message" default="{game_status}"/>
-        </Condition>
-        -->
-        <!-- 补充缺失的IsGameTime Condition节点定义（解决找不到IsGameTime报错） -->
         <Condition ID="IsGameTime" editable="true">
             <input_port name="message" default="{game_status}"/>
             <input_port name="game_progress" default="4"/>
@@ -275,16 +223,6 @@
             <input_port name="message" default="{robot_status}"/>
             <input_port name="hp_threshold" default="100"/>
         </Condition>
-        <!-- REMOVED: IsModeRight - no source file
-        <Condition ID="IsModeRight" editable="true">
-            <input_port name="decision_num" default="{decision_num}"/>
-        </Condition>
-        -->
-        <!-- REMOVED: IsModeLeft - no source file
-        <Condition ID="IsModeLeft" editable="true">
-            <input_port name="decision_num" default="{decision_num}"/>
-        </Condition>
-        -->
         <Condition ID="IsDead" editable="true">
             <input_port name="message" default="{robot_status}"/>
         </Condition>
@@ -304,7 +242,6 @@
         <Condition ID="NotArrived" editable="true">
             <input_port name="rfid_status" default="{rfid.status}"/>
         </Condition>
-        <!-- 补充缺失的RateController Decorator节点定义（解决找不到RateController报错） -->
         <Decorator ID="RateController" editable="true">
             <input_port name="hz" default="1.0"/>
         </Decorator>

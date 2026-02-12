@@ -19,7 +19,8 @@
               hp_cur="{hp_cur}"
               need_recovery="{need_recovery}"
               recovery_start_ms="{recovery_start_ms}"
-              search_start_ms="{search_start_ms}"/>
+              search_start_ms="{search_start_ms}"
+              heal_start_ms="{heal_start_ms}"/>
 
           <IsRecoveryNeeded need_recovery="{need_recovery}"/>
 
@@ -34,10 +35,10 @@
                   topic_name="/robot_status"
                   now_ms="{now_ms}"
                   heal_start_ms="{heal_start_ms}"
-                  heal_wait_ms="{heal_wait_ms}"
+                  heal_wait_ms="{cfg.heal_wait_ms}"
                   hp_cur="{hp_cur}"
                   hp_max="{hp_max}"
-                  heal_min_ratio="{heal_min_ratio}"/>
+                  heal_min_ratio="{cfg.heal_min_ratio}"/>
               <!-- 退出恢复模式 -->
               <ClearRecoveryFlag
                   need_recovery="{need_recovery}"
@@ -52,10 +53,10 @@
 
                 <!-- 导航目标点=配置的补给区入口/中心 -->
                 <SetNavGoalFromConfig
-                    cfg_x="{supply_goal_x}"
-                    cfg_y="{supply_goal_y}"
-                    goal_x="{goal_x}"
-                    goal_y="{goal_y}"
+                    cfg_x="{cfg.supply_goal_x}"
+                    cfg_y="{cfg.supply_goal_y}"
+                    goal_x="{nav.goal_x}"
+                    goal_y="{nav.goal_y}"
                     goal_pose="{goal_pose}"/>
 
                 <!-- 外层：任何时刻，补给卡检测最高优先级 -->
@@ -78,9 +79,9 @@
                                 <IsWithinScope
                                     pose_x="{pose.x}"
                                     pose_y="{pose.y}"
-                                    goal_x="{supply_goal_x}"
-                                    goal_y="{supply_goal_y}"
-                                    arrive_radius="{arrive_radius}"/>
+                                    goal_x="{cfg.supply_goal_x}"
+                                    goal_y="{cfg.supply_goal_y}"
+                                    arrive_radius="{cfg.arrive_radius}"/>
 
                                 <!-- 到达后先刹车，保证微搜动作可控 -->
                                 <RobotControl stop_gimbal_scan="True"
@@ -94,7 +95,8 @@
                                 <MicroSearchSupplyCard
                                     search_start_ms="{search_start_ms}"
                                     timeout_ms="{cfg.search_timeout_ms}"
-                                    rfid_status="{rfid.status}"/>
+                                    rfid_status="{rfid.status}"
+                                    rfid_supply_arrived="{rfid.supply_arrived}"/>
                             </Sequence>
 
                             <!-- B) 未到达：持续发导航，并强制RUNNING -->
@@ -128,20 +130,13 @@
       </BehaviorTree>
 
   <TreeNodesModel>
-
-    
-
-    <!-- ========== 你们自己的作战入口 ========== -->
-
-    <Action ID="CombatMain" editable="true">
-    </Action>
         <Action ID="SendGoal" editable="true">
             <input_port name="goal_pose" default="{goal_pose}"/>
             <input_port name="goal_x" default="0.0"/>
             <input_port name="goal_y" default="0.0"/>
             <input_port name="action_name" default="navigate_to_pose"/>
+            <input_port name="min_interval_ms" default="0"/>
         </Action>
-
   </TreeNodesModel>
 
 </root>
