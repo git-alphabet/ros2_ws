@@ -25,7 +25,10 @@
                     <!-- 处于存活状态则进入战斗逻辑 -->
                     <Fallback>
                         <!-- 检测到敌人进行战斗逻辑 -->
-                        <SubTree ID="IsDetectEnemy"/>
+                        <ReactiveSequence>
+                            <IsDetectEnemy message="{robot_status}"/>
+                            <RobotControl stop_gimbal_scan="True" chassis_spin="True"/>
+                        </ReactiveSequence>
                         <Fallback>
                             <!-- 高血量战斗逻辑 -->
                             <SubTree ID="HighHPCombatLogic"/>
@@ -40,7 +43,6 @@
                                 <IsHPBelow message="{robot_status}" hp_threshold="200"/>
 
                                 <RateController hz="1">
-                                    <!-- Converted from goal_pose to goal_x/goal_y -->
                                     <SendGoal name="GoSupplyToHeal"
                                             goal_x="0.21"
                                             goal_y="-0.32"
@@ -48,16 +50,21 @@
                                             action_name="navigate_to_pose"/>
                                 </RateController>
 
-                                <!-- 点内微动，持续“接触/检测”补给区卡 -->
-                                <MoveAround expected_nearby_goal_count="5"
-                                            expected_dis="0.3"
-                                            message="{current_location}"/>
+                                <!-- ✅ 使用新的 IsAtNavGoal 节点检测是否到达 -->
+                                <IsAtNavGoal rfid_status="{rfid_status}"/>
+
+                                <!-- Fallback: 先感应补给区卡,感应不到再微动重试 -->
+                                <ReactiveFallback>
+                                    <IsSupplyZoneDetected rfid_status="{rfid_status}"/>
+                                    <MoveAround expected_nearby_goal_count="5"
+                                                expected_dis="0.3"
+                                                message="{current_location}"/>
+                                </ReactiveFallback>
                             </ReactiveSequence>
 
                             <!-- 3) 抢控制区：对方每秒-1胜利点；离开后延迟2s失效 -->
                             <ReactiveSequence>
                                 <RateController hz="1">
-                                    <!-- Converted from goal_pose to goal_x/goal_y -->
                                     <SendGoal name="GoControlZone"
                                             goal_x="5.13"
                                             goal_y="-3.94"
@@ -65,10 +72,16 @@
                                             action_name="navigate_to_pose"/>
                                 </RateController>
 
-                                <!-- 控制区内巡航/微动，避免点卡死区导致“以为站住了但读不到卡” -->
-                                <MoveAround expected_nearby_goal_count="5"
-                                            expected_dis="0.3"
-                                            message="{current_location}"/>
+                                <!-- ✅ 使用新的 IsAtNavGoal 节点检测是否到达 -->
+                                <IsAtNavGoal rfid_status="{rfid_status}"/>
+
+                                <!-- Fallback: 先感应控制区卡,感应不到再微动重试 -->
+                                <ReactiveFallback>
+                                    <IsControlZoneDetected rfid_status="{rfid_status}"/>
+                                    <MoveAround expected_nearby_goal_count="5"
+                                                expected_dis="0.3"
+                                                message="{current_location}"/>
+                                </ReactiveFallback>
                             </ReactiveSequence>
 
                         </ReactiveFallback>
@@ -196,7 +209,7 @@
             <input_port name="cmd_type" default="0"/>
             <input_port name="emergency_stop" default="False"/>
         </Action>
-        <Condition ID="IsAttacked" editable="true">
+        <Condition ID="IsDetectEnemy" editable="true">
             <input_port name="message" default="{robot_status}"/>
         </Condition>
         <Condition ID="IsFriendOK" editable="true">
@@ -238,6 +251,9 @@
             <input_port name="arrive_radius" default="{cfg.arrive_radius}"/>
         </Condition>
         <Condition ID="NotArrived" editable="true">
+            <input_port name="rfid_status" default="{rfid.status}"/>
+        </Condition>
+        <Condition ID="IsAtNavGoal" editable="true">
             <input_port name="rfid_status" default="{rfid.status}"/>
         </Condition>
         <Decorator ID="RateController" editable="true">

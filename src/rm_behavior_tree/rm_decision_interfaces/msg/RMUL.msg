@@ -1,8 +1,5 @@
 # =============================================================================
 # RMUL.msg — 统一裁判系统消息（合并所有 BT 节点所需的自定义接口）
-# 对应 rm_decision_interfaces 中原有的:
-#   GameStatus, RobotStatus, AllRobotHP, DecisionNum, RFID,
-#   RobotControl, NavControlCmd, RobotPosition
 # =============================================================================
 
 std_msgs/Header header
@@ -21,7 +18,7 @@ bool   rfid_supply_arrived   # 补给区交互卡反馈
 bool   rfid_control_arrived  # 控制区交互卡反馈
 
 # ── 5. 导航控制命令 (NavControlCmd) ───────────────────────────────────────────
-int32  cmd_type              # 指令类型：0=无操作, 1=开始导航, 2=终止导航, 3=原地不动
+int32  cmd_type              # 指令类型：0=无操作(禁止导航), 1=开始导航(允许发起导航), 2=终止导航, 3=原地不动
 bool   emergency_stop        # 紧急停止（优先级最高, true=立刻停）
 
 # ── 6. 机器人控制命令 (RobotControl) ──────────────────────────────────────────
@@ -34,3 +31,6 @@ float32 y                    # 当前位置 y (meter, map 坐标系)
 
 # ── 8. 视觉检测 ──────────────────────────────────────────────────────────────
 bool   is_detect_enemy       # 是否检测到敌人
+
+# ── 9. 判断机器人是否到达导航指定位置 ─────────────────────────────────────
+bool   is_at_nav_goal        # 是否到达导航目标点 

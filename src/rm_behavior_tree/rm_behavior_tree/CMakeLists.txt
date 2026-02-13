@@ -63,10 +63,10 @@ ament_auto_add_library(is_status_ok SHARED
 )
 add_target_dependencies(is_status_ok)
 
-ament_auto_add_library(is_attacked SHARED 
-    plugins/condition/is_attacked.cpp
+ament_auto_add_library(is_detect_enemy SHARED 
+    plugins/condition/is_detect_enemy.cpp
 )
-add_target_dependencies(is_attacked)
+add_target_dependencies(is_detect_enemy)
 
 ament_auto_add_library(is_friend_ok SHARED 
     plugins/condition/is_friend_ok.cpp
@@ -237,6 +237,11 @@ ament_auto_add_library(not_arrived SHARED
     plugins/condition/not_arrived.cpp
 )
 add_target_dependencies(not_arrived)
+
+ament_auto_add_library(is_at_nav_goal SHARED 
+    plugins/condition/is_at_nav_goal.cpp
+)
+add_target_dependencies(is_at_nav_goal)
 
 ament_auto_add_library(keep_running SHARED 
     plugins/action/keep_running.cpp
