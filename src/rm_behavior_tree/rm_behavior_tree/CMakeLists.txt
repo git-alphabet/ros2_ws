@@ -106,6 +106,11 @@ ament_auto_add_library(is_supply_card_detected SHARED
 )
 add_target_dependencies(is_supply_card_detected)
 
+ament_auto_add_library(is_control_zone_detected SHARED 
+    plugins/condition/is_control_zone_detected.cpp
+)
+add_target_dependencies(is_control_zone_detected)
+
 ament_auto_add_library(is_within_scope SHARED 
     plugins/condition/is_within_scope.cpp
 )

@@ -60,6 +60,7 @@ int main(int argc, char ** argv)
     "cancel_nav_goal",
     "is_recovery_needed",
     "is_supply_card_detected",
+    "is_control_zone_detected",
     "is_within_scope",
     
   };

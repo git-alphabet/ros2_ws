@@ -112,6 +112,9 @@
             <!-- 补充action_name输入端口（解决GoSupplyToHeal端口不匹配报错） -->
             <input_port name="action_name" default="navigate_to_pose"/>
         </Action>
+        <Action ID="IsControlZoneDetected" editable="true">
+            <input_port name="rfid_status" default="{rfid.status}"/>
+        </Action>
         <Action ID="SubArmors" editable="true">
             <input_port name="topic_name" default="/detector/armors"/>
             <output_port name="armors" default="{armors}"/>
