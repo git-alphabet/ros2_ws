@@ -1,6 +1,6 @@
 #include <memory>
 #include "rclcpp/rclcpp.hpp"
-#include "rm_decision_interfaces/msg/robot_status.hpp"
+#include "rm_decision_interfaces/msg/rmul.hpp"
 
 using namespace std::chrono_literals;
 
@@ -10,13 +10,13 @@ public:
   DetectRespawnChecker()
   : Node("detect_respawn_checker")
   {
-    sub_ = this->create_subscription<rm_decision_interfaces::msg::RobotStatus>(
+    sub_ = this->create_subscription<rm_decision_interfaces::msg::RMUL>(
       "/robot_status", 10, std::bind(&DetectRespawnChecker::cb, this, std::placeholders::_1));
     RCLCPP_INFO(this->get_logger(), "DetectRespawnChecker started");
   }
 
 private:
-  void cb(const rm_decision_interfaces::msg::RobotStatus::SharedPtr msg)
+  void cb(const rm_decision_interfaces::msg::RMUL::SharedPtr msg)
   {
     const int MAX_HP = 400;
     const int RESPAWN_STABLE_FRAMES = 2;
@@ -55,7 +55,7 @@ private:
     was_dead_ = is_dead_now;
   }
 
-  rclcpp::Subscription<rm_decision_interfaces::msg::RobotStatus>::SharedPtr sub_;
+  rclcpp::Subscription<rm_decision_interfaces::msg::RMUL>::SharedPtr sub_;
   int alive_stable_frames_ = 0;
   bool respawn_locked_ = false;
   uint64_t last_respawn_ms_ = 0;

@@ -14,16 +14,6 @@ find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/AllRobotHP.msg"
-  "msg/RobotStatus.msg"
-  "msg/FriendLocation.msg"
-  "msg/GameStatus.msg"
-  "msg/RFID.msg"
-  "msg/RobotControl.msg"
-  "msg/DecisionNum.msg"
-  "msg/NavControlCmd.msg"
-  "msg/RobotPosition.msg"
-  "msg/Target.msg"
   "msg/RMUL.msg"
   DEPENDENCIES
     std_msgs

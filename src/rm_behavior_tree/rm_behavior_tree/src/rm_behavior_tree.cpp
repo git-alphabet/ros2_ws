@@ -44,10 +44,8 @@ int main(int argc, char ** argv)
 
   // clang-format off
   const std::vector<std::string> msg_update_plugin_libs = {
-    "sub_all_robot_hp",
     "sub_robot_status",
     "sub_game_status",
-    "sub_decision_num",
     "sub_rfid_status",
     "sub_robot_position",
     "init_blackboard_config",
@@ -67,7 +65,6 @@ int main(int argc, char ** argv)
 
   const std::vector<std::string> bt_plugin_libs = {
     "rate_controller",
-    "decision_switch",
     "is_game_time",
     "is_hp_above",
     "is_hp_below",
@@ -75,7 +72,6 @@ int main(int argc, char ** argv)
     "is_status_ok",
     "is_attacked",
     "is_friend_ok",
-    "is_outpost_ok",
     "get_current_location",
     "move_around",
     "keep_running",

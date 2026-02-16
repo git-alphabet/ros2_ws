@@ -41,10 +41,6 @@ ament_auto_add_executable(rm_behavior_tree_minimal
     src/rm_behavior_tree_minimal.cpp
 )
 # Controllers
-ament_auto_add_library(decision_switch SHARED
-    plugins/control/decision_switch.cpp
-)
-add_target_dependencies(decision_switch)
 
 # Decorators
 ament_auto_add_library(rate_controller SHARED 
@@ -73,10 +69,6 @@ ament_auto_add_library(is_friend_ok SHARED
 )
 add_target_dependencies(is_friend_ok)
 
-ament_auto_add_library(is_outpost_ok SHARED 
-    plugins/condition/is_outpost_ok.cpp
-)
-add_target_dependencies(is_outpost_ok)
 
 ## is_detect_enemy skipped: depends on external package 'auto_aim_interfaces' not available in this workspace
 
@@ -122,10 +114,6 @@ ament_auto_add_library(send_goal SHARED
 )
 add_target_dependencies(send_goal)
 
-ament_auto_add_library(sub_all_robot_hp SHARED 
-    plugins/action/sub_all_robot_hp.cpp
-)
-add_target_dependencies(sub_all_robot_hp)
 
 ament_auto_add_library(sub_robot_status SHARED 
     plugins/action/sub_robot_status.cpp
@@ -145,10 +133,6 @@ add_target_dependencies(sub_game_status)
 # )
 # add_target_dependencies(sub_armors)
 
-ament_auto_add_library(sub_decision_num SHARED
-    plugins/action/sub_decision_num.cpp
-)
-add_target_dependencies(sub_decision_num)
 
 ament_auto_add_library(get_current_location SHARED 
     plugins/action/get_current_location.cpp

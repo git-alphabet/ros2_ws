@@ -1,7 +1,7 @@
 #include <chrono>
 #include <memory>
 #include "rclcpp/rclcpp.hpp"
-#include "rm_decision_interfaces/msg/robot_status.hpp"
+#include "rm_decision_interfaces/msg/rmul.hpp"
 
 using namespace std::chrono_literals;
 
@@ -11,7 +11,7 @@ public:
   RobotStatusPublisher()
   : Node("robot_status_publisher")
   {
-    pub_ = this->create_publisher<rm_decision_interfaces::msg::RobotStatus>("/robot_status", 10);
+    pub_ = this->create_publisher<rm_decision_interfaces::msg::RMUL>("/robot_status", 10);
     timer_ = this->create_wall_timer(100ms, std::bind(&RobotStatusPublisher::onTimer, this));
     start_time_ = this->now();
   }
@@ -21,7 +21,7 @@ private:
   {
     auto now = this->now();
     auto elapsed = now - start_time_;
-    rm_decision_interfaces::msg::RobotStatus msg;
+    rm_decision_interfaces::msg::RMUL msg;
 
     // First 3 seconds: hp = 0 (dead). After that: hp = 100 (alive)
     if (elapsed.seconds() < 3.0) {
@@ -31,10 +31,10 @@ private:
     }
 
     pub_->publish(msg);
-    RCLCPP_INFO(this->get_logger(), "Publishing RobotStatus current_hp=%d", msg.current_hp);
+    RCLCPP_INFO(this->get_logger(), "Publishing RMUL current_hp=%d", msg.current_hp);
   }
 
-  rclcpp::Publisher<rm_decision_interfaces::msg::RobotStatus>::SharedPtr pub_;
+  rclcpp::Publisher<rm_decision_interfaces::msg::RMUL>::SharedPtr pub_;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Time start_time_;
 };

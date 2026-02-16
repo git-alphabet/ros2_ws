@@ -4,7 +4,7 @@
 #include <string>
 
 #include "behaviortree_cpp/action_node.h"
-#include "rm_decision_interfaces/msg/rfid.hpp"
+#include "rm_decision_interfaces/msg/rmul.hpp"
 
 namespace rm_behavior_tree
 {
@@ -33,7 +33,7 @@ public:
   {
     return {
       // RFID 状态：由其他节点订阅 RFID.msg 并写入黑板后提供给此节点读取
-      BT::InputPort<rm_decision_interfaces::msg::RFID>("rfid_status")
+      BT::InputPort<rm_decision_interfaces::msg::RMUL>("rfid_status")
     };
   }
 
