@@ -35,7 +35,7 @@ public:
       // 你们树里是 inout_port
       BT::BidirectionalPort<std::uint64_t>("search_start_ms"),
 
-      BT::InputPort<int>("timeout_ms"),
+      BT::InputPort<std::uint64_t>("timeout_ms"),
 
       BT::InputPort<rm_decision_interfaces::msg::RMUL>("rfid_status"),
 

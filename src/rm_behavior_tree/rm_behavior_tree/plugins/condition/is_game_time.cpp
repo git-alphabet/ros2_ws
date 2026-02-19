@@ -16,7 +16,6 @@ BT::NodeStatus IsGameTimeCondition::checkGameStart()
   getInput("lower_remain_time", lower_remain_time);
   getInput("higher_remain_time", higher_remain_time);
   if (!msg) {
-    // std::cout << "missing required input [game_status]" << '\n';
     return BT::NodeStatus::FAILURE;
   }
 

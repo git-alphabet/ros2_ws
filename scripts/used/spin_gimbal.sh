@@ -19,7 +19,7 @@ DURATION_SEC="${DURATION_SEC:-0}"
 TOPIC_SUFFIX="${TOPIC_SUFFIX:-robot_base/gimbal_cmd}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WS_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+WS_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # source overlay（存在就用 overlay，否则只用 /opt/ros）
 set +u
@@ -65,7 +65,7 @@ fi
 # - yaw_type=2 / pitch_type=2 表示相对角度
 # - position.yaw 每条消息增加 YAW_STEP_RAD 弧度
 # - -r RATE_HZ 表示发送频率
-MSG="{yaw_type: 2, pitch_type: 2, position: {yaw: ${YAW_STEP_RAD}, pitch: ${PITCH_STEP_RAD}}}"
+MSG="{tid: 0, yaw_type: 2, pitch_type: 2, position: {yaw: ${YAW_STEP_RAD}, pitch: ${PITCH_STEP_RAD}}, velocity: {yaw: 0.0, pitch: 0.0}}"
 
 CMD=(ros2 topic pub -r "${RATE_HZ}" "${TOPIC}" rmoss_interfaces/msg/GimbalCmd "${MSG}")
 

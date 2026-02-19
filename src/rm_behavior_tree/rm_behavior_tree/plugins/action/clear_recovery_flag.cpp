@@ -21,9 +21,9 @@ BT::NodeStatus ClearRecoveryFlagAction::tick()
   setOutput("need_recovery", false);
 
   // 清理恢复流程相关计时器状态（避免下次复活沿/回血逻辑复用到旧值）
-  setOutput("heal_start_ms", 0ULL);
-  setOutput("search_start_ms", 0ULL);
-  setOutput("recovery_start_ms", 0ULL);
+  setOutput("heal_start_ms", static_cast<std::uint64_t>(0));
+  setOutput("search_start_ms", static_cast<std::uint64_t>(0));
+  setOutput("recovery_start_ms", static_cast<std::uint64_t>(0));
 
   return BT::NodeStatus::SUCCESS;
 }

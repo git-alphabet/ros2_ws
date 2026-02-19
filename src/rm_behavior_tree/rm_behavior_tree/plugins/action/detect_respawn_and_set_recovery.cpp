@@ -140,6 +140,11 @@ BT::NodeStatus DetectRespawnAndSetRecoveryAction::onTick(
   // 4. 直接从ROS节点获取当前时间（毫秒级）+ 空指针保护
   std::uint64_t now_ms = static_cast<std::uint64_t>(node_->now().nanoseconds() / 1000000ULL);
 
+  RCLCPP_DEBUG(node_->get_logger(), 
+    "[DetectRespawn] hp=%d, was_dead=%d, need_recovery=%d, alive_frames=%d/%d",
+    current_hp_, static_cast<int>(was_dead), static_cast<int>(need_recovery),
+    alive_stable_frames_, RESPAWN_STABLE_FRAMES);
+
   // 5. 优化1：血量合法性过滤（避免电控解析异常值）
   const bool hp_is_valid = (current_hp_ >= 0 && current_hp_ <= MAX_HP);
   // 只有血量合法时，才判断死亡状态；非法则默认判定为死亡
@@ -182,9 +187,9 @@ BT::NodeStatus DetectRespawnAndSetRecoveryAction::onTick(
   // 9. 触发复活沿：初始化恢复参数 + 加锁防重复
   if (respawn_edge) {
     need_recovery = true;
-    setOutput("recovery_start_ms", now_ms);    // 记录恢复开始时间
-    setOutput("search_start_ms", 0ULL);        // 重置搜卡时间
-    setOutput("heal_start_ms", 0ULL);          // 重置回血时间
+    setOutput("recovery_start_ms", now_ms);                       // 记录恢复开始时间
+    setOutput("search_start_ms", static_cast<std::uint64_t>(0));  // 重置搜卡时间
+    setOutput("heal_start_ms", static_cast<std::uint64_t>(0));    // 重置回血时间
     
     // 加锁+记录触发时间（避免短时间重复触发）
     respawn_locked_ = true;
@@ -200,7 +205,17 @@ BT::NodeStatus DetectRespawnAndSetRecoveryAction::onTick(
   }
 
   // 10. 更新黑板状态（关键：同步最新状态）
-  setOutput("was_dead", is_dead_now);          // 更新历史死亡状态
+  // was_dead 的语义：标记"最近经历过死亡，尚未完成复活沿检测"
+  // - 死亡时 (is_dead_now=true): 设为 true
+  // - 触发复活沿后 (respawn_edge=true): 设为 false（任务完成）
+  // - 存活但尚在累计防抖帧 (was_dead=true, !respawn_edge): 保持 true
+  if (is_dead_now) {
+    setOutput("was_dead", true);
+  } else if (respawn_edge) {
+    setOutput("was_dead", false);               // 复活沿已触发，清除标记
+  } else {
+    setOutput("was_dead", was_dead);            // 保持原值（防抖期间不清除）
+  }
   setOutput("need_recovery", need_recovery);   // 更新恢复模式标志
 
   return BT::NodeStatus::SUCCESS;

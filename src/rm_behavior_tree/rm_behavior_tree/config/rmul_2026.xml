@@ -5,14 +5,13 @@
     <include path="HighHP_combat_logic.xml"/>
     <include path="MediumHP_combat_logic.xml"/>
     <include path="perception_and_blackboard.xml"/>
-    <include path="IsDetectEnemy.xml"/>
     <include path="IsDeadAndDispelDebuff.xml"/>
 
     <BehaviorTree ID="MainBehaviorTree">
         <Sequence>
             <!-- 用Sequence包裹所有节点，确保BehaviorTree只有1个子节点 -->
             <!-- 订阅数据并写入黑板 -->
-            <SubTree ID="PerceptionAndBlackboard"/>
+            <SubTree ID="PerceptionAndBlackboard" _autoremap="true"/>
             <WhileDoElse>
                 <IsGameTime name="IsGameStart"
                         message="{game_status}"
@@ -21,7 +20,7 @@
                         higher_remain_time="300"/>
                 <Fallback>
                     <!--判断战亡，若战亡，执行解除虚弱状态操作 -->
-                    <SubTree ID="IsDeadAndDispelDebuff"/>
+                    <SubTree ID="IsDeadAndDispelDebuff" _autoremap="true"/>
                     <!-- 处于存活状态则进入战斗逻辑 -->
                     <Fallback>
                         <!-- 检测到敌人进行战斗逻辑 -->
@@ -31,9 +30,9 @@
                         </ReactiveSequence>
                         <Fallback>
                             <!-- 高血量战斗逻辑 -->
-                            <SubTree ID="HighHPCombatLogic"/>
+                            <SubTree ID="HighHPCombatLogic" _autoremap="true"/>
                             <!-- 中血量战斗逻辑 -->
-                            <SubTree ID="MediumHPCombatLogic"/>
+                            <SubTree ID="MediumHPCombatLogic" _autoremap="true"/>
                         </Fallback>
 
                         <!-- 非战斗时刻占点逻辑 -->
@@ -55,7 +54,7 @@
 
                                 <!-- Fallback: 先感应补给区卡,感应不到再微动重试 -->
                                 <ReactiveFallback>
-                                    <IsSupplyZoneDetected rfid_status="{rfid_status}"/>
+                                    <IsSupplyCardDetected rfid_status="{rfid_status}"/>
                                     <MoveAround expected_nearby_goal_count="5"
                                                 expected_dis="0.3"
                                                 message="{current_location}"/>

@@ -78,6 +78,8 @@ int main(int argc, char ** argv)
     "not_arrived",
     "navigate_to_goal",
     "print_message",
+    "is_at_nav_goal",
+    "is_detect_enemy",
 
     
   };

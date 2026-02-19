@@ -159,9 +159,8 @@ BT::NodeStatus MicroSearchSupplyCardAction::onRunning()
   }
 
   // 读取 timeout 与 search_start_ms
-  int timeout_ms = 0;
-  (void)getInput<int>("timeout_ms", timeout_ms);
-  timeout_ms = std::max(0, timeout_ms);
+  std::uint64_t timeout_ms = 0;
+  (void)getInput<std::uint64_t>("timeout_ms", timeout_ms);
 
   std::uint64_t start_ms = 0;
   (void)getInput<std::uint64_t>("search_start_ms", start_ms);
