@@ -3,21 +3,21 @@
       main_tree_to_execute="rmuc_2026">
 
     <!--
-      Sentry autonomous decision Behavior Tree (BT.CPP v4 XML)
-      - Focus: survivability + objective control + economy-aware sustain + posture management
-      - Designed around RoboMaster 2026 rules for sentry: posture system, remote exchange, supply healing, fortress/base/outpost buffs.
-      - All map coordinates are configurable via InitSentryConfig outputs.
+      哨兵自主决策行为树 (BT.CPP v4 XML)
+      - 核心：生存能力 + 目标控制 + 经济感知补给 + 姿态管理
+      - 基于 RoboMaster 2026 哨兵规则设计：姿态系统、远程兑换、补给回血、堡垒/基地/前哨站增益
+      - 所有地图坐标可通过 InitSentryConfig 输出配置
     -->
 
     <BehaviorTree ID="rmuc_2026">
         <Sequence>
-            <!-- Perception -> Blackboard (should tick continuously; nodes are expected to be non-blocking) -->
+            <!-- 感知 -> 黑板（应持续 tick；节点预期为非阻塞） -->
             <SubTree ID="PerceptionAndBlackboard" _autoremap="true"/>
 
-            <!-- Initialize config + internal cmd state (idempotent; safe to tick repeatedly) -->
+            <!-- 初始化配置 + 内部命令状态（幂等；可安全重复 tick） -->
             <SubTree ID="InitOnce" _autoremap="true"/>
 
-            <!-- Match stage loop (7 minutes = 420s) -->
+            <!-- 比赛阶段循环（7 分钟 = 420 秒） -->
             <WhileDoElse>
                 <IsGameTime name="IsMatchStage"
                             message="{game_status}"
@@ -25,44 +25,44 @@
                             lower_remain_time="0"
                             higher_remain_time="420"/>
 
-                <!-- ===================== MATCH STAGE ===================== -->
+                <!-- ===================== 比赛阶段 ===================== -->
                 <ReactiveSequence>
 
-                    <!-- Build & send sentry autonomous-decision command (0x0120) at controlled rate -->
+                    <!-- 构建并按控制速率发送哨兵自主决策指令 (0x0120) -->
                     <SubTree ID="CommandHub" _autoremap="true"/>
 
-                    <!-- Priority-based tactics -->
+                    <!-- 基于优先级的战术 -->
                     <ReactiveFallback>
 
-                        <!-- 0) Dead / respawn handling (succeeds only if dead) -->
+                        <!-- 0) 死亡/复活处理（仅在死亡时成功） -->
                         <SubTree ID="DeathAndRespawn" _autoremap="true"/>
 
-                        <!-- 1) Weakness dispel rush (after normal respawn) -->
+                        <!-- 1) 虚弱解除冲刺（正常复活后） -->
                         <SubTree ID="WeaknessRecovery" _autoremap="true"/>
 
-                        <!-- 2) Critical survival (HP/heat/power) -->
+                        <!-- 2) 危急生存（血量/热量/电量） -->
                         <SubTree ID="CriticalSurvival" _autoremap="true"/>
 
-                        <!-- 3) Base / fortress defense when threatened -->
+                        <!-- 3) 基地/堡垒防御（受威胁时） -->
                         <SubTree ID="BaseDefense" _autoremap="true"/>
 
-                        <!-- 4) Engage enemies when we have a valid target and it's safe -->
+                        <!-- 4) 交战（有有效目标且安全时） -->
                         <SubTree ID="EngageCombat" _autoremap="true"/>
 
-                        <!-- 5) Sustain: heal / ammo (economy-aware) -->
+                        <!-- 5) 后勤：回血/补弹（经济感知） -->
                         <SubTree ID="SustainAndEconomy" _autoremap="true"/>
 
-                        <!-- 6) Objective control: central/ladder/fortress/tunnel etc. -->
+                        <!-- 6) 目标控制：中央高地/梯形高地/堡垒/隧道等 -->
                         <SubTree ID="ObjectivePlanner" _autoremap="true"/>
 
-                        <!-- 7) Default: patrol & scan -->
+                        <!-- 7) 默认：巡逻扫描 -->
                         <SubTree ID="PatrolAndScan" _autoremap="true"/>
 
                     </ReactiveFallback>
 
                 </ReactiveSequence>
 
-                <!-- ===================== NOT MATCH STAGE ===================== -->
+                <!-- ===================== 非比赛阶段 ===================== -->
                 <ReactiveSequence>
                     <RateController hz="1">
                         <SendGoal name="Home"
@@ -90,7 +90,7 @@
         </Sequence>
     </BehaviorTree>
 
-    <!-- ===================== SUBTREE INCLUDES ===================== -->
+    <!-- ===================== 子树引用 ===================== -->
     <include path="PerceptionAndBlackboard.xml"/>
     <include path="InitOnce.xml"/>
     <include path="CommandHub.xml"/>
@@ -106,10 +106,10 @@
     <include path="ObjectivePlanner.xml"/>
     <include path="PatrolAndScan.xml"/>
 
-    <!-- ===================== NODE MODELS (for Groot) ===================== -->
+    <!-- ===================== 节点模型（供 Groot 使用） ===================== -->
     <TreeNodesModel>
 
-        <!-- Actions: Subscriptions -->
+        <!-- 动作：订阅节点 -->
         <Action ID="SubGameStatus" editable="true">
             <input_port name="topic_name" default="/game_status"/>
             <output_port name="game_status" default="{game_status}"/>
@@ -134,7 +134,7 @@
             <output_port name="radar_tracks" default="{radar.tracks}"/>
         </Action>
 
-        <!-- Actions: Blackboard init / parse -->
+        <!-- 动作：黑板初始化/解析 -->
         <Action ID="InitSentryConfig" editable="true">
             <output_port name="topic_game_status" default="/game_status"/>
             <output_port name="topic_robot_status" default="/robot_status"/>
@@ -220,7 +220,7 @@
             <output_port name="fortress_threat" default="{threat.fortress}"/>
         </Action>
 
-        <!-- Actions: Decisions -->
+        <!-- 动作：决策节点 -->
         <Action ID="DecidePosture" editable="true">
             <input_port name="hp_cur" default="{hp.cur}"/>
             <input_port name="hp_max" default="{hp.max}"/>
@@ -265,7 +265,7 @@
             <output_port name="confirm_instant_respawn" default="{cmd.confirm_instant_respawn}"/>
         </Action>
 
-        <!-- Actions: Referee command mux (0x0120) -->
+        <!-- 动作：裁判系统指令复用器 (0x0120) -->
         <Action ID="SentryCmdMux" editable="true">
             <input_port name="posture" default="3"/>
             <input_port name="confirm_respawn" default="0"/>
@@ -277,7 +277,7 @@
             <inout_port name="cmd_state" default="{cmd.state}"/>
         </Action>
 
-        <!-- Actions: Navigation -->
+        <!-- 动作：导航节点 -->
         <Action ID="SendGoal" editable="true">
             <input_port name="goal_x" default="0.0"/>
             <input_port name="goal_y" default="0.0"/>
@@ -295,7 +295,7 @@
         </Action>
         <Action ID="KeepRunning" editable="true"/>
 
-        <!-- Actions: Combat -->
+        <!-- 动作：战斗节点 -->
         <Action ID="SelectBestTarget" editable="true">
             <input_port name="radar_tracks" default="{radar.tracks}"/>
             <input_port name="pose_x" default="{pose.x}"/>
@@ -318,7 +318,7 @@
             <input_port name="fire_enable" default="False"/>
         </Action>
 
-        <!-- Actions: Objective/utility -->
+        <!-- 动作：目标/工具节点 -->
         <Action ID="SelectObjective" editable="true">
             <input_port name="pose_x" default="{pose.x}"/>
             <input_port name="pose_y" default="{pose.y}"/>
@@ -406,7 +406,7 @@
             <input_port name="ammo_target" default="{cfg.ammo_target}"/>
         </Action>
 
-        <!-- Conditions -->
+        <!-- 条件节点 -->
         <Condition ID="IsGameTime" editable="true">
             <input_port name="message" default="{game_status}"/>
             <input_port name="game_progress" default="4"/>
@@ -483,7 +483,7 @@
             <input_port name="arrive_radius" default="{cfg.arrive_radius}"/>
         </Condition>
 
-        <!-- Decorators -->
+        <!-- 装饰器节点 -->
         <Decorator ID="RateController" editable="true">
             <input_port name="hz" default="1.0"/>
         </Decorator>
