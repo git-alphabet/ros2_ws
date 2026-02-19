@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+
+    <BehaviorTree ID="EngageCombat">
+        <ReactiveSequence>
+            <HasValidTarget has_target="{combat.has_target}"
+                            best_target="{combat.best_target}"/>
+            <IsCombatAllowed is_weak="{state.is_weak}"
+                             ammo_allow="{ammo.allow}"
+                             heat_cur="{heat.cur}"
+                             heat_high="{cfg.heat_high}"
+                             hp_cur="{hp.cur}"
+                             hp_low="{cfg.hp_low}"/>
+            <RobotControl stop_gimbal_scan="True"
+                          chassis_spin="True"
+                          fire_enable="True"/>
+            <SubTree ID="CombatLoop" _autoremap="true"/>
+        </ReactiveSequence>
+    </BehaviorTree>
+
+</root>

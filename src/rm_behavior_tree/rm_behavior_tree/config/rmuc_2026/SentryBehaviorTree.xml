@@ -1,0 +1,493 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4"
+      main_tree_to_execute="rmuc_2026">
+
+    <!--
+      Sentry autonomous decision Behavior Tree (BT.CPP v4 XML)
+      - Focus: survivability + objective control + economy-aware sustain + posture management
+      - Designed around RoboMaster 2026 rules for sentry: posture system, remote exchange, supply healing, fortress/base/outpost buffs.
+      - All map coordinates are configurable via InitSentryConfig outputs.
+    -->
+
+    <BehaviorTree ID="rmuc_2026">
+        <Sequence>
+            <!-- Perception -> Blackboard (should tick continuously; nodes are expected to be non-blocking) -->
+            <SubTree ID="PerceptionAndBlackboard" _autoremap="true"/>
+
+            <!-- Initialize config + internal cmd state (idempotent; safe to tick repeatedly) -->
+            <SubTree ID="InitOnce" _autoremap="true"/>
+
+            <!-- Match stage loop (7 minutes = 420s) -->
+            <WhileDoElse>
+                <IsGameTime name="IsMatchStage"
+                            message="{game_status}"
+                            game_progress="4"
+                            lower_remain_time="0"
+                            higher_remain_time="420"/>
+
+                <!-- ===================== MATCH STAGE ===================== -->
+                <ReactiveSequence>
+
+                    <!-- Build & send sentry autonomous-decision command (0x0120) at controlled rate -->
+                    <SubTree ID="CommandHub" _autoremap="true"/>
+
+                    <!-- Priority-based tactics -->
+                    <ReactiveFallback>
+
+                        <!-- 0) Dead / respawn handling (succeeds only if dead) -->
+                        <SubTree ID="DeathAndRespawn" _autoremap="true"/>
+
+                        <!-- 1) Weakness dispel rush (after normal respawn) -->
+                        <SubTree ID="WeaknessRecovery" _autoremap="true"/>
+
+                        <!-- 2) Critical survival (HP/heat/power) -->
+                        <SubTree ID="CriticalSurvival" _autoremap="true"/>
+
+                        <!-- 3) Base / fortress defense when threatened -->
+                        <SubTree ID="BaseDefense" _autoremap="true"/>
+
+                        <!-- 4) Engage enemies when we have a valid target and it's safe -->
+                        <SubTree ID="EngageCombat" _autoremap="true"/>
+
+                        <!-- 5) Sustain: heal / ammo (economy-aware) -->
+                        <SubTree ID="SustainAndEconomy" _autoremap="true"/>
+
+                        <!-- 6) Objective control: central/ladder/fortress/tunnel etc. -->
+                        <SubTree ID="ObjectivePlanner" _autoremap="true"/>
+
+                        <!-- 7) Default: patrol & scan -->
+                        <SubTree ID="PatrolAndScan" _autoremap="true"/>
+
+                    </ReactiveFallback>
+
+                </ReactiveSequence>
+
+                <!-- ===================== NOT MATCH STAGE ===================== -->
+                <ReactiveSequence>
+                    <RateController hz="1">
+                        <SendGoal name="Home"
+                                  goal_x="{cfg.home_x}"
+                                  goal_y="{cfg.home_y}"
+                                  frame_id="map"
+                                  action_name="navigate_to_pose"/>
+                    </RateController>
+                    <RobotControl stop_gimbal_scan="True"
+                                  chassis_spin="False"
+                                  fire_enable="False"/>
+                    <RateController hz="2">
+                        <SentryCmdMux posture="3"
+                                      confirm_respawn="0"
+                                      confirm_instant_respawn="0"
+                                      allow_ammo_target="{cmd.allow_ammo_target}"
+                                      trigger_remote_ammo="0"
+                                      trigger_remote_hp="0"
+                                      enable_big_energy="0"
+                                      cmd_state="{cmd.state}"/>
+                    </RateController>
+                </ReactiveSequence>
+
+            </WhileDoElse>
+        </Sequence>
+    </BehaviorTree>
+
+    <!-- ===================== SUBTREE INCLUDES ===================== -->
+    <include path="PerceptionAndBlackboard.xml"/>
+    <include path="InitOnce.xml"/>
+    <include path="CommandHub.xml"/>
+    <include path="DeathAndRespawn.xml"/>
+    <include path="WeaknessRecovery.xml"/>
+    <include path="CriticalSurvival.xml"/>
+    <include path="BaseDefense.xml"/>
+    <include path="EngageCombat.xml"/>
+    <include path="CombatLoop.xml"/>
+    <include path="SustainAndEconomy.xml"/>
+    <include path="HealPlan.xml"/>
+    <include path="AmmoPlan.xml"/>
+    <include path="ObjectivePlanner.xml"/>
+    <include path="PatrolAndScan.xml"/>
+
+    <!-- ===================== NODE MODELS (for Groot) ===================== -->
+    <TreeNodesModel>
+
+        <!-- Actions: Subscriptions -->
+        <Action ID="SubGameStatus" editable="true">
+            <input_port name="topic_name" default="/game_status"/>
+            <output_port name="game_status" default="{game_status}"/>
+            <output_port name="now_ms" default="{time.now_ms}"/>
+        </Action>
+        <Action ID="SubRobotStatus" editable="true">
+            <input_port name="topic_name" default="/robot_status"/>
+            <output_port name="robot_status" default="{robot_status}"/>
+        </Action>
+        <Action ID="SubRFIDStatus" editable="true">
+            <input_port name="topic_name" default="/rfid_status"/>
+            <output_port name="rfid_status" default="{rfid.status}"/>
+        </Action>
+        <Action ID="SubRobotPosition" editable="true">
+            <input_port name="topic_name" default="/robot_position"/>
+            <output_port name="pose_x" default="{pose.x}"/>
+            <output_port name="pose_y" default="{pose.y}"/>
+            <output_port name="pose_yaw" default="{pose.yaw}"/>
+        </Action>
+        <Action ID="SubRadarTracks" editable="true">
+            <input_port name="topic_name" default="/radar/enemy_tracks"/>
+            <output_port name="radar_tracks" default="{radar.tracks}"/>
+        </Action>
+
+        <!-- Actions: Blackboard init / parse -->
+        <Action ID="InitSentryConfig" editable="true">
+            <output_port name="topic_game_status" default="/game_status"/>
+            <output_port name="topic_robot_status" default="/robot_status"/>
+            <output_port name="topic_rfid_status" default="/rfid_status"/>
+            <output_port name="topic_robot_pose" default="/robot_position"/>
+            <output_port name="topic_radar_tracks" default="/radar/enemy_tracks"/>
+
+            <output_port name="home_x" default="0.0"/>
+            <output_port name="home_y" default="0.0"/>
+            <output_port name="supply_x" default="0.0"/>
+            <output_port name="supply_y" default="0.0"/>
+            <output_port name="base_buff_x" default="0.0"/>
+            <output_port name="base_buff_y" default="0.0"/>
+            <output_port name="outpost_buff_x" default="0.0"/>
+            <output_port name="outpost_buff_y" default="0.0"/>
+            <output_port name="fortress_ally_x" default="0.0"/>
+            <output_port name="fortress_ally_y" default="0.0"/>
+            <output_port name="fortress_enemy_x" default="0.0"/>
+            <output_port name="fortress_enemy_y" default="0.0"/>
+            <output_port name="central_highland_x" default="0.0"/>
+            <output_port name="central_highland_y" default="0.0"/>
+            <output_port name="ladder_highland_x" default="0.0"/>
+            <output_port name="ladder_highland_y" default="0.0"/>
+            <output_port name="defend_anchor_x" default="0.0"/>
+            <output_port name="defend_anchor_y" default="0.0"/>
+
+            <output_port name="patrol_wpt_0_x" default="0.0"/>
+            <output_port name="patrol_wpt_0_y" default="0.0"/>
+            <output_port name="patrol_wpt_1_x" default="0.0"/>
+            <output_port name="patrol_wpt_1_y" default="0.0"/>
+            <output_port name="patrol_wpt_2_x" default="0.0"/>
+            <output_port name="patrol_wpt_2_y" default="0.0"/>
+
+            <output_port name="arrive_radius" default="0.35"/>
+            <output_port name="hp_critical" default="80"/>
+            <output_port name="hp_low" default="180"/>
+            <output_port name="hp_safe" default="280"/>
+            <output_port name="heat_high" default="210"/>
+            <output_port name="heat_critical" default="245"/>
+            <output_port name="ammo_low" default="80"/>
+            <output_port name="ammo_target" default="300"/>
+            <output_port name="base_deficit_for_fortress" default="500"/>
+            <output_port name="enemy_near_base_radius" default="2.0"/>
+            <output_port name="objective_hold_ms" default="12000"/>
+            <output_port name="combat_fire_burst_ms" default="180"/>
+            <output_port name="combat_fire_pause_ms" default="120"/>
+        </Action>
+
+        <Action ID="InitCmdState" editable="true">
+            <inout_port name="cmd_state" default="{cmd.state}"/>
+            <inout_port name="allow_ammo_target" default="{cmd.allow_ammo_target}"/>
+        </Action>
+
+        <Action ID="ParseSentryBlackboard" editable="true">
+            <input_port name="game_status" default="{game_status}"/>
+            <input_port name="robot_status" default="{robot_status}"/>
+            <input_port name="rfid_status" default="{rfid.status}"/>
+            <input_port name="radar_tracks" default="{radar.tracks}"/>
+            <input_port name="pose_x" default="{pose.x}"/>
+            <input_port name="pose_y" default="{pose.y}"/>
+            <input_port name="now_ms" default="{time.now_ms}"/>
+
+            <output_port name="stage_remain_time" default="{game.remain_s}"/>
+            <output_port name="stage_elapsed_time" default="{game.elapsed_s}"/>
+            <output_port name="hp_cur" default="{hp.cur}"/>
+            <output_port name="hp_max" default="{hp.max}"/>
+            <output_port name="heat_cur" default="{heat.cur}"/>
+            <output_port name="ammo_allow" default="{ammo.allow}"/>
+            <output_port name="ammo_left" default="{ammo.left}"/>
+            <output_port name="base_hp_cur" default="{base.hp.cur}"/>
+            <output_port name="base_hp_max" default="{base.hp.max}"/>
+            <output_port name="outpost_alive" default="{outpost.alive}"/>
+            <output_port name="is_dead" default="{state.is_dead}"/>
+            <output_port name="is_weak" default="{state.is_weak}"/>
+            <output_port name="is_disengaged" default="{state.disengaged}"/>
+            <output_port name="disengage_countdown" default="{state.disengage_cd_s}"/>
+            <output_port name="can_remote_heal" default="{economy.can_remote_heal}"/>
+            <output_port name="can_remote_ammo" default="{economy.can_remote_ammo}"/>
+            <output_port name="team_coins" default="{economy.coins}"/>
+            <output_port name="has_target" default="{combat.has_target}"/>
+            <output_port name="best_target" default="{combat.best_target}"/>
+            <output_port name="base_threat" default="{threat.base}"/>
+            <output_port name="fortress_threat" default="{threat.fortress}"/>
+        </Action>
+
+        <!-- Actions: Decisions -->
+        <Action ID="DecidePosture" editable="true">
+            <input_port name="hp_cur" default="{hp.cur}"/>
+            <input_port name="hp_max" default="{hp.max}"/>
+            <input_port name="heat_cur" default="{heat.cur}"/>
+            <input_port name="heat_high" default="{cfg.heat_high}"/>
+            <input_port name="has_target" default="{combat.has_target}"/>
+            <input_port name="base_threat" default="{threat.base}"/>
+            <input_port name="is_disengaged" default="{state.disengaged}"/>
+            <input_port name="stage_elapsed_time" default="{game.elapsed_s}"/>
+            <input_port name="now_ms" default="{time.now_ms}"/>
+            <output_port name="posture_out" default="{cmd.posture}"/>
+        </Action>
+
+        <Action ID="DecideEconomyCmd" editable="true">
+            <input_port name="hp_cur" default="{hp.cur}"/>
+            <input_port name="hp_max" default="{hp.max}"/>
+            <input_port name="ammo_allow" default="{ammo.allow}"/>
+            <input_port name="ammo_target" default="{cfg.ammo_target}"/>
+            <input_port name="ammo_low" default="{cfg.ammo_low}"/>
+            <input_port name="is_disengaged" default="{state.disengaged}"/>
+            <input_port name="can_remote_heal" default="{economy.can_remote_heal}"/>
+            <input_port name="can_remote_ammo" default="{economy.can_remote_ammo}"/>
+            <input_port name="team_coins" default="{economy.coins}"/>
+            <input_port name="stage_remain_time" default="{game.remain_s}"/>
+            <input_port name="base_threat" default="{threat.base}"/>
+            <input_port name="allow_ammo_target_in" default="{cmd.allow_ammo_target}"/>
+            <output_port name="allow_ammo_target_out" default="{cmd.allow_ammo_target}"/>
+            <output_port name="trigger_remote_ammo" default="{cmd.trig_remote_ammo}"/>
+            <output_port name="trigger_remote_hp" default="{cmd.trig_remote_hp}"/>
+            <output_port name="enable_big_energy" default="{cmd.enable_big_energy}"/>
+        </Action>
+
+        <Action ID="DecideRespawnCmd" editable="true">
+            <input_port name="is_dead" default="{state.is_dead}"/>
+            <input_port name="robot_status" default="{robot_status}"/>
+            <input_port name="team_coins" default="{economy.coins}"/>
+            <input_port name="stage_remain_time" default="{game.remain_s}"/>
+            <input_port name="base_hp_cur" default="{base.hp.cur}"/>
+            <input_port name="base_hp_max" default="{base.hp.max}"/>
+            <input_port name="base_threat" default="{threat.base}"/>
+            <output_port name="confirm_respawn" default="{cmd.confirm_respawn}"/>
+            <output_port name="confirm_instant_respawn" default="{cmd.confirm_instant_respawn}"/>
+        </Action>
+
+        <!-- Actions: Referee command mux (0x0120) -->
+        <Action ID="SentryCmdMux" editable="true">
+            <input_port name="posture" default="3"/>
+            <input_port name="confirm_respawn" default="0"/>
+            <input_port name="confirm_instant_respawn" default="0"/>
+            <input_port name="allow_ammo_target" default="{cmd.allow_ammo_target}"/>
+            <input_port name="trigger_remote_ammo" default="0"/>
+            <input_port name="trigger_remote_hp" default="0"/>
+            <input_port name="enable_big_energy" default="0"/>
+            <inout_port name="cmd_state" default="{cmd.state}"/>
+        </Action>
+
+        <!-- Actions: Navigation -->
+        <Action ID="SendGoal" editable="true">
+            <input_port name="goal_x" default="0.0"/>
+            <input_port name="goal_y" default="0.0"/>
+            <input_port name="frame_id" default="map"/>
+            <input_port name="action_name" default="navigate_to_pose"/>
+        </Action>
+        <Action ID="CancelNavGoal" editable="true">
+            <input_port name="action_name" default="navigate_to_pose"/>
+        </Action>
+
+        <Action ID="MoveAround" editable="true">
+            <input_port name="expected_nearby_goal_count" default="5"/>
+            <input_port name="expected_dis" default="0.25"/>
+            <input_port name="message" default="{pose}"/>
+        </Action>
+        <Action ID="KeepRunning" editable="true"/>
+
+        <!-- Actions: Combat -->
+        <Action ID="SelectBestTarget" editable="true">
+            <input_port name="radar_tracks" default="{radar.tracks}"/>
+            <input_port name="pose_x" default="{pose.x}"/>
+            <input_port name="pose_y" default="{pose.y}"/>
+            <input_port name="base_x" default="{cfg.base_buff_x}"/>
+            <input_port name="base_y" default="{cfg.base_buff_y}"/>
+            <output_port name="out_target" default="{combat.best_target}"/>
+        </Action>
+        <Action ID="AimAtTarget" editable="true">
+            <input_port name="target" default="{combat.best_target}"/>
+        </Action>
+        <Action ID="FireBurst" editable="true">
+            <input_port name="burst_ms" default="{cfg.combat_fire_burst_ms}"/>
+            <input_port name="pause_ms" default="{cfg.combat_fire_pause_ms}"/>
+        </Action>
+
+        <Action ID="RobotControl" editable="true">
+            <input_port name="stop_gimbal_scan" default="False"/>
+            <input_port name="chassis_spin" default="False"/>
+            <input_port name="fire_enable" default="False"/>
+        </Action>
+
+        <!-- Actions: Objective/utility -->
+        <Action ID="SelectObjective" editable="true">
+            <input_port name="pose_x" default="{pose.x}"/>
+            <input_port name="pose_y" default="{pose.y}"/>
+            <input_port name="stage_elapsed_time" default="{game.elapsed_s}"/>
+            <input_port name="stage_remain_time" default="{game.remain_s}"/>
+            <input_port name="hp_cur" default="{hp.cur}"/>
+            <input_port name="hp_max" default="{hp.max}"/>
+            <input_port name="base_hp_cur" default="{base.hp.cur}"/>
+            <input_port name="base_hp_max" default="{base.hp.max}"/>
+            <input_port name="base_deficit_for_fortress" default="{cfg.base_deficit_for_fortress}"/>
+            <input_port name="outpost_alive" default="{outpost.alive}"/>
+            <input_port name="base_threat" default="{threat.base}"/>
+            <output_port name="goal_x" default="{nav.goal_x}"/>
+            <output_port name="goal_y" default="{nav.goal_y}"/>
+            <output_port name="objective_name" default="{nav.objective}"/>
+        </Action>
+
+        <Action ID="HoldObjective" editable="true">
+            <input_port name="hold_ms" default="{cfg.objective_hold_ms}"/>
+            <input_port name="base_threat" default="{threat.base}"/>
+            <input_port name="has_target" default="{combat.has_target}"/>
+        </Action>
+
+        <Action ID="WaypointPatrol" editable="true">
+            <input_port name="pose_x" default="{pose.x}"/>
+            <input_port name="pose_y" default="{pose.y}"/>
+            <input_port name="wpt0_x" default="{cfg.patrol.0.x}"/>
+            <input_port name="wpt0_y" default="{cfg.patrol.0.y}"/>
+            <input_port name="wpt1_x" default="{cfg.patrol.1.x}"/>
+            <input_port name="wpt1_y" default="{cfg.patrol.1.y}"/>
+            <input_port name="wpt2_x" default="{cfg.patrol.2.x}"/>
+            <input_port name="wpt2_y" default="{cfg.patrol.2.y}"/>
+            <output_port name="goal_x" default="{nav.goal_x}"/>
+            <output_port name="goal_y" default="{nav.goal_y}"/>
+        </Action>
+
+        <Action ID="SelectNearestDispelCard" editable="true">
+            <input_port name="pose_x" default="{pose.x}"/>
+            <input_port name="pose_y" default="{pose.y}"/>
+            <input_port name="supply_x" default="{cfg.supply_x}"/>
+            <input_port name="supply_y" default="{cfg.supply_y}"/>
+            <input_port name="base_buff_x" default="{cfg.base_buff_x}"/>
+            <input_port name="base_buff_y" default="{cfg.base_buff_y}"/>
+            <input_port name="outpost_buff_x" default="{cfg.outpost_buff_x}"/>
+            <input_port name="outpost_buff_y" default="{cfg.outpost_buff_y}"/>
+            <output_port name="goal_x" default="{nav.goal_x}"/>
+            <output_port name="goal_y" default="{nav.goal_y}"/>
+        </Action>
+
+        <Action ID="SelectNearestResupplyStation" editable="true">
+            <input_port name="pose_x" default="{pose.x}"/>
+            <input_port name="pose_y" default="{pose.y}"/>
+            <input_port name="supply_x" default="{cfg.supply_x}"/>
+            <input_port name="supply_y" default="{cfg.supply_y}"/>
+            <input_port name="base_buff_x" default="{cfg.base_buff_x}"/>
+            <input_port name="base_buff_y" default="{cfg.base_buff_y}"/>
+            <input_port name="outpost_buff_x" default="{cfg.outpost_buff_x}"/>
+            <input_port name="outpost_buff_y" default="{cfg.outpost_buff_y}"/>
+            <output_port name="goal_x" default="{nav.goal_x}"/>
+            <output_port name="goal_y" default="{nav.goal_y}"/>
+        </Action>
+
+        <Action ID="SelectSafeRetreatGoal" editable="true">
+            <input_port name="pose_x" default="{pose.x}"/>
+            <input_port name="pose_y" default="{pose.y}"/>
+            <input_port name="supply_x" default="{cfg.supply_x}"/>
+            <input_port name="supply_y" default="{cfg.supply_y}"/>
+            <input_port name="defend_anchor_x" default="{cfg.defend_anchor_x}"/>
+            <input_port name="defend_anchor_y" default="{cfg.defend_anchor_y}"/>
+            <output_port name="goal_x" default="{nav.goal_x}"/>
+            <output_port name="goal_y" default="{nav.goal_y}"/>
+        </Action>
+
+        <Action ID="HoldAndHeal" editable="true">
+            <input_port name="hp_cur" default="{hp.cur}"/>
+            <input_port name="hp_max" default="{hp.max}"/>
+            <input_port name="hp_safe" default="{cfg.hp_safe}"/>
+            <input_port name="stage_elapsed_time" default="{game.elapsed_s}"/>
+            <input_port name="is_disengaged" default="{state.disengaged}"/>
+        </Action>
+
+        <Action ID="HoldForSupplyAmmoTick" editable="true">
+            <input_port name="stage_elapsed_time" default="{game.elapsed_s}"/>
+            <input_port name="ammo_allow" default="{ammo.allow}"/>
+            <input_port name="ammo_target" default="{cfg.ammo_target}"/>
+        </Action>
+
+        <!-- Conditions -->
+        <Condition ID="IsGameTime" editable="true">
+            <input_port name="message" default="{game_status}"/>
+            <input_port name="game_progress" default="4"/>
+            <input_port name="lower_remain_time" default="0"/>
+            <input_port name="higher_remain_time" default="420"/>
+        </Condition>
+        <Condition ID="IsDead" editable="true">
+            <input_port name="message" default="{robot_status}"/>
+        </Condition>
+        <Condition ID="IsWeakness" editable="true">
+            <input_port name="robot_status" default="{robot_status}"/>
+        </Condition>
+        <Condition ID="IsHPBelow" editable="true">
+            <input_port name="message" default="{robot_status}"/>
+            <input_port name="hp_threshold" default="{cfg.hp_low}"/>
+        </Condition>
+
+        <Condition ID="IsAmmoBelow" editable="true">
+            <input_port name="ammo_allow" default="{ammo.allow}"/>
+            <input_port name="ammo_low" default="{cfg.ammo_low}"/>
+        </Condition>
+
+        <Condition ID="IsCriticalState" editable="true">
+            <input_port name="hp_cur" default="{hp.cur}"/>
+            <input_port name="hp_critical" default="{cfg.hp_critical}"/>
+            <input_port name="heat_cur" default="{heat.cur}"/>
+            <input_port name="heat_critical" default="{cfg.heat_critical}"/>
+        </Condition>
+
+        <Condition ID="IsBaseThreatened" editable="true">
+            <input_port name="base_threat" default="{threat.base}"/>
+            <input_port name="base_hp_cur" default="{base.hp.cur}"/>
+            <input_port name="base_hp_max" default="{base.hp.max}"/>
+            <input_port name="enemy_near_base_radius" default="{cfg.enemy_near_base_radius}"/>
+        </Condition>
+
+        <Condition ID="HasValidTarget" editable="true">
+            <input_port name="has_target" default="{combat.has_target}"/>
+            <input_port name="best_target" default="{combat.best_target}"/>
+        </Condition>
+
+        <Condition ID="IsCombatAllowed" editable="true">
+            <input_port name="is_weak" default="{state.is_weak}"/>
+            <input_port name="ammo_allow" default="{ammo.allow}"/>
+            <input_port name="heat_cur" default="{heat.cur}"/>
+            <input_port name="heat_high" default="{cfg.heat_high}"/>
+            <input_port name="hp_cur" default="{hp.cur}"/>
+            <input_port name="hp_low" default="{cfg.hp_low}"/>
+        </Condition>
+
+        <Condition ID="IsFireWindowOk" editable="true">
+            <input_port name="heat_cur" default="{heat.cur}"/>
+            <input_port name="heat_high" default="{cfg.heat_high}"/>
+            <input_port name="ammo_allow" default="{ammo.allow}"/>
+            <input_port name="is_weak" default="{state.is_weak}"/>
+        </Condition>
+
+        <Condition ID="IsZoneCardDetected" editable="true">
+            <input_port name="zone" default="SUPPLY"/>
+            <input_port name="rfid_status" default="{rfid.status}"/>
+            <input_port name="robot_status" default="{robot_status}"/>
+        </Condition>
+
+        <Condition ID="IsAnyDispelCardDetected" editable="true">
+            <input_port name="rfid_status" default="{rfid.status}"/>
+            <input_port name="robot_status" default="{robot_status}"/>
+        </Condition>
+
+        <Condition ID="IsAtGoal" editable="true">
+            <input_port name="pose_x" default="{pose.x}"/>
+            <input_port name="pose_y" default="{pose.y}"/>
+            <input_port name="goal_x" default="{nav.goal_x}"/>
+            <input_port name="goal_y" default="{nav.goal_y}"/>
+            <input_port name="arrive_radius" default="{cfg.arrive_radius}"/>
+        </Condition>
+
+        <!-- Decorators -->
+        <Decorator ID="RateController" editable="true">
+            <input_port name="hz" default="1.0"/>
+        </Decorator>
+
+    </TreeNodesModel>
+
+</root>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+
+    <BehaviorTree ID="CombatLoop">
+        <ReactiveSequence>
+            <SelectBestTarget radar_tracks="{radar.tracks}"
+                              pose_x="{pose.x}" pose_y="{pose.y}"
+                              base_x="{cfg.base_buff_x}" base_y="{cfg.base_buff_y}"
+                              out_target="{combat.best_target}"/>
+            <AimAtTarget target="{combat.best_target}"/>
+
+            <ReactiveFallback>
+                <IsFireWindowOk heat_cur="{heat.cur}" heat_high="{cfg.heat_high}"
+                                ammo_allow="{ammo.allow}" is_weak="{state.is_weak}"/>
+                <RobotControl fire_enable="False"/>
+            </ReactiveFallback>
+
+            <FireBurst burst_ms="{cfg.combat_fire_burst_ms}"
+                       pause_ms="{cfg.combat_fire_pause_ms}"/>
+
+            <KeepRunning/>
+        </ReactiveSequence>
+    </BehaviorTree>
+
+</root>

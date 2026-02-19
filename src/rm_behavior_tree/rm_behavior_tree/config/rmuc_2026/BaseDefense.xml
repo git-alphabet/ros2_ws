@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+
+    <BehaviorTree ID="BaseDefense">
+        <ReactiveSequence>
+            <IsBaseThreatened base_threat="{threat.base}"
+                              base_hp_cur="{base.hp.cur}"
+                              base_hp_max="{base.hp.max}"
+                              enemy_near_base_radius="{cfg.enemy_near_base_radius}"/>
+            <RobotControl stop_gimbal_scan="False"
+                          chassis_spin="False"
+                          fire_enable="True"/>
+            <RateController hz="1">
+                <SendGoal name="DefendAnchor"
+                          goal_x="{cfg.defend_anchor_x}"
+                          goal_y="{cfg.defend_anchor_y}"
+                          frame_id="map"
+                          action_name="navigate_to_pose"/>
+            </RateController>
+
+            <!-- hold and fight around base -->
+            <SubTree ID="CombatLoop" _autoremap="true"/>
+        </ReactiveSequence>
+    </BehaviorTree>
+
+</root>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+
+    <BehaviorTree ID="PerceptionAndBlackboard">
+        <Sequence>
+            <SubGameStatus topic_name="{cfg.topic_game_status}"
+                           game_status="{game_status}"
+                           now_ms="{time.now_ms}"/>
+            <SubRobotStatus topic_name="{cfg.topic_robot_status}"
+                            robot_status="{robot_status}"/>
+            <SubRFIDStatus topic_name="{cfg.topic_rfid_status}"
+                           rfid_status="{rfid.status}"/>
+            <SubRobotPosition topic_name="{cfg.topic_robot_pose}"
+                              pose_x="{pose.x}"
+                              pose_y="{pose.y}"
+                              pose_yaw="{pose.yaw}"/>
+            <SubRadarTracks topic_name="{cfg.topic_radar_tracks}"
+                            radar_tracks="{radar.tracks}"/>
+
+            <!-- Parse/derive common fields used by tactics -->
+            <ParseSentryBlackboard game_status="{game_status}"
+                                   robot_status="{robot_status}"
+                                   rfid_status="{rfid.status}"
+                                   radar_tracks="{radar.tracks}"
+                                   pose_x="{pose.x}"
+                                   pose_y="{pose.y}"
+                                   now_ms="{time.now_ms}"
+                                   stage_remain_time="{game.remain_s}"
+                                   stage_elapsed_time="{game.elapsed_s}"
+                                   hp_cur="{hp.cur}"
+                                   hp_max="{hp.max}"
+                                   heat_cur="{heat.cur}"
+                                   ammo_allow="{ammo.allow}"
+                                   ammo_left="{ammo.left}"
+                                   base_hp_cur="{base.hp.cur}"
+                                   base_hp_max="{base.hp.max}"
+                                   outpost_alive="{outpost.alive}"
+                                   is_dead="{state.is_dead}"
+                                   is_weak="{state.is_weak}"
+                                   is_disengaged="{state.disengaged}"
+                                   disengage_countdown="{state.disengage_cd_s}"
+                                   can_remote_heal="{economy.can_remote_heal}"
+                                   can_remote_ammo="{economy.can_remote_ammo}"
+                                   team_coins="{economy.coins}"
+                                   has_target="{combat.has_target}"
+                                   best_target="{combat.best_target}"
+                                   base_threat="{threat.base}"
+                                   fortress_threat="{threat.fortress}"/>
+        </Sequence>
+    </BehaviorTree>
+
+</root>

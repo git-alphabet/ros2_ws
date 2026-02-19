@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+
+    <BehaviorTree ID="CriticalSurvival">
+        <ReactiveSequence>
+            <IsCriticalState hp_cur="{hp.cur}" hp_critical="{cfg.hp_critical}"
+                             heat_cur="{heat.cur}" heat_critical="{cfg.heat_critical}"/>
+            <CancelNavGoal action_name="navigate_to_pose"/>
+            <RobotControl stop_gimbal_scan="False"
+                          chassis_spin="False"
+                          fire_enable="False"/>
+            <SelectSafeRetreatGoal pose_x="{pose.x}" pose_y="{pose.y}"
+                                   supply_x="{cfg.supply_x}" supply_y="{cfg.supply_y}"
+                                   defend_anchor_x="{cfg.defend_anchor_x}" defend_anchor_y="{cfg.defend_anchor_y}"
+                                   goal_x="{nav.goal_x}" goal_y="{nav.goal_y}"/>
+            <RateController hz="1">
+                <SendGoal name="Retreat"
+                          goal_x="{nav.goal_x}" goal_y="{nav.goal_y}"
+                          frame_id="map" action_name="navigate_to_pose"/>
+            </RateController>
+            <KeepRunning/>
+        </ReactiveSequence>
+    </BehaviorTree>
+
+</root>
