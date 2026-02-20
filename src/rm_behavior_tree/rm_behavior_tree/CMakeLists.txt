@@ -47,28 +47,28 @@ ament_auto_add_executable(rm_behavior_tree_rmuc
 
 # Decorators
 ament_auto_add_library(rate_controller SHARED 
-    plugins/decorator/rate_controller.cpp
+    plugins/rmul_2026/decorator/rate_controller.cpp
 )
 add_target_dependencies(rate_controller)
 
 # Conditions
 ament_auto_add_library(is_game_time SHARED 
-    plugins/condition/is_game_time.cpp
+    plugins/rmul_2026/condition/is_game_time.cpp
 )
 add_target_dependencies(is_game_time)
 
 ament_auto_add_library(is_status_ok SHARED 
-    plugins/condition/is_status_ok.cpp
+    plugins/rmul_2026/condition/is_status_ok.cpp
 )
 add_target_dependencies(is_status_ok)
 
 ament_auto_add_library(is_detect_enemy SHARED 
-    plugins/condition/is_detect_enemy.cpp
+    plugins/rmul_2026/condition/is_detect_enemy.cpp
 )
 add_target_dependencies(is_detect_enemy)
 
 ament_auto_add_library(is_friend_ok SHARED 
-    plugins/condition/is_friend_ok.cpp
+    plugins/rmul_2026/condition/is_friend_ok.cpp
 )
 add_target_dependencies(is_friend_ok)
 
@@ -77,17 +77,17 @@ add_target_dependencies(is_friend_ok)
 
 
 ament_auto_add_library(is_hp_above SHARED 
-    plugins/condition/is_hp_above.cpp
+    plugins/rmul_2026/condition/is_hp_above.cpp
 )
 add_target_dependencies(is_hp_above)
 
 ament_auto_add_library(is_hp_below SHARED 
-    plugins/condition/is_hp_below.cpp
+    plugins/rmul_2026/condition/is_hp_below.cpp
 )
 add_target_dependencies(is_hp_below)
 
 ament_auto_add_library(is_dead SHARED 
-    plugins/condition/is_dead.cpp
+    plugins/rmul_2026/condition/is_dead.cpp
 )
 add_target_dependencies(is_dead)
 
@@ -280,39 +280,39 @@ add_target_dependencies(rmuc_is_any_dispel_card_detected)
 # ── 结束 RMUC 2026 全部插件 ────────────────────────────────────────────────
 
 ament_auto_add_library(is_recovery_needed SHARED 
-    plugins/condition/is_recovery_needed.cpp
+    plugins/rmul_2026/condition/is_recovery_needed.cpp
 )
 add_target_dependencies(is_recovery_needed)
 
 ament_auto_add_library(is_supply_card_detected SHARED 
-    plugins/condition/is_supply_card_detected.cpp
+    plugins/rmul_2026/condition/is_supply_card_detected.cpp
 )
 add_target_dependencies(is_supply_card_detected)
 
 ament_auto_add_library(is_control_zone_detected SHARED 
-    plugins/condition/is_control_zone_detected.cpp
+    plugins/rmul_2026/condition/is_control_zone_detected.cpp
 )
 add_target_dependencies(is_control_zone_detected)
 
 ament_auto_add_library(is_within_scope SHARED 
-    plugins/condition/is_within_scope.cpp
+    plugins/rmul_2026/condition/is_within_scope.cpp
 )
 add_target_dependencies(is_within_scope)
 
 # Actions
 ament_auto_add_library(send_goal SHARED 
-    plugins/action/send_goal.cpp
+    plugins/rmul_2026/action/send_goal.cpp
 )
 add_target_dependencies(send_goal)
 
 
 ament_auto_add_library(sub_robot_status SHARED 
-    plugins/action/sub_robot_status.cpp
+    plugins/rmul_2026/action/sub_robot_status.cpp
 )
 add_target_dependencies(sub_robot_status)
 
 ament_auto_add_library(sub_game_status SHARED 
-    plugins/action/sub_game_status.cpp
+    plugins/rmul_2026/action/sub_game_status.cpp
 )
 add_target_dependencies(sub_game_status)
 
@@ -326,105 +326,105 @@ add_target_dependencies(sub_game_status)
 
 
 ament_auto_add_library(get_current_location SHARED 
-    plugins/action/get_current_location.cpp
+    plugins/rmul_2026/action/get_current_location.cpp
 )
 add_target_dependencies(get_current_location)
 
 ament_auto_add_library(move_around SHARED 
-    plugins/action/move_around.cpp
+    plugins/rmul_2026/action/move_around.cpp
 )
 add_target_dependencies(move_around)
 
 ament_auto_add_library(robot_control SHARED 
-    plugins/action/robot_control.cpp
+    plugins/rmul_2026/action/robot_control.cpp
 )
 add_target_dependencies(robot_control)
 
 ament_auto_add_library(nav_control_cmd SHARED
-    plugins/action/nav_control_cmd.cpp
+    plugins/rmul_2026/action/nav_control_cmd.cpp
 )
 add_target_dependencies(nav_control_cmd)
 
 ament_auto_add_library(print_message SHARED 
-    plugins/action/print_message.cpp
+    plugins/rmul_2026/action/print_message.cpp
 )
 add_target_dependencies(print_message)
 
 # Sentry follower action plugin (was present in source but missing from build targets)
 ament_auto_add_library(sentry_follower SHARED
-    plugins/action/sentry_follower.cpp
+    plugins/rmul_2026/action/sentry_follower.cpp
 )
 add_target_dependencies(sentry_follower)
 
 
 
 ament_auto_add_library(detect_respawn_and_set_recovery SHARED 
-    plugins/action/detect_respawn_and_set_recovery.cpp
+    plugins/rmul_2026/action/detect_respawn_and_set_recovery.cpp
 )
 add_target_dependencies(detect_respawn_and_set_recovery)
 
 ament_auto_add_library(sub_rfid_status SHARED 
-    plugins/action/sub_rfid_status.cpp
+    plugins/rmul_2026/action/sub_rfid_status.cpp
 )
 add_target_dependencies(sub_rfid_status)
 
 ament_auto_add_library(init_blackboard_config SHARED 
-    plugins/action/init_blackboard_config.cpp
+    plugins/rmul_2026/action/init_blackboard_config.cpp
 )
 add_target_dependencies(init_blackboard_config)
 
 ament_auto_add_library(wait_and_heal SHARED 
-    plugins/action/wait_and_heal.cpp
+    plugins/rmul_2026/action/wait_and_heal.cpp
 )
 add_target_dependencies(wait_and_heal)
 
 ament_auto_add_library(clear_recovery_flag SHARED 
-    plugins/action/clear_recovery_flag.cpp
+    plugins/rmul_2026/action/clear_recovery_flag.cpp
 )
 add_target_dependencies(clear_recovery_flag)
 
 ament_auto_add_library(set_nav_goal_from_config SHARED
-    plugins/action/set_nav_goal_from_config.cpp
+    plugins/rmul_2026/action/set_nav_goal_from_config.cpp
 )
 add_target_dependencies(set_nav_goal_from_config)
 
 ament_auto_add_library(micro_search_supply_card SHARED
-    plugins/action/micro_search_supply_card.cpp
+    plugins/rmul_2026/action/micro_search_supply_card.cpp
 )
 add_target_dependencies(micro_search_supply_card)
 
 ament_auto_add_library(navigate_to_goal SHARED 
-    plugins/condition/navigate_to_goal.cpp
+    plugins/rmul_2026/condition/navigate_to_goal.cpp
 )
 add_target_dependencies(navigate_to_goal)
 
 ament_auto_add_library(sub_robot_position SHARED 
-    plugins/action/sub_robot_position.cpp
+    plugins/rmul_2026/action/sub_robot_position.cpp
 )
 add_target_dependencies(sub_robot_position)
 
 ament_auto_add_library(init_search_timer_if_needed SHARED 
-    plugins/action/init_search_timer_if_needed.cpp
+    plugins/rmul_2026/action/init_search_timer_if_needed.cpp
 )
 add_target_dependencies(init_search_timer_if_needed)
 
 ament_auto_add_library(not_arrived SHARED 
-    plugins/condition/not_arrived.cpp
+    plugins/rmul_2026/condition/not_arrived.cpp
 )
 add_target_dependencies(not_arrived)
 
 ament_auto_add_library(is_at_nav_goal SHARED 
-    plugins/condition/is_at_nav_goal.cpp
+    plugins/rmul_2026/condition/is_at_nav_goal.cpp
 )
 add_target_dependencies(is_at_nav_goal)
 
 ament_auto_add_library(keep_running SHARED 
-    plugins/action/keep_running.cpp
+    plugins/rmul_2026/action/keep_running.cpp
 )
 add_target_dependencies(keep_running)
 
 ament_auto_add_library(cancel_nav_goal SHARED 
-    plugins/action/cancel_nav_goal.cpp
+    plugins/rmul_2026/action/cancel_nav_goal.cpp
 )
 add_target_dependencies(cancel_nav_goal)
 

@@ -1,4 +1,4 @@
-#include "rm_behavior_tree/plugins/condition/is_status_ok.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/condition/is_status_ok.hpp"
 
 namespace rm_behavior_tree
 {

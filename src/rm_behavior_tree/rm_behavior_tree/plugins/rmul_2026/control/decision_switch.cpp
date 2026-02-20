@@ -1,4 +1,4 @@
-#include "rm_behavior_tree/plugins/control/decision_switch.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/control/decision_switch.hpp"
 #include "behaviortree_cpp/behavior_tree.h"
 
 namespace rm_behavior_tree

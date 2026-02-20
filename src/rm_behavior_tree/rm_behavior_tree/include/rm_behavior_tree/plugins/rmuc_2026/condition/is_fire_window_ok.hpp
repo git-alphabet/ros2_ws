@@ -15,7 +15,7 @@ public:
   {
     return {
       BT::InputPort<int>("heat_cur"),
-      BT::InputPort<int>("heat_high", 210),
+      BT::InputPort<int>("heat_high", "210", "heat_high"),
       BT::InputPort<int>("ammo_allow"),
       BT::InputPort<bool>("is_weak")};
   }

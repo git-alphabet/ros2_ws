@@ -17,9 +17,9 @@ public:
       BT::InputPort<bool>("is_weak"),
       BT::InputPort<int>("ammo_allow"),
       BT::InputPort<int>("heat_cur"),
-      BT::InputPort<int>("heat_high", 210),
+      BT::InputPort<int>("heat_high", "210", "heat_high"),
       BT::InputPort<int>("hp_cur"),
-      BT::InputPort<int>("hp_low", 180)};
+      BT::InputPort<int>("hp_low", "180", "hp_low")};
   }
   BT::NodeStatus tick() override;
 };

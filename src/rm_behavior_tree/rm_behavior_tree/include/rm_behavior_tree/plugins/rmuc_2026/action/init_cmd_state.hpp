@@ -14,8 +14,8 @@ public:
   static BT::PortsList providedPorts()
   {
     return {
-      BT::BidirectionalPort<std::string>("cmd_state", ""),
-      BT::BidirectionalPort<int>("allow_ammo_target", 0)};
+      BT::BidirectionalPort<std::string>("cmd_state", std::string(""), "cmd state"),
+      BT::BidirectionalPort<int>("allow_ammo_target", 0, "allow ammo target")};
   }
   BT::NodeStatus tick() override;
 };

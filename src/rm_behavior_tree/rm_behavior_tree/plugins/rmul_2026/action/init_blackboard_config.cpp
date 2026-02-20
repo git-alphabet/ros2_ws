@@ -1,4 +1,4 @@
-#include "rm_behavior_tree/plugins/action/init_blackboard_config.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/action/init_blackboard_config.hpp"
 
 #include <algorithm>
 

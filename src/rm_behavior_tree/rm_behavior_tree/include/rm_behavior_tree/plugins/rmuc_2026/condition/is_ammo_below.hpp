@@ -14,7 +14,7 @@ public:
   {
     return {
       BT::InputPort<int>("ammo_allow"),
-      BT::InputPort<int>("ammo_low", 80)};
+      BT::InputPort<int>("ammo_low", "80", "ammo_low")};
   }
   BT::NodeStatus tick() override;
 };

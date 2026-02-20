@@ -1,4 +1,4 @@
-#include "rm_behavior_tree/plugins/action/sub_robot_position.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/action/sub_robot_position.hpp"
 
 #include "behaviortree_ros2/plugins.hpp"  // CreateRosNodePlugin 宏
 

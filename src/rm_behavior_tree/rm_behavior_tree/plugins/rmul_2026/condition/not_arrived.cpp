@@ -1,4 +1,4 @@
-#include "rm_behavior_tree/plugins/condition/not_arrived.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/condition/not_arrived.hpp"
 
 namespace rm_behavior_tree
 {

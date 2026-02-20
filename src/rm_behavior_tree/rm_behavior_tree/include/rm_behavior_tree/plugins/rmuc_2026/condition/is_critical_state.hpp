@@ -15,9 +15,9 @@ public:
   {
     return {
       BT::InputPort<int>("hp_cur"),
-      BT::InputPort<int>("hp_critical", 80),
+      BT::InputPort<int>("hp_critical", "80", "hp_critical"),
       BT::InputPort<int>("heat_cur"),
-      BT::InputPort<int>("heat_critical", 245)};
+      BT::InputPort<int>("heat_critical", "245", "heat_critical")};
   }
   BT::NodeStatus tick() override;
 };

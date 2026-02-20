@@ -15,7 +15,7 @@ public:
   static BT::PortsList providedPorts()
   {
     return {
-      BT::InputPort<int>("hold_ms", 12000),
+      BT::InputPort<int>("hold_ms", "12000", "hold_ms"),
       BT::InputPort<bool>("base_threat"),
       BT::InputPort<bool>("has_target")};
   }

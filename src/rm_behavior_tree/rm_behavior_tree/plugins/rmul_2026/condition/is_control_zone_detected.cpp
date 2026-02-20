@@ -1,4 +1,4 @@
-#include "rm_behavior_tree/plugins/condition/is_control_zone_detected.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/condition/is_control_zone_detected.hpp"
 
 namespace rm_behavior_tree
 {

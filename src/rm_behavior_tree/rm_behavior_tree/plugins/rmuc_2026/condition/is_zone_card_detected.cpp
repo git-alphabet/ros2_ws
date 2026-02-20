@@ -23,15 +23,15 @@ BT::NodeStatus RmucIsZoneCardDetectedCondition::tick()
   if (zone == "SUPPLY") {
     detected = rfid->rfid_supply;
   } else if (zone == "BASE") {
-    detected = rfid->rfid_base;
+    detected = rfid->rfid_base_buff;
   } else if (zone == "OUTPOST") {
-    detected = rfid->rfid_outpost;
+    detected = rfid->rfid_outpost_buff;
   } else if (zone == "CENTRAL_HIGHLAND") {
     detected = rfid->rfid_central_highland;
   } else if (zone == "TRAPEZOIDAL_HIGHLAND") {
-    detected = rfid->rfid_trapezoid_highland;
+    detected = rfid->rfid_ladder_highland;
   } else if (zone == "ENEMY_FORTRESS") {
-    detected = rfid->rfid_enemy_fortress;
+    detected = rfid->rfid_fortress_enemy;
   }
 
   return detected ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;

@@ -1,4 +1,4 @@
-#include "rm_behavior_tree/plugins/action/cancel_nav_goal.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/action/cancel_nav_goal.hpp"
 
 #include "behaviortree_ros2/plugins.hpp"
 #include <type_traits>

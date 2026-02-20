@@ -13,7 +13,7 @@ BT::NodeStatus IsAnyDispelCardDetectedCondition::tick()
   if (!rfid) return BT::NodeStatus::FAILURE;
 
   // 任意可祛弱的区域 RFID 为 true → SUCCESS
-  if (rfid->rfid_supply || rfid->rfid_base || rfid->rfid_outpost) {
+  if (rfid->rfid_supply || rfid->rfid_base_buff || rfid->rfid_outpost_buff) {
     return BT::NodeStatus::SUCCESS;
   }
   return BT::NodeStatus::FAILURE;

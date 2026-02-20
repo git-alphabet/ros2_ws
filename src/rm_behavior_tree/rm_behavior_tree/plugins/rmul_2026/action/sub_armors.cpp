@@ -1,4 +1,4 @@
-#include "rm_behavior_tree/plugins/action/sub_armors.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/action/sub_armors.hpp"
 
 namespace rm_behavior_tree
 {

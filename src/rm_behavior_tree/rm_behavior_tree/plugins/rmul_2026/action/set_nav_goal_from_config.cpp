@@ -1,4 +1,4 @@
-#include "rm_behavior_tree/plugins/action/set_nav_goal_from_config.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/action/set_nav_goal_from_config.hpp"
 
 #include "rclcpp/rclcpp.hpp"   // rclcpp::get_logger
 #include "rclcpp/logging.hpp"

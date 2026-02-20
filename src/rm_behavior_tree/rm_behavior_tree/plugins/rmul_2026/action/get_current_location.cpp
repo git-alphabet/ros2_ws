@@ -1,4 +1,4 @@
-#include "rm_behavior_tree/plugins/action/get_current_location.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/action/get_current_location.hpp"
 
 #include <rclcpp/logging.hpp>
 

@@ -1,5 +1,5 @@
 // sentry_follower.cpp
-#include "rm_behavior_tree/plugins/action/sentry_follower.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/action/sentry_follower.hpp"
 
 namespace rm_behavior_tree
 {

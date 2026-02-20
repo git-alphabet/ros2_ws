@@ -1,5 +1,5 @@
 #include "behaviortree_cpp/action_node.h"
-#include "rm_behavior_tree/plugins/action/print_message.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/action/print_message.hpp"
 #include <iostream>
 
 namespace rm_behavior_tree

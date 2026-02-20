@@ -19,7 +19,7 @@ public:
       BT::InputPort<double>("pose_y"),
       BT::InputPort<double>("goal_x"),
       BT::InputPort<double>("goal_y"),
-      BT::InputPort<double>("arrive_radius", 0.35)};
+      BT::InputPort<double>("arrive_radius", "0.35", "arrive_radius")};
   }
   BT::NodeStatus tick() override;
 };

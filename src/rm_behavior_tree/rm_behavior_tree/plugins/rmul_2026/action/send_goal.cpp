@@ -1,5 +1,5 @@
 
-#include "rm_behavior_tree/plugins/action/send_goal.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/action/send_goal.hpp"
 #include <rclcpp/rclcpp.hpp>
 
 namespace rm_behavior_tree

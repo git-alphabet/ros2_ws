@@ -24,24 +24,24 @@ BT::NodeStatus ParseSentryBlackboardAction::tick()
   if (robot_ptr) {
     const auto & r = **robot_ptr;
     setOutput("hp_cur", static_cast<int>(r.current_hp));
-    setOutput("hp_max", static_cast<int>(r.hp_max));
+    setOutput("hp_max", static_cast<int>(r.max_hp));
     setOutput("heat_cur", static_cast<int>(r.shooter_heat));
-    setOutput("ammo_allow", static_cast<int>(r.projectile_allowance));
-    setOutput("ammo_left", static_cast<int>(r.remaining_ammo));
-    setOutput("base_hp_cur", static_cast<int>(r.base_hp));
-    setOutput("base_hp_max", 5000);  // RMUC 基地满血 5000
-    setOutput("outpost_alive", r.outpost_hp > 0);
+    setOutput("ammo_allow", static_cast<int>(r.ammo_allow));
+    setOutput("ammo_left", static_cast<int>(r.ammo_left));
+    setOutput("base_hp_cur", static_cast<int>(r.base_hp_cur));
+    setOutput("base_hp_max", static_cast<int>(r.base_hp_max));
+    setOutput("outpost_alive", r.outpost_alive);
     setOutput("is_dead", r.current_hp <= 0);
     setOutput("is_weak", r.is_weak);
 
-    // 脱战判定（简化：血量一定时间未减少则脱战，此处由上游直接提供或默认 false）
-    setOutput("is_disengaged", false);
-    setOutput("disengage_countdown", 0);
+    // 脱战判定
+    setOutput("is_disengaged", r.is_disengaged);
+    setOutput("disengage_countdown", static_cast<int>(r.disengage_cd_s));
 
-    // 经济状态
-    setOutput("can_remote_heal", r.gold_coins >= 200);  // 200 金币可远程回血
-    setOutput("can_remote_ammo", r.gold_coins >= 100);  // 100 金币可远程补弹
-    setOutput("team_coins", static_cast<int>(r.gold_coins));
+    // 经济状态（由上游电控已计算好）
+    setOutput("can_remote_heal", r.can_remote_heal);
+    setOutput("can_remote_ammo", r.can_remote_ammo);
+    setOutput("team_coins", static_cast<int>(r.team_coins));
   }
 
   // ── 雷达目标 ──

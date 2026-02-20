@@ -16,7 +16,7 @@ public:
     return {
       BT::InputPort<int>("stage_elapsed_time"),
       BT::InputPort<int>("ammo_allow"),
-      BT::InputPort<int>("ammo_target", 300)};
+      BT::InputPort<int>("ammo_target", "300", "ammo_target")};
   }
   BT::NodeStatus onStart() override;
   BT::NodeStatus onRunning() override;

@@ -19,13 +19,13 @@ public:
   static BT::PortsList providedPorts()
   {
     return {
-      BT::InputPort<int>("posture", 3, "姿态 1=进攻 2=防御 3=移动"),
-      BT::InputPort<int>("confirm_respawn", 0),
-      BT::InputPort<int>("confirm_instant_respawn", 0),
-      BT::InputPort<int>("allow_ammo_target", 0),
-      BT::InputPort<int>("trigger_remote_ammo", 0),
-      BT::InputPort<int>("trigger_remote_hp", 0),
-      BT::InputPort<int>("enable_big_energy", 0),
+      BT::InputPort<int>("posture", "3", "姿态 1=进攻 2=防御 3=移动"),
+      BT::InputPort<int>("confirm_respawn", "0", "confirm_respawn"),
+      BT::InputPort<int>("confirm_instant_respawn", "0", "confirm_instant_respawn"),
+      BT::InputPort<int>("allow_ammo_target", "0", "allow_ammo_target"),
+      BT::InputPort<int>("trigger_remote_ammo", "0", "trigger_remote_ammo"),
+      BT::InputPort<int>("trigger_remote_hp", "0", "trigger_remote_hp"),
+      BT::InputPort<int>("enable_big_energy", "0", "enable_big_energy"),
       BT::BidirectionalPort<std::string>("cmd_state", "", "内部状态跟踪")};
   }
 };

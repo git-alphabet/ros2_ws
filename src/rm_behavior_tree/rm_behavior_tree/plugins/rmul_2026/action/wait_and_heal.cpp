@@ -1,4 +1,4 @@
-#include "rm_behavior_tree/plugins/action/wait_and_heal.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/action/wait_and_heal.hpp"
 
 #include <algorithm>
 #include "rclcpp/rclcpp.hpp"

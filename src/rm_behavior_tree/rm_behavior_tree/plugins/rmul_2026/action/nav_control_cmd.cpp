@@ -1,4 +1,4 @@
-#include "rm_behavior_tree/plugins/action/nav_control_cmd.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/action/nav_control_cmd.hpp"
 
 namespace rm_behavior_tree
 {

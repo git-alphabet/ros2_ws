@@ -1,4 +1,4 @@
-#include "rm_behavior_tree/plugins/action/detect_respawn_and_set_recovery.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/action/detect_respawn_and_set_recovery.hpp"
 #include "rclcpp/logging.hpp"  // 用于日志输出
 #include "rclcpp/time.hpp"     // 用于时间处理
 

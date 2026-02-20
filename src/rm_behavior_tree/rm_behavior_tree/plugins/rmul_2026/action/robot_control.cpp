@@ -1,4 +1,4 @@
-#include "rm_behavior_tree/plugins/action/robot_control.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/action/robot_control.hpp"
 
 namespace rm_behavior_tree
 {

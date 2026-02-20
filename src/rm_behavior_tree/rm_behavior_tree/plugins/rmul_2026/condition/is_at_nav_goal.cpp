@@ -1,4 +1,4 @@
-#include "rm_behavior_tree/plugins/condition/is_at_nav_goal.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/condition/is_at_nav_goal.hpp"
 
 namespace rm_behavior_tree
 {

@@ -1,4 +1,4 @@
-#include "rm_behavior_tree/plugins/condition/is_within_scope.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/condition/is_within_scope.hpp"
 
 #include <cmath>
 #include <optional>

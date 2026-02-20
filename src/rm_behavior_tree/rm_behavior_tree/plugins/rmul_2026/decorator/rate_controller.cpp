@@ -1,4 +1,4 @@
-#include "rm_behavior_tree/plugins/decorator/rate_controller.hpp"
+#include "rm_behavior_tree/plugins/rmul_2026/decorator/rate_controller.hpp"
 
 #include <chrono>
 #include <string>

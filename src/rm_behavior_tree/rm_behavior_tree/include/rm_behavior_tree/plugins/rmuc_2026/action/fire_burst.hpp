@@ -15,8 +15,8 @@ public:
   static BT::PortsList providedPorts()
   {
     return {
-      BT::InputPort<int>("burst_ms", 180),
-      BT::InputPort<int>("pause_ms", 120)};
+      BT::InputPort<int>("burst_ms", "180", "burst_ms"),
+      BT::InputPort<int>("pause_ms", "120", "pause_ms")};
   }
   BT::NodeStatus onStart() override;
   BT::NodeStatus onRunning() override;
