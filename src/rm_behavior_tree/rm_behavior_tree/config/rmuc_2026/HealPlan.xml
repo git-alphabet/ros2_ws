@@ -3,7 +3,7 @@
 
     <BehaviorTree ID="HealPlan">
         <ReactiveSequence>
-            <IsHPBelow message="{robot_status}" hp_threshold="{cfg.hp_low}"/>
+            <RmucIsHPBelow message="{robot_status}" hp_threshold="{cfg.hp_low}"/>
 
             <ReactiveFallback>
                 <!-- If already at supply: hold until safe HP -->
@@ -21,9 +21,9 @@
                                   goal_x="{cfg.supply_x}" goal_y="{cfg.supply_y}"
                                   frame_id="map" action_name="navigate_to_pose"/>
                     </RateController>
-                    <RobotControl stop_gimbal_scan="False"
-                                  chassis_spin="False"
-                                  fire_enable="False"/>
+                    <RmucRobotControl stop_gimbal_scan="False"
+                                      chassis_spin="False"
+                                      fire_enable="False"/>
                     <KeepRunning/>
                 </ReactiveSequence>
             </ReactiveFallback>

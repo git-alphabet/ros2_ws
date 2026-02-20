@@ -19,11 +19,11 @@
 
             <!-- 比赛阶段循环（7 分钟 = 420 秒） -->
             <WhileDoElse>
-                <IsGameTime name="IsMatchStage"
-                            message="{game_status}"
-                            game_progress="4"
-                            lower_remain_time="0"
-                            higher_remain_time="420"/>
+                <RmucIsGameTime name="IsMatchStage"
+                                message="{game_status}"
+                                game_progress="4"
+                                lower_remain_time="0"
+                                higher_remain_time="420"/>
 
                 <!-- ===================== 比赛阶段 ===================== -->
                 <ReactiveSequence>
@@ -68,9 +68,9 @@
                                   frame_id="map"
                                   action_name="navigate_to_pose"/>
                     </RateController>
-                    <RobotControl stop_gimbal_scan="True"
-                                  chassis_spin="False"
-                                  fire_enable="False"/>
+                    <RmucRobotControl stop_gimbal_scan="True"
+                                      chassis_spin="False"
+                                      fire_enable="False"/>
                     <RateController hz="2">
                         <SentryCmdMux posture="3"
                                       confirm_respawn="0"
@@ -105,38 +105,38 @@
     <!-- ===================== 节点模型（供 Groot 使用） ===================== -->
     <TreeNodesModel>
 
-        <!-- 动作：订阅节点 -->
-        <Action ID="SubGameStatus" editable="true">
-            <input_port name="topic_name" default="/game_status"/>
+        <!-- 动作：订阅节点 (RMUC 镜像) -->
+        <Action ID="RmucSubGameStatus" editable="true">
+            <input_port name="topic_name" default="/rmuc"/>
             <output_port name="game_status" default="{game_status}"/>
             <output_port name="now_ms" default="{time.now_ms}"/>
         </Action>
-        <Action ID="SubRobotStatus" editable="true">
-            <input_port name="topic_name" default="/robot_status"/>
+        <Action ID="RmucSubRobotStatus" editable="true">
+            <input_port name="topic_name" default="/rmuc"/>
             <output_port name="robot_status" default="{robot_status}"/>
         </Action>
-        <Action ID="SubRFIDStatus" editable="true">
-            <input_port name="topic_name" default="/rfid_status"/>
+        <Action ID="RmucSubRFIDStatus" editable="true">
+            <input_port name="topic_name" default="/rmuc"/>
             <output_port name="rfid_status" default="{rfid.status}"/>
         </Action>
-        <Action ID="SubRobotPosition" editable="true">
-            <input_port name="topic_name" default="/robot_position"/>
+        <Action ID="RmucSubRobotPosition" editable="true">
+            <input_port name="topic_name" default="/rmuc"/>
             <output_port name="pose_x" default="{pose.x}"/>
             <output_port name="pose_y" default="{pose.y}"/>
             <output_port name="pose_yaw" default="{pose.yaw}"/>
         </Action>
         <Action ID="SubRadarTracks" editable="true">
-            <input_port name="topic_name" default="/radar/enemy_tracks"/>
+            <input_port name="topic_name" default="/rmuc"/>
             <output_port name="radar_tracks" default="{radar.tracks}"/>
         </Action>
 
         <!-- 动作：黑板初始化/解析 -->
         <Action ID="InitSentryConfig" editable="true">
-            <output_port name="topic_game_status" default="/game_status"/>
-            <output_port name="topic_robot_status" default="/robot_status"/>
-            <output_port name="topic_rfid_status" default="/rfid_status"/>
-            <output_port name="topic_robot_pose" default="/robot_position"/>
-            <output_port name="topic_radar_tracks" default="/radar/enemy_tracks"/>
+            <output_port name="topic_game_status" default="/rmuc"/>
+            <output_port name="topic_robot_status" default="/rmuc"/>
+            <output_port name="topic_rfid_status" default="/rmuc"/>
+            <output_port name="topic_robot_pose" default="/rmuc"/>
+            <output_port name="topic_radar_tracks" default="/rmuc"/>
 
             <output_port name="home_x" default="0.0"/>
             <output_port name="home_y" default="0.0"/>
@@ -308,7 +308,7 @@
             <input_port name="pause_ms" default="{cfg.combat_fire_pause_ms}"/>
         </Action>
 
-        <Action ID="RobotControl" editable="true">
+        <Action ID="RmucRobotControl" editable="true">
             <input_port name="stop_gimbal_scan" default="False"/>
             <input_port name="chassis_spin" default="False"/>
             <input_port name="fire_enable" default="False"/>
@@ -403,19 +403,19 @@
         </Action>
 
         <!-- 条件节点 -->
-        <Condition ID="IsGameTime" editable="true">
+        <Condition ID="RmucIsGameTime" editable="true">
             <input_port name="message" default="{game_status}"/>
             <input_port name="game_progress" default="4"/>
             <input_port name="lower_remain_time" default="0"/>
             <input_port name="higher_remain_time" default="420"/>
         </Condition>
-        <Condition ID="IsDead" editable="true">
+        <Condition ID="RmucIsDead" editable="true">
             <input_port name="message" default="{robot_status}"/>
         </Condition>
         <Condition ID="IsWeakness" editable="true">
             <input_port name="robot_status" default="{robot_status}"/>
         </Condition>
-        <Condition ID="IsHPBelow" editable="true">
+        <Condition ID="RmucIsHPBelow" editable="true">
             <input_port name="message" default="{robot_status}"/>
             <input_port name="hp_threshold" default="{cfg.hp_low}"/>
         </Condition>

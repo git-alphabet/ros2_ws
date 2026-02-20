@@ -7,9 +7,9 @@
                               base_hp_cur="{base.hp.cur}"
                               base_hp_max="{base.hp.max}"
                               enemy_near_base_radius="{cfg.enemy_near_base_radius}"/>
-            <RobotControl stop_gimbal_scan="False"
-                          chassis_spin="False"
-                          fire_enable="True"/>
+            <RmucRobotControl stop_gimbal_scan="False"
+                              chassis_spin="False"
+                              fire_enable="True"/>
             <RateController hz="1">
                 <SendGoal name="DefendAnchor"
                           goal_x="{cfg.defend_anchor_x}"

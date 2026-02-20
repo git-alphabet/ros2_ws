@@ -6,9 +6,9 @@
             <IsCriticalState hp_cur="{hp.cur}" hp_critical="{cfg.hp_critical}"
                              heat_cur="{heat.cur}" heat_critical="{cfg.heat_critical}"/>
             <CancelNavGoal action_name="navigate_to_pose"/>
-            <RobotControl stop_gimbal_scan="False"
-                          chassis_spin="False"
-                          fire_enable="False"/>
+            <RmucRobotControl stop_gimbal_scan="False"
+                              chassis_spin="False"
+                              fire_enable="False"/>
             <SelectSafeRetreatGoal pose_x="{pose.x}" pose_y="{pose.y}"
                                    supply_x="{cfg.supply_x}" supply_y="{cfg.supply_y}"
                                    defend_anchor_x="{cfg.defend_anchor_x}" defend_anchor_y="{cfg.defend_anchor_y}"

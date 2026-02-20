@@ -15,9 +15,9 @@
                           goal_x="{nav.goal_x}" goal_y="{nav.goal_y}"
                           frame_id="map" action_name="navigate_to_pose"/>
             </RateController>
-            <RobotControl stop_gimbal_scan="False"
-                          chassis_spin="False"
-                          fire_enable="False"/>
+            <RmucRobotControl stop_gimbal_scan="False"
+                              chassis_spin="False"
+                              fire_enable="False"/>
             <!-- arrival + micro adjust until any dispel card detected -->
             <ReactiveFallback>
                 <IsAnyDispelCardDetected rfid_status="{rfid.status}" robot_status="{robot_status}"/>

@@ -11,9 +11,9 @@
                              heat_high="{cfg.heat_high}"
                              hp_cur="{hp.cur}"
                              hp_low="{cfg.hp_low}"/>
-            <RobotControl stop_gimbal_scan="True"
-                          chassis_spin="True"
-                          fire_enable="True"/>
+            <RmucRobotControl stop_gimbal_scan="True"
+                              chassis_spin="True"
+                              fire_enable="True"/>
             <SubTree ID="CombatLoop" _autoremap="true"/>
         </ReactiveSequence>
     </BehaviorTree>
