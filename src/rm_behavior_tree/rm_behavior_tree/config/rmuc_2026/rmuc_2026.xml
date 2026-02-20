@@ -34,28 +34,25 @@
                     <!-- 基于优先级的战术 -->
                     <ReactiveFallback>
 
-                        <!-- 0) 死亡/复活处理（仅在死亡时成功） -->
-                        <SubTree ID="DeathAndRespawn" _autoremap="true"/>
+                        <!-- 0) 死亡 + 复活恢复（RMUC 版：死亡停车 / 复活后自主导航补给区刷卡回血） -->
+                        <SubTree ID="RespawnRecovery" _autoremap="true"/>
 
-                        <!-- 1) 虚弱解除冲刺（正常复活后） -->
-                        <SubTree ID="WeaknessRecovery" _autoremap="true"/>
-
-                        <!-- 2) 危急生存（血量/热量/电量） -->
+                        <!-- 1) 危急生存（血量/热量/电量） -->
                         <SubTree ID="CriticalSurvival" _autoremap="true"/>
 
-                        <!-- 3) 基地/堡垒防御（受威胁时） -->
+                        <!-- 2) 基地/堡垒防御（受威胁时） -->
                         <SubTree ID="BaseDefense" _autoremap="true"/>
 
-                        <!-- 4) 交战（有有效目标且安全时） -->
+                        <!-- 3) 交战（有有效目标且安全时） -->
                         <SubTree ID="EngageCombat" _autoremap="true"/>
 
-                        <!-- 5) 后勤：回血/补弹（经济感知） -->
+                        <!-- 4) 后勤：回血/补弹（经济感知） -->
                         <SubTree ID="SustainAndEconomy" _autoremap="true"/>
 
-                        <!-- 6) 目标控制：中央高地/梯形高地/堡垒/隧道等 -->
+                        <!-- 5) 目标控制：中央高地/梯形高地/堡垒/隧道等 -->
                         <SubTree ID="ObjectivePlanner" _autoremap="true"/>
 
-                        <!-- 7) 默认：巡逻扫描 -->
+                        <!-- 6) 默认：巡逻扫描 -->
                         <SubTree ID="PatrolAndScan" _autoremap="true"/>
 
                     </ReactiveFallback>
@@ -94,8 +91,7 @@
     <include path="PerceptionAndBlackboard.xml"/>
     <include path="InitOnce.xml"/>
     <include path="CommandHub.xml"/>
-    <include path="DeathAndRespawn.xml"/>
-    <include path="WeaknessRecovery.xml"/>
+    <include path="RespawnRecovery.xml"/>
     <include path="CriticalSurvival.xml"/>
     <include path="BaseDefense.xml"/>
     <include path="EngageCombat.xml"/>

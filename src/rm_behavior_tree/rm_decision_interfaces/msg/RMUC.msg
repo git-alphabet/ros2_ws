@@ -168,6 +168,14 @@ float32 pose_y               # 位置 y (meter, map 坐标系)
 float32 pose_yaw             # 航向角 (radian, map 坐标系)
 
 
+# ── 9b. 导航到达判定 ──────────────────────────────────────────────────────
+# 话题: /robot_position (建议与位姿合并发布)
+# 下游引用:
+#   - IsAtNavGoal            : RespawnRecovery 子树中判断是否到达导航目标
+# ─────────────────────────────────────────────────────────────────────────────
+bool   is_at_nav_goal        # 是否到达导航目标点 (true=已到达)
+
+
 # ── 10. 雷达敌方目标跟踪 ──────────────────────────────────────────────────
 # 话题: /radar/enemy_tracks
 # 订阅节点: SubRadarTracks → 写入黑板 {radar.tracks}
@@ -251,3 +259,13 @@ bool   cmd_enable_big_energy        # 大能量机关确认 (true=确认激活)
 bool   stop_gimbal_scan      # 停止云台扫描 (false=持续扫描, true=停止扫描)
 bool   chassis_spin          # 底盘小陀螺旋转 (false=不旋转, true=旋转)
 bool   fire_enable           # 允许发射 (false=发射锁定, true=允许开火)
+
+
+# ── 13. 导航控制命令 ──────────────────────────────────────────────────────
+# 话题: /nav_control_cmd
+# 发布节点: NavControlCmd（RespawnRecovery 子树）
+# 下游引用:
+#   - RespawnRecovery 子树中控制导航模式切换 (开始/终止/原地不动)
+# ─────────────────────────────────────────────────────────────────────────────
+int32  cmd_type              # 导航控制指令: 0=无操作 1=开始导航 2=终止导航 3=原地不动
+bool   emergency_stop        # 紧急停止 (true=立刻停车，优先级最高)
