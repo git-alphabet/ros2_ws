@@ -11,18 +11,11 @@ RmucIsAtNavGoalCondition::RmucIsAtNavGoalCondition(
 
 BT::NodeStatus RmucIsAtNavGoalCondition::tick()
 {
-  // 从黑板读取 RMUC.msg
-  rm_decision_interfaces::msg::RMUC rfid_msg;
-  auto res = getInput<rm_decision_interfaces::msg::RMUC>("rfid_status");
+  auto res = getInput<bool>("is_at_nav_goal");
   if (!res) {
     return BT::NodeStatus::FAILURE;
   }
-  rfid_msg = res.value();
-
-  // 检查是否到达导航目标点
-  const bool is_at_goal = rfid_msg.is_at_nav_goal;
-
-  return is_at_goal ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
+  return res.value() ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
 }
 
 }  // namespace rm_behavior_tree

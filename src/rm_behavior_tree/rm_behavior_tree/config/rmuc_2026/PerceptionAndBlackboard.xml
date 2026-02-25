@@ -3,24 +3,24 @@
 
     <BehaviorTree ID="PerceptionAndBlackboard">
         <Sequence>
-            <RmucSubGameStatus topic_name="/rmuc"
+            <RmucSubGameStatus topic_name="/game_status"
                                game_status="{game_status}"
                                now_ms="{time.now_ms}"/>
-            <RmucSubRobotStatus topic_name="/rmuc"
+            <RmucSubRobotStatus topic_name="/robot_status"
                                 robot_status="{robot_status}"/>
-            <RmucSubRFIDStatus topic_name="/rmuc"
+            <RmucSubRFIDStatus topic_name="/rfid_status"
                                rfid_status="{rfid.status}"/>
-            <RmucSubRobotPosition topic_name="/rmuc"
+            <RmucSubRobotPosition topic_name="/robot_position"
                                   pose_x="{pose.x}"
                                   pose_y="{pose.y}"
-                                  pose_yaw="{pose.yaw}"/>
-            <SubRadarTracks topic_name="/rmuc"
+                                  pose_yaw="{pose.yaw}"
+                                  is_at_nav_goal="{is_at_nav_goal}"/>
+            <SubRadarTracks topic_name="/radar/enemy_tracks"
                             radar_tracks="{radar.tracks}"/>
 
             <!-- Parse/derive common fields used by tactics -->
             <ParseSentryBlackboard game_status="{game_status}"
                                    robot_status="{robot_status}"
-                                   rfid_status="{rfid.status}"
                                    radar_tracks="{radar.tracks}"
                                    pose_x="{pose.x}"
                                    pose_y="{pose.y}"

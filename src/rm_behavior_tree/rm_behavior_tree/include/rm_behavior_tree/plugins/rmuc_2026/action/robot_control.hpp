@@ -2,18 +2,18 @@
 #define RM_BEHAVIOR_TREE__PLUGINS__RMUC_2026__ACTION__ROBOT_CONTROL_HPP_
 
 #include "behaviortree_ros2/bt_topic_pub_node.hpp"
-#include "rm_decision_interfaces/msg/rmuc.hpp"
+#include "rm_decision_interfaces/msg/rmuc_robot_control.hpp"
 
 namespace rm_behavior_tree
 {
 
-class RmucRobotControlAction : public BT::RosTopicPubNode<rm_decision_interfaces::msg::RMUC>
+class RmucRobotControlAction : public BT::RosTopicPubNode<rm_decision_interfaces::msg::RMUCRobotControl>
 {
 public:
   RmucRobotControlAction(
     const std::string & name, const BT::NodeConfig & conf, const BT::RosNodeParams & params);
 
-  bool setMessage(rm_decision_interfaces::msg::RMUC & msg) override;
+  bool setMessage(rm_decision_interfaces::msg::RMUCRobotControl & msg) override;
 
   static BT::PortsList providedPorts()
   {

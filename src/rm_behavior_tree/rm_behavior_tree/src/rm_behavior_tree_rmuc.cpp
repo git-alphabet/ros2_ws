@@ -3,12 +3,23 @@
  * @brief RMUC 2026 哨兵行为树 —— 独立入口
  *
  * 与 RMUL 版本 (rm_behavior_tree.cpp) 完全分离：
- *   - 所有 RMUC.msg 通信统一到 /rmuc 话题（订阅 + 发布）
+ *   - RMUC.msg 已拆分为 8 个独立小话题，每类数据走独立话题
  *   - Groot2 使用不同端口 (1668) 以便同时调试
  *
- * 话题约定:
- *   /rmuc        — 所有 RMUC.msg 订阅者 & 发布者共用
- *   goal_pose    — SendGoal 发布 (通用 PoseStamped，与 RMUL 共享)
+ * 话题约定 (输入 — 订阅):
+ *   /game_status       — RMUCGameStatus      (1 Hz)
+ *   /robot_status      — RMUCRobotStatus     (10 Hz)
+ *   /rfid_status       — RMUCRFIDStatus      (事件驱动)
+ *   /robot_position    — RMUCRobotPosition   (50 Hz)
+ *   /radar/enemy_tracks— RMUCEnemyTracks     (10-30 Hz)
+ *
+ * 话题约定 (输出 — 发布):
+ *   /sentry_cmd        — RMUCSentryCmd       (2 Hz)
+ *   /robot_control     — RMUCRobotControl    (10 Hz)
+ *   /nav_control_cmd   — RMUCNavControlCmd   (按需)
+ *
+ * 共享话题:
+ *   goal_pose          — SendGoal (PoseStamped，与 RMUL 共享)
  */
 
 #include "rm_behavior_tree/rm_behavior_tree.h"
@@ -35,139 +46,153 @@ int main(int argc, char ** argv)
   RCLCPP_INFO(node->get_logger(), "Load bt_xml: \e[1;42m %s \e[0m", bt_xml_path.c_str());
 
   // ═══════════════════════ ROS Node Params ═══════════════════════
+  // 每类消息对应独立的 RosNodeParams，话题名在 default_port_value 中指定
 
-  // 统一参数：所有 RMUC.msg 订阅者 / 发布者 / 混合节点均使用 /rmuc 话题
-  BT::RosNodeParams params_rmuc;
-  params_rmuc.nh = std::make_shared<rclcpp::Node>("rmuc_msg_io");
-  params_rmuc.default_port_value = "/rmuc";
+  // ── 输入话题（订阅者） ──
+  BT::RosNodeParams params_game_status;
+  params_game_status.nh = std::make_shared<rclcpp::Node>("rmuc_game_status_io");
+  params_game_status.default_port_value = "/game_status";
 
-  // SendGoal (共享 RMUL 通用导航话题，PoseStamped 类型)
+  BT::RosNodeParams params_robot_status;
+  params_robot_status.nh = std::make_shared<rclcpp::Node>("rmuc_robot_status_io");
+  params_robot_status.default_port_value = "/robot_status";
+
+  BT::RosNodeParams params_rfid_status;
+  params_rfid_status.nh = std::make_shared<rclcpp::Node>("rmuc_rfid_status_io");
+  params_rfid_status.default_port_value = "/rfid_status";
+
+  BT::RosNodeParams params_robot_position;
+  params_robot_position.nh = std::make_shared<rclcpp::Node>("rmuc_robot_position_io");
+  params_robot_position.default_port_value = "/robot_position";
+
+  BT::RosNodeParams params_radar;
+  params_radar.nh = std::make_shared<rclcpp::Node>("rmuc_radar_io");
+  params_radar.default_port_value = "/radar/enemy_tracks";
+
+  // ── 输出话题（发布者） ──
+  BT::RosNodeParams params_sentry_cmd;
+  params_sentry_cmd.nh = std::make_shared<rclcpp::Node>("rmuc_sentry_cmd_io");
+  params_sentry_cmd.default_port_value = "/sentry_cmd";
+
+  BT::RosNodeParams params_robot_ctrl;
+  params_robot_ctrl.nh = std::make_shared<rclcpp::Node>("rmuc_robot_ctrl_io");
+  params_robot_ctrl.default_port_value = "/robot_control";
+
+  BT::RosNodeParams params_nav_cmd;
+  params_nav_cmd.nh = std::make_shared<rclcpp::Node>("rmuc_nav_cmd_io");
+  params_nav_cmd.default_port_value = "/nav_control_cmd";
+
+  // ── 通用 ROS 节点（不绑定特定消息话题，供工具类插件使用） ──
+  BT::RosNodeParams params_utility;
+  params_utility.nh = std::make_shared<rclcpp::Node>("rmuc_utility");
+  params_utility.default_port_value = "";
+
+  // ── SendGoal (共享 RMUL 通用导航话题，PoseStamped 类型) ──
   BT::RosNodeParams params_send_goal;
   params_send_goal.nh = std::make_shared<rclcpp::Node>("send_goal");
   params_send_goal.default_port_value = "goal_pose";
 
-  // ═══════════════════ 插件库列表 ════════════════════════════════
+  // ═══════════════════ 注册插件 ══════════════════════════════════
+  // 辅助 lambda：注册 ROS 节点插件
+  auto regRos = [&](const std::string & lib, const BT::RosNodeParams & p) {
+    try {
+      RegisterRosNode(factory, BT::SharedLibrary::getOSName(lib), p);
+    } catch (const std::exception & e) {
+      RCLCPP_WARN(node->get_logger(), "Could not load ROS plugin '%s': %s",
+                  lib.c_str(), e.what());
+    }
+  };
+  // 辅助 lambda：注册纯 BT 插件
+  auto regBT = [&](const std::string & lib) {
+    try {
+      factory.registerFromPlugin(BT::SharedLibrary::getOSName(lib));
+    } catch (const std::exception & e) {
+      RCLCPP_WARN(node->get_logger(), "Could not load BT plugin '%s': %s",
+                  lib.c_str(), e.what());
+    }
+  };
 
   // clang-format off
 
-  // ── A. 所有 RMUC.msg ROS 节点插件 → RegisterRosNode + params_rmuc (/rmuc) ──
-  //    包括订阅者、发布者、混合节点；全部走 /rmuc 话题
-  const std::vector<std::string> rmuc_ros_plugin_libs = {
-    // 订阅者
-    "rmuc_sub_game_status",               // RmucSubGameStatus
-    "rmuc_sub_robot_status",              // RmucSubRobotStatus
-    "rmuc_sub_rfid_status",               // RmucSubRFIDStatus
-    "rmuc_sub_robot_position",            // RmucSubRobotPosition
-    "rmuc_sub_radar_tracks",              // SubRadarTracks
-    "rmuc_detect_respawn_and_set_recovery", // RmucDetectRespawnAndSetRecovery
-    "rmuc_wait_and_heal",                 // RmucWaitAndHeal
-    // 发布者
-    "rmuc_robot_control",                 // RmucRobotControl
-    "rmuc_nav_control_cmd",               // RmucNavControlCmd
-    "rmuc_sentry_cmd_mux",                // SentryCmdMux
-    // 混合 (内部自行创建 publisher/subscriber)
-    "rmuc_micro_search_supply_card",      // RmucMicroSearchSupplyCard
-    "rmuc_is_supply_card_detected",       // RmucIsSupplyCardDetected
-  };
+  // ── A. 订阅者：game_status (/game_status → RMUCGameStatus) ──
+  regRos("rmuc_sub_game_status",                params_game_status);
 
-  // ── B. 共享 RMUL CreateRosNodePlugin 库 → RegisterRosNode + params_rmuc ──
-  const std::vector<std::string> shared_ros_plugin_libs = {
-    "cancel_nav_goal",                    // CancelNavGoal
-    "clear_recovery_flag",                // ClearRecoveryFlag
-    "init_search_timer_if_needed",        // InitSearchTimerIfNeeded
-    "is_recovery_needed",                 // IsRecoveryNeeded
-  };
+  // ── B. 订阅者：robot_status (/robot_status → RMUCRobotStatus) ──
+  regRos("rmuc_sub_robot_status",               params_robot_status);
+  regRos("rmuc_detect_respawn_and_set_recovery", params_robot_status);
+  regRos("rmuc_wait_and_heal",                  params_robot_status);
 
-  // ── C. RMUC BT_REGISTER_NODES 纯 BT 插件（无需 ROS 参数） ──
-  const std::vector<std::string> rmuc_bt_plugin_libs = {
-    // ── 动作 ──
-    "rmuc_init_sentry_config",            // InitSentryConfig
-    "rmuc_init_cmd_state",                // InitCmdState
-    "rmuc_decide_posture",                // DecidePosture
-    "rmuc_decide_economy_cmd",            // DecideEconomyCmd
-    "rmuc_decide_respawn_cmd",            // DecideRespawnCmd
-    "rmuc_parse_sentry_blackboard",       // ParseSentryBlackboard
-    "rmuc_select_safe_retreat_goal",      // SelectSafeRetreatGoal
-    "rmuc_select_best_target",            // SelectBestTarget
-    "rmuc_aim_at_target",                 // AimAtTarget
-    "rmuc_fire_burst",                    // FireBurst
-    "rmuc_hold_and_heal",                 // HoldAndHeal
-    "rmuc_hold_for_supply_ammo_tick",     // HoldForSupplyAmmoTick
-    "rmuc_select_nearest_resupply_station", // SelectNearestResupplyStation
-    "rmuc_select_nearest_dispel_card",    // SelectNearestDispelCard
-    "rmuc_select_objective",              // SelectObjective
-    "rmuc_hold_objective",                // HoldObjective
-    "rmuc_waypoint_patrol",              // WaypointPatrol
-    // ── 条件 ──
-    "rmuc_is_dead",                       // RmucIsDead
-    "rmuc_is_game_time",                  // RmucIsGameTime
-    "rmuc_is_hp_below",                   // RmucIsHPBelow
-    "rmuc_is_at_nav_goal",                // RmucIsAtNavGoal
-    "rmuc_is_at_goal",                    // IsAtGoal
-    "rmuc_is_zone_card_detected",         // IsZoneCardDetected
-    "rmuc_is_any_dispel_card_detected",   // IsAnyDispelCardDetected
-    "rmuc_is_critical_state",             // IsCriticalState
-    "rmuc_is_base_threatened",            // IsBaseThreatened
-    "rmuc_has_valid_target",              // HasValidTarget
-    "rmuc_is_combat_allowed",             // IsCombatAllowed
-    "rmuc_is_fire_window_ok",             // IsFireWindowOk
-    "rmuc_is_ammo_below",                // IsAmmoBelow
-  };
+  // ── C. 订阅者：rfid_status (/rfid_status → RMUCRFIDStatus) ──
+  regRos("rmuc_sub_rfid_status",                params_rfid_status);
 
-  // ── D. 共享 RMUL BT_REGISTER_NODES 库 ──
-  const std::vector<std::string> shared_bt_plugin_libs = {
-    "rate_controller",                    // RateController
-    "keep_running",                       // KeepRunning
-    "move_around",                        // MoveAround (WeaknessRecovery 备用)
-  };
+  // ── D. 订阅者：robot_position (/robot_position → RMUCRobotPosition) ──
+  regRos("rmuc_sub_robot_position",             params_robot_position);
+
+  // ── E. 订阅者：radar/enemy_tracks (/radar/enemy_tracks → RMUCEnemyTracks) ──
+  regRos("rmuc_sub_radar_tracks",               params_radar);
+
+  // ── F. 发布者：sentry_cmd (/sentry_cmd → RMUCSentryCmd) ──
+  regRos("rmuc_sentry_cmd_mux",                 params_sentry_cmd);
+
+  // ── G. 发布者：robot_control (/robot_control → RMUCRobotControl) ──
+  regRos("rmuc_robot_control",                  params_robot_ctrl);
+
+  // ── H. 发布者：nav_control_cmd (/nav_control_cmd → RMUCNavControlCmd) ──
+  regRos("rmuc_nav_control_cmd",                params_nav_cmd);
+
+  // ── I. 工具类 ROS 插件（不绑定特定话题，仅需 ROS node handle） ──
+  regRos("rmuc_micro_search_supply_card",       params_utility);
+  regRos("rmuc_is_supply_card_detected",        params_utility);
+
+  // ── J. 共享 RMUL ROS 插件 ──
+  regRos("cancel_nav_goal",                     params_utility);
+  regRos("clear_recovery_flag",                 params_utility);
+  regRos("init_search_timer_if_needed",         params_utility);
+  regRos("is_recovery_needed",                  params_utility);
+
+  // ── K. SendGoal (PoseStamped，非 RMUC 消息) ──
+  regRos("send_goal",                           params_send_goal);
+
+  // ── L. RMUC 纯 BT 插件（无需 ROS 参数，通过黑板获取数据） ──
+  // 动作
+  regBT("rmuc_init_sentry_config");
+  regBT("rmuc_init_cmd_state");
+  regBT("rmuc_decide_posture");
+  regBT("rmuc_decide_economy_cmd");
+  regBT("rmuc_decide_respawn_cmd");
+  regBT("rmuc_parse_sentry_blackboard");
+  regBT("rmuc_select_safe_retreat_goal");
+  regBT("rmuc_select_best_target");
+  regBT("rmuc_aim_at_target");
+  regBT("rmuc_fire_burst");
+  regBT("rmuc_hold_and_heal");
+  regBT("rmuc_hold_for_supply_ammo_tick");
+  regBT("rmuc_select_nearest_resupply_station");
+  regBT("rmuc_select_nearest_dispel_card");
+  regBT("rmuc_select_objective");
+  regBT("rmuc_hold_objective");
+  regBT("rmuc_waypoint_patrol");
+  // 条件
+  regBT("rmuc_is_dead");
+  regBT("rmuc_is_game_time");
+  regBT("rmuc_is_hp_below");
+  regBT("rmuc_is_at_nav_goal");
+  regBT("rmuc_is_at_goal");
+  regBT("rmuc_is_zone_card_detected");
+  regBT("rmuc_is_any_dispel_card_detected");
+  regBT("rmuc_is_critical_state");
+  regBT("rmuc_is_base_threatened");
+  regBT("rmuc_has_valid_target");
+  regBT("rmuc_is_combat_allowed");
+  regBT("rmuc_is_fire_window_ok");
+  regBT("rmuc_is_ammo_below");
+
+  // ── M. 共享 RMUL BT 插件 ──
+  regBT("rate_controller");
+  regBT("keep_running");
+  regBT("move_around");
 
   // clang-format on
-
-  // ═══════════════════ 注册插件 ══════════════════════════════════
-
-  // A. RMUC ROS 插件（订阅 + 发布 + 混合，全部 /rmuc）
-  for (const auto & p : rmuc_ros_plugin_libs) {
-    try {
-      RegisterRosNode(factory, BT::SharedLibrary::getOSName(p), params_rmuc);
-    } catch (const std::exception & e) {
-      RCLCPP_WARN(node->get_logger(), "Could not load RMUC ROS plugin '%s': %s",
-                  p.c_str(), e.what());
-    }
-  }
-
-  // B. 共享 RMUL ROS 插件
-  for (const auto & p : shared_ros_plugin_libs) {
-    try {
-      RegisterRosNode(factory, BT::SharedLibrary::getOSName(p), params_rmuc);
-    } catch (const std::exception & e) {
-      RCLCPP_WARN(node->get_logger(), "Could not load shared ROS plugin '%s': %s",
-                  p.c_str(), e.what());
-    }
-  }
-
-  // C. RMUC 纯 BT 插件
-  for (const auto & p : rmuc_bt_plugin_libs) {
-    try {
-      factory.registerFromPlugin(BT::SharedLibrary::getOSName(p));
-    } catch (const std::exception & e) {
-      RCLCPP_WARN(node->get_logger(), "Could not load RMUC BT plugin '%s': %s",
-                  p.c_str(), e.what());
-    }
-  }
-
-  // D. 共享 RMUL BT 插件
-  for (const auto & p : shared_bt_plugin_libs) {
-    try {
-      factory.registerFromPlugin(BT::SharedLibrary::getOSName(p));
-    } catch (const std::exception & e) {
-      RCLCPP_WARN(node->get_logger(), "Could not load shared BT plugin '%s': %s",
-                  p.c_str(), e.what());
-    }
-  }
-
-  // E. SendGoal (PoseStamped，非 RMUC.msg，单独注册)
-  RegisterRosNode(factory, BT::SharedLibrary::getOSName("send_goal"),
-                  params_send_goal);
 
   // ═══════════════════ 创建并执行行为树 ═════════════════════════
 

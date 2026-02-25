@@ -4,7 +4,6 @@
 #include <string>
 
 #include "behaviortree_cpp/condition_node.h"
-#include "rm_decision_interfaces/msg/rmuc.hpp"
 
 namespace rm_behavior_tree
 {
@@ -17,7 +16,7 @@ public:
   static BT::PortsList providedPorts()
   {
     return {
-      BT::InputPort<rm_decision_interfaces::msg::RMUC>("rfid_status")
+      BT::InputPort<bool>("is_at_nav_goal")
     };
   }
 

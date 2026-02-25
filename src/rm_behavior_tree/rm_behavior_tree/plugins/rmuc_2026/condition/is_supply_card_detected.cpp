@@ -13,7 +13,7 @@ RmucIsSupplyCardDetectedCondition::RmucIsSupplyCardDetectedCondition(
 
 BT::NodeStatus RmucIsSupplyCardDetectedCondition::tick()
 {
-  auto res = getInput<rm_decision_interfaces::msg::RMUC>("rfid_status");
+  auto res = getInput<rm_decision_interfaces::msg::RMUCRFIDStatus>("rfid_status");
   if (!res) {
     return BT::NodeStatus::FAILURE;
   }

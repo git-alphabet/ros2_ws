@@ -16,18 +16,19 @@ RmucSubRobotPositionAction::RmucSubRobotPositionAction(
 
   rclcpp::QoS qos(10);
   qos.reliable();
-  sub_ = node_->create_subscription<rm_decision_interfaces::msg::RMUC>(
+  sub_ = node_->create_subscription<rm_decision_interfaces::msg::RMUCRobotPosition>(
     topic, qos,
-    [this](const rm_decision_interfaces::msg::RMUC::SharedPtr msg) { this->callback(msg); });
+    [this](const rm_decision_interfaces::msg::RMUCRobotPosition::SharedPtr msg) { this->callback(msg); });
 }
 
 void RmucSubRobotPositionAction::callback(
-  const rm_decision_interfaces::msg::RMUC::SharedPtr msg)
+  const rm_decision_interfaces::msg::RMUCRobotPosition::SharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   pose_x_ = msg->pose_x;
   pose_y_ = msg->pose_y;
   pose_yaw_ = msg->pose_yaw;
+  is_at_nav_goal_ = msg->is_at_nav_goal;
   has_data_ = true;
 }
 
@@ -40,6 +41,7 @@ BT::NodeStatus RmucSubRobotPositionAction::tick()
   setOutput("pose_x", pose_x_);
   setOutput("pose_y", pose_y_);
   setOutput("pose_yaw", pose_yaw_);
+  setOutput("is_at_nav_goal", is_at_nav_goal_);
   return BT::NodeStatus::SUCCESS;
 }
 

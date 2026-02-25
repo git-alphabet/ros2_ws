@@ -5,7 +5,9 @@
 #include <memory>
 #include <cmath>
 #include "behaviortree_cpp/action_node.h"
-#include "rm_decision_interfaces/msg/rmuc.hpp"
+#include "rm_decision_interfaces/msg/rmuc_game_status.hpp"
+#include "rm_decision_interfaces/msg/rmuc_robot_status.hpp"
+#include "rm_decision_interfaces/msg/rmuc_enemy_tracks.hpp"
 
 namespace rm_behavior_tree
 {
@@ -18,11 +20,10 @@ public:
   static BT::PortsList providedPorts()
   {
     return {
-      // inputs (原始消息)
-      BT::InputPort<rm_decision_interfaces::msg::RMUC>("game_status"),
-      BT::InputPort<std::shared_ptr<rm_decision_interfaces::msg::RMUC>>("robot_status"),
-      BT::InputPort<rm_decision_interfaces::msg::RMUC>("rfid_status"),
-      BT::InputPort<rm_decision_interfaces::msg::RMUC>("radar_tracks"),
+      // inputs (原始消息 — 拆分后各自独立类型)
+      BT::InputPort<rm_decision_interfaces::msg::RMUCGameStatus>("game_status"),
+      BT::InputPort<std::shared_ptr<rm_decision_interfaces::msg::RMUCRobotStatus>>("robot_status"),
+      BT::InputPort<rm_decision_interfaces::msg::RMUCEnemyTracks>("radar_tracks"),
       BT::InputPort<double>("pose_x"),
       BT::InputPort<double>("pose_y"),
       BT::InputPort<std::uint64_t>("now_ms"),
