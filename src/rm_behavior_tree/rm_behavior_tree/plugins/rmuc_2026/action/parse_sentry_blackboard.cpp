@@ -67,7 +67,16 @@ BT::NodeStatus ParseSentryBlackboardAction::tick()
       }
     }
     setOutput("best_target", best_target_str);
-    setOutput("base_threat", false);     // TODO: 结合敌方位置与基地距离判定
+
+    // 基地威胁判定：任意敌方 y 坐标 ≤ 14m 视为威胁
+    bool base_threatened = false;
+    for (size_t i = 0; i < radar_msg->enemy_count && i < radar_msg->enemy_y.size(); ++i) {
+      if (radar_msg->enemy_y[i] <= 14.0) {
+        base_threatened = true;
+        break;
+      }
+    }
+    setOutput("base_threat", base_threatened);
     setOutput("fortress_threat", false); // TODO: 结合敌方位置与堡垒距离判定
   } else {
     setOutput("has_target", false);
