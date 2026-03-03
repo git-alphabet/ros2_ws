@@ -14,7 +14,8 @@
                               out_target="{combat.best_target}"/>
             <!--
                 解析 best_target 的 "id:x:y"，发布 PointStamped 到 /aim_target 话题，
-                通知云台控制器追踪该目标；实际瞄准由底层自瞄模块执行
+                通知云台控制器追踪该目标；实际瞄准由底层自瞄模块执行 
+                TODO: 追踪功能待完善
             -->
             <AimAtTarget target="{combat.best_target}"/>
 
