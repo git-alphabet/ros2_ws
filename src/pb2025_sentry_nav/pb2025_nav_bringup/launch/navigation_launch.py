@@ -225,6 +225,7 @@ def generate_launch_description():
         package="rm_behavior_tree",
         executable="rm_behavior_tree",
         name="rm_behavior_tree",
+        namespace=namespace,
         output="screen",
         respawn=use_respawn,
         respawn_delay=2.0,
@@ -736,6 +737,8 @@ def generate_launch_description():
         SetLaunchConfiguration("processed_params_file", params_file)
     )
     ld.add_action(SetLaunchConfiguration("enable_obstacle_scan", "false"))
+    ld.add_action(SetLaunchConfiguration("enable_rm_behavior_tree", "false"))
+    ld.add_action(SetLaunchConfiguration("rm_behavior_tree_style_path", ""))
     # Set switches before starting nodes
     ld.add_action(set_switches_cmd)
     # Add the actions to launch all of the navigation nodes
