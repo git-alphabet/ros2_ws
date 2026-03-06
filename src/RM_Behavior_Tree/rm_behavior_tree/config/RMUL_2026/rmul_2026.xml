@@ -21,19 +21,21 @@
                 <Fallback>
                     <!--判断战亡，若战亡，执行解除虚弱状态操作 -->
                     <SubTree ID="IsDeadAndDispelDebuff" _autoremap="true"/>
-                    <!-- 处于存活状态则进入战斗逻辑 -->
+                    <!-- 处于存活状态则进入战斗/占点逻辑 -->
                     <Fallback>
-                        <!-- 检测到敌人进行战斗逻辑 -->
-                        <ReactiveSequence>
-                            <IsDetectEnemy message="{robot_status}"/>
-                            <RobotControl stop_gimbal_scan="True" chassis_spin="True"/>
-                        </ReactiveSequence>
-                        <Fallback>
-                            <!-- 高血量战斗逻辑 -->
-                            <SubTree ID="HighHPCombatLogic" _autoremap="true"/>
-                            <!-- 中血量战斗逻辑 -->
-                            <SubTree ID="MediumHPCombatLogic" _autoremap="true"/>
-                        </Fallback>
+                        <!--
+                          战斗决策优先级 (从高到低):
+                            1. 高血量(≥300): 检测敌人→停车射击 / 未检测→巡逻控制区
+                            2. 中血量(200~300): 检测敌人→停车射击 / 未检测→靠近补给区
+                            3. 低血量(<200): 无条件回补给区回血
+                          每个子树内部已包含 IsDetectEnemy 判断，
+                          会根据有无敌人自动切换射击/巡逻模式
+                        -->
+
+                        <!-- 高血量战斗逻辑 (HP ≥ 300) -->
+                        <SubTree ID="HighHPCombatLogic" _autoremap="true"/>
+                        <!-- 中血量战斗逻辑 (200 ≤ HP < 300) -->
+                        <SubTree ID="MediumHPCombatLogic" _autoremap="true"/>
 
                         <!-- 非战斗时刻占点逻辑 -->
                         <ReactiveFallback>

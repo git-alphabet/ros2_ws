@@ -70,7 +70,6 @@ int main(int argc, char ** argv)
     "is_hp_below",
     "is_dead",
     "is_status_ok",
-    "is_attacked",
     "is_friend_ok",
     "get_current_location",
     "move_around",
