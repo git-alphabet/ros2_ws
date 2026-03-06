@@ -225,7 +225,7 @@ def generate_launch_description():
         package="rm_behavior_tree",
         executable="rm_behavior_tree",
         name="rm_behavior_tree",
-        namespace=namespace,
+        # namespace 由 bringup_launch.py 的 PushRosNamespace 提供，不再重复设置
         output="screen",
         respawn=use_respawn,
         respawn_delay=2.0,

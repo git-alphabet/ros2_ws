@@ -119,6 +119,10 @@ BT::NodeStatus DetectRespawnAndSetRecoveryAction::onTick(
 
   if (!got_hp) {
     RCLCPP_WARN(node_->get_logger(), "未获取到机器人血量，跳过复活沿检测");
+    // 即使跳过检测，也要保证 need_recovery 键存在于黑板中，
+    // 否则下游 IsRecoveryNeeded 节点会因找不到该键而抛异常崩溃
+    setOutput("need_recovery", false);
+    setOutput("was_dead", false);
     return BT::NodeStatus::SUCCESS;
   }
 

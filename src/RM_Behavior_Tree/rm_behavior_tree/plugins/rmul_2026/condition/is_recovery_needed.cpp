@@ -18,9 +18,12 @@ BT::NodeStatus IsRecoveryNeededCondition::tick()
   // 读黑板 need_recovery
   auto res = getInput<bool>("need_recovery");
   if (!res) {
-    // 由于我们给了默认值 false，理论上不会走到这里；
-    // 但保留防御性编程，便于定位配置错误。
-    throw BT::RuntimeError("IsRecoveryNeeded: failed to read input [need_recovery]: ", res.error());
+    // 首次 tick 时黑板中可能还没有 need_recovery 键
+    // （DetectRespawnAndSetRecovery 尚未收到消息时会跳过写入）
+    // 安全降级：视为不需要恢复
+    RCLCPP_DEBUG(rclcpp::get_logger("IsRecoveryNeeded"),
+      "need_recovery key not found in blackboard, default to FAILURE (no recovery)");
+    return BT::NodeStatus::FAILURE;
   }
 
   return (res.value() ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE);
