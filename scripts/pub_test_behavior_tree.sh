@@ -9,6 +9,7 @@
 #   MODE=respawn PRE_DELAY=60 bash scripts/pub_test_behavior_tree.sh  # 复活沿测试：先正常导航60s → 战亡3s → 复活hp=80 → BT自动回补给区
 #   START_DELAY=5 bash scripts/pub_test_behavior_tree.sh             # 先停滞5s（非比赛阶段）再切换为比赛进行中，BT才开始走
 #   MODE=kill_and_revive bash scripts/pub_test_behavior_tree.sh       # 新开终端随时随地触发：立刻发hp=0，10s后切换hp=80，全程game_status不断
+#   MODE=set_hp SET_HP=150 bash scripts/pub_test_behavior_tree.sh      # 随时发布指定血量（<200触发回补给区），只发 /robot_status
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -30,6 +31,31 @@ source "/opt/ros/${ROS_DISTRO}/setup.bash"
 # shellcheck disable=SC1090
 source "${WS_DIR}/install/setup.bash"
 set -u
+
+# ── set_hp 模式 ──────────────────────────────────────────────────────────────────
+# 随时随地可用：只发 /robot_status，不碰 /game_status
+# 用途：测试低血量（<200）无条件触发回补给区的 BT 决策
+# 推荐用法：
+#   终端1（保持运行）: bash scripts/pub_test_behavior_tree.sh          # 维持 game_status + 正常 robot_status
+#   终端2（按需触发）: SET_HP=150 MODE=set_hp bash scripts/pub_test_behavior_tree.sh  # 覆盖 robot_status，发布低血量
+# 终端2 Ctrl+C 后，终端1 的正常血量自动恢复
+if [[ "${MODE}" == "set_hp" ]]; then
+    SET_HP="${SET_HP:-150}"   # 要发布的血量值，默认150（<200，触发回补给区）
+
+    echo "[pub_test_status][set_hp] 发布 hp=${SET_HP}，只发 /robot_status（不干扰 /game_status）"
+    echo "[pub_test_status][set_hp] BT 阈值：<200 无条件回补给区，200~300 中血量战斗逻辑，≥300 高血量"
+    echo "[pub_test_status][set_hp] 按 Ctrl+C 停止（/game_status 由另一个终端的脚本维持）"
+    echo ""
+
+    ros2 topic pub /robot_status rm_decision_interfaces/msg/RMUL \
+        "{current_hp: ${SET_HP}}" \
+        --rate "${PUB_RATE}" &
+    PID_SET_HP=$!
+    trap "kill ${PID_SET_HP} 2>/dev/null; exit 0" INT TERM
+
+    wait "${PID_SET_HP}"
+    exit 0
+fi
 
 # ── kill_and_revive 模式 ──────────────────────────────────────────────────────
 # 随时随地可用：只发 /robot_status，不碰 /game_status

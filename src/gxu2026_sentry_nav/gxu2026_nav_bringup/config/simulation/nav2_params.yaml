@@ -12,7 +12,7 @@ pb_navigation_switches:
   ros__parameters:
     controller_plugin: "pb_omni_pid_pursuit_controller"   # 控制器插件选择：neupan_nav2_controller / pb_omni_pid_pursuit_controller
     odometry_source: "point_lio"                   #point_lio / small_point_lio / loam_interface
-    behavior_tree: "config/RMUL_2026/rmul_2026.xml"  # .xml or default,none（slam:=True 建图时会被自动忽略）
+    behavior_tree: "none"  # .xml or default,none
 
 
     enable_gimbal_yaw_bridge: false               # 仿真中 TF 由 Gazebo bringup 的 robot_state_publisher 直接提供，无需此通路。
@@ -513,7 +513,7 @@ slam_toolbox:
     debug_logging: false
     throttle_scans: 1
     scan_queue_size: 10
-    transform_publish_period: 0.0                # if 0 never publishes odometry
+    transform_publish_period: 0.0               # 发布 map→odom TF 的周期（s），0=不发布
     map_update_interval: 0.5
     resolution: 0.05
     min_laser_range: 0.3                         # for rastering images
@@ -525,7 +525,7 @@ slam_toolbox:
     enable_interactive_mode: true
 
     # General Parameters
-    use_scan_matching: false
+    use_scan_matching: False
     use_scan_barycenter: true
     minimum_travel_distance: 0.1
     minimum_travel_heading: 0.1
