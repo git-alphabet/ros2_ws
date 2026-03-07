@@ -273,7 +273,7 @@ point_lio:
       tf_send_en: False                                 # True: send transform from 'camera_init' to 'aft_mapped'
 
     pcd_save:
-      pcd_save_en: False
+      pcd_save_en: True
       interval: -1                                      # how many LiDAR frames saved in each pcd file;
                                                         # -1 : all frames will be saved in ONE pcd file, may lead to memory crash when having too much frames.
 
@@ -568,7 +568,7 @@ bt_navigator:
     global_frame: map
     robot_base_frame: gimbal_yaw_fake
     odom_topic: odometry
-    bt_loop_duration: 10
+    bt_loop_duration: 50
     default_server_timeout: 100
     wait_for_service_timeout: 1000
     default_nav_to_pose_bt_xml: $(find-pkg-share gxu2026_nav_bringup)/behavior_trees/navigate_to_pose_w_replanning_and_recovery.xml
