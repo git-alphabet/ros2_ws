@@ -3,12 +3,12 @@
 # 用于在没有真实裁判系统时模拟比赛状态，消除行为树的 WARN 日志
 #
 # 用法：
-#   bash scripts/pub_test_status.sh                            # 默认：比赛进行中, 血量=400
-#   GAME_PROGRESS=0 bash scripts/pub_test_status.sh            # 非比赛阶段（BT 会回家）
-#   CURRENT_HP=150  bash scripts/pub_test_status.sh            # 模拟低血量（<200 回补给区）
-#   MODE=respawn PRE_DELAY=15 bash scripts/pub_test_status.sh  # 复活沿测试：先正常导航15s → 战亡3s → 复活hp=80 → BT自动回补给区
-#   START_DELAY=5 bash scripts/pub_test_status.sh             # 先停滞5s（非比赛阶段）再切换为比赛进行中，BT才开始走
-#   MODE=kill_and_revive bash scripts/pub_test_status.sh       # 新开终端随时随地触发：立刻发hp=0，10s后切换hp=80，全程game_status不断
+#   bash scripts/pub_test_behavior_tree.sh                            # 默认：比赛进行中, 血量=400
+#   GAME_PROGRESS=0 bash scripts/pub_test_behavior_tree.sh            # 非比赛阶段（BT 会回家）
+#   CURRENT_HP=150  bash scripts/pub_test_behavior_tree.sh            # 模拟低血量（<200 回补给区）
+#   MODE=respawn PRE_DELAY=60 bash scripts/pub_test_behavior_tree.sh  # 复活沿测试：先正常导航60s → 战亡3s → 复活hp=80 → BT自动回补给区
+#   START_DELAY=5 bash scripts/pub_test_behavior_tree.sh             # 先停滞5s（非比赛阶段）再切换为比赛进行中，BT才开始走
+#   MODE=kill_and_revive bash scripts/pub_test_behavior_tree.sh       # 新开终端随时随地触发：立刻发hp=0，10s后切换hp=80，全程game_status不断
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
