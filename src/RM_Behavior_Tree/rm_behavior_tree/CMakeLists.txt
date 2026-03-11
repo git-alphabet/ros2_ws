@@ -25,6 +25,10 @@ set(PACKAGE_INCLUDE_DEPENDS
     std_msgs
     behaviortree_cpp
     behaviortree_ros2
+    geometry_msgs
+    tf2
+    tf2_ros
+    tf2_geometry_msgs
 )
 
 # 定义宏函数 add_target_dependencies
