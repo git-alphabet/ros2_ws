@@ -20,7 +20,7 @@ pb_navigation_switches:
   ros__parameters:
     controller_plugin: "pb_omni_pid_pursuit_controller"
     odometry_source: "point_lio"
-    behavior_tree: "default"
+    behavior_tree: "none"
 
 
     enable_gimbal_yaw_bridge: true             #是否启用 gimbal_yaw_bridge 通路。
