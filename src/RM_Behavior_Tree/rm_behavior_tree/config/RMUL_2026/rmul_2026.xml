@@ -51,19 +51,18 @@
                                             action_name="navigate_to_pose"/>
                                 </RateController>
 
-                                <!-- ✅ 使用新的 IsAtNavGoal 节点检测是否到达 -->
+                                <!-- 到达补给区后的 RFID 感应 + 微调（实车用，仿真中注释掉避免 current_location 缺失导致来回跳）
                                 <IsAtNavGoal rfid_status="{rfid_status}"/>
-
-                                <!-- Fallback: 先感应补给区卡,感应不到再微动重试 -->
                                 <ReactiveFallback>
                                     <IsSupplyCardDetected rfid_status="{rfid_status}"/>
                                     <MoveAround expected_nearby_goal_count="5"
                                                 expected_dis="0.3"
                                                 message="{current_location}"/>
                                 </ReactiveFallback>
+                                -->
                             </ReactiveSequence>
 
-                            <!-- 3) 抢控制区：对方每秒-1胜利点；离开后延迟2s失效 -->
+                            <!-- 抢控制区：对方每秒-1胜利点；离开后延迟2s失效 -->
                             <ReactiveSequence>
                                 <RateController hz="1">
                                     <SendGoal name="GoControlZone"
@@ -73,16 +72,15 @@
                                             action_name="navigate_to_pose"/>
                                 </RateController>
 
-                                <!-- ✅ 使用新的 IsAtNavGoal 节点检测是否到达 -->
+                                <!-- 到达控制区后的 RFID 感应 + 微调（实车用，仿真中注释掉）
                                 <IsAtNavGoal rfid_status="{rfid_status}"/>
-
-                                <!-- Fallback: 先感应控制区卡,感应不到再微动重试 -->
                                 <ReactiveFallback>
                                     <IsControlZoneDetected rfid_status="{rfid_status}"/>
                                     <MoveAround expected_nearby_goal_count="5"
                                                 expected_dis="0.3"
                                                 message="{current_location}"/>
                                 </ReactiveFallback>
+                                -->
                             </ReactiveSequence>
 
                         </ReactiveFallback>
