@@ -397,11 +397,6 @@ ament_auto_add_library(micro_search_supply_card SHARED
 )
 add_target_dependencies(micro_search_supply_card)
 
-ament_auto_add_library(navigate_to_goal SHARED 
-    plugins/rmul_2026/condition/navigate_to_goal.cpp
-)
-add_target_dependencies(navigate_to_goal)
-
 ament_auto_add_library(sub_robot_position SHARED 
     plugins/rmul_2026/action/sub_robot_position.cpp
 )

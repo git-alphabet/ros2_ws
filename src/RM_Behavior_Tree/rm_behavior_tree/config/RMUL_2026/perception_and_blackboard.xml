@@ -18,7 +18,8 @@
             <SubRobotPosition topic_name="/robot_position"
                               pose_x="{pose.x}"
                               pose_y="{pose.y}"
-                              is_at_nav_goal="{nav.is_at_goal}"/>
+                              is_at_nav_goal="{nav.is_at_goal}"
+                              is_detect_enemy="{nav.is_detect_enemy}"/>
         </Sequence>
     </BehaviorTree>
 </root>

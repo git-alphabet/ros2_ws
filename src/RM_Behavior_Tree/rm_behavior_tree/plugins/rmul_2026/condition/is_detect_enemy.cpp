@@ -10,18 +10,13 @@ IsDetectEnemyCondition::IsDetectEnemyCondition(const std::string & name, const B
 
 BT::NodeStatus IsDetectEnemyCondition::checkEnemyDetected()
 {
-  auto msg = getInput<std::shared_ptr<rm_decision_interfaces::msg::RMULNav>>("message");
+  auto msg = getInput<bool>("message");
 
   if (!msg) {
     return BT::NodeStatus::FAILURE;
   }
 
-  // 使用RMUL消息中的视觉检测敌人字段
-  if ((*msg)->is_detect_enemy) {
-    return BT::NodeStatus::SUCCESS;
-  }
-
-  return BT::NodeStatus::FAILURE;
+  return msg.value() ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
 }
 
 }  // namespace rm_behavior_tree

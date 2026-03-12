@@ -48,7 +48,8 @@
                                             goal_x="0.21"
                                             goal_y="-0.32"
                                             frame_id="map"
-                                            action_name="navigate_to_pose"/>
+                                            action_name="navigate_to_pose"
+                                            min_interval_ms="5000"/>
                                 </RateController>
 
                                 <!-- 到达补给区后的 RFID 感应 + 微调（实车用，仳真中注释掉避免 current_location 缺失导致来回跳）-->
@@ -69,7 +70,8 @@
                                             goal_x="5.13"
                                             goal_y="-3.94"
                                             frame_id="map"
-                                            action_name="navigate_to_pose"/>
+                                            action_name="navigate_to_pose"
+                                            min_interval_ms="5000"/>
                                 </RateController>
 
                                 <!-- 到达控制区后的 RFID 感应 + 微调（实车用，仳真中注释掉）-->
@@ -94,7 +96,8 @@
                             goal_x="0.0"
                             goal_y="0.0"
                             frame_id="map"
-                            action_name="navigate_to_pose"/>
+                            action_name="navigate_to_pose"
+                            min_interval_ms="5000"/>
                     </RateController>
                     <RobotControl stop_gimbal_scan="True"
                                     chassis_spin="False"/>
@@ -108,9 +111,9 @@
         <Action ID="GetCurrentLocation" editable="true">
             <output_port name="current_location" default="{current_location}"/>
         </Action>
-        <Action ID="IsDetectEnemy" editable="true">
-            <input_port name="message" default="{armors}"/>
-        </Action>
+        <Condition ID="IsDetectEnemy" editable="true">
+            <input_port name="message" default="{nav.is_detect_enemy}"/>
+        </Condition>
         <Action ID="MoveAround" editable="true">
             <input_port name="expected_nearby_goal_count" default="5"/>
             <input_port name="expected_dis" default="0.3"/>
@@ -157,6 +160,8 @@
             <input_port name="topic_name" default="/robot_position"/>
             <output_port name="pose_x" default="{pose.x}"/>
             <output_port name="pose_y" default="{pose.y}"/>
+            <output_port name="is_at_nav_goal" default="{nav.is_at_goal}"/>
+            <output_port name="is_detect_enemy" default="{nav.is_detect_enemy}"/>
         </Action>
         <Action ID="KeepRunning" editable="true"/>
         <Action ID="CancelNavGoal" editable="true">
@@ -208,9 +213,6 @@
             <input_port name="cmd_type" default="0"/>
             <input_port name="emergency_stop" default="False"/>
         </Action>
-        <Condition ID="IsDetectEnemy" editable="true">
-            <input_port name="message" default="{robot_status}"/>
-        </Condition>
         <Condition ID="IsFriendOK" editable="true">
             <input_port name="message" default="{robot_status}"/>
         </Condition>

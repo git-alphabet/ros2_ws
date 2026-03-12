@@ -20,7 +20,7 @@
              分支 A: 检测到敌人 → 中血量交战
              ══════════════════════════════════════════════════════════ -->
         <ReactiveSequence>
-          <IsDetectEnemy message="{robot_status}"/>
+          <IsDetectEnemy message="{nav.is_detect_enemy}"/>
 
           <Fallback>
             <!-- A-1: 热量安全 → 停车射击，精度优先 + 小陀螺防护 -->
@@ -44,7 +44,8 @@
                           goal_x="0.21"
                           goal_y="-0.32"
                           frame_id="map"
-                          action_name="navigate_to_pose"/>
+                          action_name="navigate_to_pose"
+                          min_interval_ms="5000"/>
               </RateController>
             </Sequence>
           </Fallback>
@@ -57,14 +58,15 @@
              ══════════════════════════════════════════════════════════ -->
         <Sequence>
           <RobotControl stop_gimbal_scan="False"
-                        chassis_spin="True"/>
+                        chassis_spin="False"/>
           <NavControlCmd cmd_type="1" emergency_stop="False"/>
           <RateController hz="1">
             <SendGoal name="HoverNearSupply"
                       goal_x="0.21"
                       goal_y="-0.32"
                       frame_id="map"
-                      action_name="navigate_to_pose"/>
+                      action_name="navigate_to_pose"
+                      min_interval_ms="5000"/>
           </RateController>
         </Sequence>
 

@@ -30,7 +30,8 @@ public:
       BT::InputPort<std::string>("topic_name", std::string("/red_standard_robot1"), "订阅的话题名"),
       BT::OutputPort<double>("pose_x"),
       BT::OutputPort<double>("pose_y"),
-      BT::OutputPort<bool>("is_at_nav_goal")
+      BT::OutputPort<bool>("is_at_nav_goal"),
+      BT::OutputPort<bool>("is_detect_enemy")
     };
   }
 
@@ -49,6 +50,7 @@ private:
   double pose_x_{0.0};
   double pose_y_{0.0};
   bool is_at_nav_goal_{false};
+  bool is_detect_enemy_{false};
   rclcpp::Time last_stamp_;
 
   bool has_data_{false};

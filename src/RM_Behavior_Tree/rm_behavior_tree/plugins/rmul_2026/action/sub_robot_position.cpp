@@ -43,6 +43,7 @@ void SubRobotPositionAction::robot_position_callback(
   pose_x_ = msg->x;
   pose_y_ = msg->y;
   is_at_nav_goal_ = msg->is_at_nav_goal;
+  is_detect_enemy_ = msg->is_detect_enemy;
 
   // 记录接收时间（如果消息带时间戳并且你希望使用它，可以改为使用 msg->header.stamp）
   last_stamp_ = node_->now();
@@ -63,6 +64,7 @@ BT::NodeStatus SubRobotPositionAction::tick()
   setOutput("pose_x", pose_x_);
   setOutput("pose_y", pose_y_);
   setOutput("is_at_nav_goal", is_at_nav_goal_);
+  setOutput("is_detect_enemy", is_detect_enemy_);
 
   return BT::NodeStatus::SUCCESS;
 }
