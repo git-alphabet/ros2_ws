@@ -25,9 +25,11 @@
              ══════════════════════════════════════════════════════════ -->
         <ReactiveSequence>
           <IsDetectEnemy message="{nav.is_detect_enemy}"/>
+          <!-- 检测到敌人：立刻取消 Nav2 导航目标，避免底盘仍被 Nav2 控制与停车指令冲突 -->
+          <CancelNavGoal action_name="navigate_to_pose" min_interval_ms="2000"/>
 
           <Fallback>
-            <!-- A-1: 热量安全(≤280) → 刹车+原地，停云台扫描让自瞄接管，开小陀螺
+            <!-- A-1: 热量安全(≤280) → 刹车+原地，开小陀螺
                  说明: 机器人停止移动以最大化射击精度，
                        小陀螺提供被动防护 -->
             <Sequence>
@@ -35,7 +37,7 @@
                           hp_threshold="0"
                           heat_threshold="280"/>
               <NavControlCmd cmd_type="3" emergency_stop="False"/>
-              <RobotControl stop_gimbal_scan="True"
+              <RobotControl stop_gimbal_scan="False"
                             chassis_spin="True"/>
             </Sequence>
 
@@ -57,7 +59,7 @@
         <!-- ══════════════════════════════════════════════════════════
              分支 B: 未检测到敌人 → 主动巡逻+占控制区
              ══════════════════════════════════════════════════════════ -->
-        <Sequence>
+        <ReactiveSequence>
           <!-- 保持云台扫描搜敌 -->
           <RobotControl stop_gimbal_scan="False"
                         chassis_spin="False"/>
@@ -72,7 +74,15 @@
                       action_name="navigate_to_pose"
                       min_interval_ms="5000"/>
           </RateController>
-        </Sequence>
+          <!-- 到达控制区后的 RFID 感应 + 微调 -->
+          <IsAtNavGoal nav_status="{nav.is_at_goal}"/>
+          <ReactiveFallback>
+            <IsControlZoneDetected rfid_status="{rfid.status}"/>
+            <MoveAround expected_nearby_goal_count="5"
+                        expected_dis="0.3"
+                        message="{current_location}"/>
+          </ReactiveFallback>
+        </ReactiveSequence>
 
       </Fallback>
     </ReactiveSequence>

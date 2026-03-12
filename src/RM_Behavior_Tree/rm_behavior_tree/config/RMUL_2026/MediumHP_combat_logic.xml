@@ -21,6 +21,8 @@
              ══════════════════════════════════════════════════════════ -->
         <ReactiveSequence>
           <IsDetectEnemy message="{nav.is_detect_enemy}"/>
+          <!-- 检测到敌人：立刻取消 Nav2 导航目标，避免底盘仍被 Nav2 控制与停车指令冲突 -->
+          <CancelNavGoal action_name="navigate_to_pose" min_interval_ms="2000"/>
 
           <Fallback>
             <!-- A-1: 热量安全 → 停车射击，精度优先 + 小陀螺防护 -->
@@ -56,7 +58,7 @@
              说明: 中血量时不再主动进攻控制区，而是靠近补给区
                    以便血量继续下降时能快速到达补给区回血
              ══════════════════════════════════════════════════════════ -->
-        <Sequence>
+        <ReactiveSequence>
           <RobotControl stop_gimbal_scan="False"
                         chassis_spin="False"/>
           <NavControlCmd cmd_type="1" emergency_stop="False"/>
@@ -68,7 +70,15 @@
                       action_name="navigate_to_pose"
                       min_interval_ms="5000"/>
           </RateController>
-        </Sequence>
+          <!-- 到达补给区后的 RFID 感应 + 微调-->
+          <IsAtNavGoal nav_status="{nav.is_at_goal}"/>
+          <ReactiveFallback>
+            <IsSupplyCardDetected rfid_status="{rfid.status}"/>
+            <MoveAround expected_nearby_goal_count="5"
+                        expected_dis="0.3"
+                        message="{current_location}"/>
+          </ReactiveFallback>
+        </ReactiveSequence>
 
       </Fallback>
     </ReactiveSequence>

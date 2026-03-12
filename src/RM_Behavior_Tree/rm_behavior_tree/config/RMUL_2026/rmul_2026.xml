@@ -37,55 +37,26 @@
                         <!-- 中血量战斗逻辑 (200 ≤ HP < 300) -->
                         <SubTree ID="MediumHPCombatLogic" _autoremap="true"/>
 
-                        <!-- 非战斗时刻占点逻辑 -->
-                        <ReactiveFallback>
-                            <!-- 低血量：回补给区回血（补给区占领：每秒回 25% 上限血量） -->
-                            <ReactiveSequence>
-                                <IsHPBelow message="{robot_status}" hp_threshold="200"/>
-
-                                <RateController hz="1">
-                                    <SendGoal name="GoSupplyToHeal"
-                                            goal_x="0.21"
-                                            goal_y="-0.32"
-                                            frame_id="map"
-                                            action_name="navigate_to_pose"
-                                            min_interval_ms="5000"/>
-                                </RateController>
-
-                                <!-- 到达补给区后的 RFID 感应 + 微调（实车用，仳真中注释掉避免 current_location 缺失导致来回跳）-->
-                                <IsAtNavGoal nav_status="{nav.is_at_goal}"/>
-                                <ReactiveFallback>
-                                    <IsSupplyCardDetected rfid_status="{rfid.status}"/>
-                                    <MoveAround expected_nearby_goal_count="5"
-                                                expected_dis="0.3"
-                                                message="{current_location}"/>
-                                </ReactiveFallback>
-                                
-                            </ReactiveSequence>
-
-                            <!-- 抢控制区：对方每秒-1胜利点；离开后延迟2s失效 -->
-                            <ReactiveSequence>
-                                <RateController hz="1">
-                                    <SendGoal name="GoControlZone"
-                                            goal_x="5.13"
-                                            goal_y="-3.94"
-                                            frame_id="map"
-                                            action_name="navigate_to_pose"
-                                            min_interval_ms="5000"/>
-                                </RateController>
-
-                                <!-- 到达控制区后的 RFID 感应 + 微调（实车用，仳真中注释掉）-->
-                                <IsAtNavGoal nav_status="{nav.is_at_goal}"/>
-                                <ReactiveFallback>
-                                    <IsControlZoneDetected rfid_status="{rfid.status}"/>
-                                    <MoveAround expected_nearby_goal_count="5"
-                                                expected_dis="0.3"
-                                                message="{current_location}"/>
-                                </ReactiveFallback>
-                                
-                            </ReactiveSequence>
-
-                        </ReactiveFallback>
+                        <!-- 低血量(<200)：无条件回补给区回血 -->
+                        <ReactiveSequence>
+                            <IsHPBelow message="{robot_status}" hp_threshold="200"/>
+                            <RateController hz="1">
+                                <SendGoal name="GoSupplyToHeal"
+                                        goal_x="0.21"
+                                        goal_y="-0.32"
+                                        frame_id="map"
+                                        action_name="navigate_to_pose"
+                                        min_interval_ms="5000"/>
+                            </RateController>
+                            <!-- 到达补给区后的 RFID 感应 + 微调（实车用，仿真中注释掉避免 current_location 缺失导致来回跳）-->
+                            <IsAtNavGoal nav_status="{nav.is_at_goal}"/>
+                            <ReactiveFallback>
+                                <IsSupplyCardDetected rfid_status="{rfid.status}"/>
+                                <MoveAround expected_nearby_goal_count="5"
+                                            expected_dis="0.3"
+                                            message="{current_location}"/>
+                            </ReactiveFallback>
+                        </ReactiveSequence>
 
                     </Fallback>
                 </Fallback>
