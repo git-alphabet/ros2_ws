@@ -51,15 +51,15 @@
                                             action_name="navigate_to_pose"/>
                                 </RateController>
 
-                                <!-- 到达补给区后的 RFID 感应 + 微调（实车用，仿真中注释掉避免 current_location 缺失导致来回跳）
-                                <IsAtNavGoal rfid_status="{rfid_status}"/>
+                                <!-- 到达补给区后的 RFID 感应 + 微调（实车用，仿真中注释掉避免 current_location 缺失导致来回跳）-->
+                                <IsAtNavGoal nav_status="{rfid.status}"/>
                                 <ReactiveFallback>
-                                    <IsSupplyCardDetected rfid_status="{rfid_status}"/>
+                                    <IsSupplyCardDetected rfid_status="{rfid.status}"/>
                                     <MoveAround expected_nearby_goal_count="5"
                                                 expected_dis="0.3"
                                                 message="{current_location}"/>
                                 </ReactiveFallback>
-                                -->
+                                
                             </ReactiveSequence>
 
                             <!-- 抢控制区：对方每秒-1胜利点；离开后延迟2s失效 -->
@@ -73,9 +73,9 @@
                                 </RateController>
 
                                 <!-- 到达控制区后的 RFID 感应 + 微调（实车用，仿真中注释掉）-->
-                                <IsAtNavGoal rfid_status="{rfid_status}"/>
+                                <IsAtNavGoal nav_status="{rfid.status}"/>
                                 <ReactiveFallback>
-                                    <IsControlZoneDetected rfid_status="{rfid_status}"/>
+                                    <IsControlZoneDetected rfid_status="{rfid.status}"/>
                                     <MoveAround expected_nearby_goal_count="5"
                                                 expected_dis="0.3"
                                                 message="{current_location}"/>
@@ -155,8 +155,8 @@
         </Action>
         <Action ID="SubRobotPosition" editable="true">
             <input_port name="topic_name" default="/robot_position"/>
-            <output_port name="pose_x" default="{pose_x}"/>
-            <output_port name="pose_y" default="{pose_y}"/>
+            <output_port name="pose_x" default="{pose.x}"/>
+            <output_port name="pose_y" default="{pose.y}"/>
         </Action>
         <Action ID="KeepRunning" editable="true"/>
         <Action ID="CancelNavGoal" editable="true">
@@ -253,7 +253,7 @@
             <input_port name="rfid_status" default="{rfid.status}"/>
         </Condition>
         <Condition ID="IsAtNavGoal" editable="true">
-            <input_port name="rfid_status" default="{rfid.status}"/>
+            <input_port name="nav_status" default="{rfid.status}"/>
         </Condition>
         <Decorator ID="RateController" editable="true">
             <input_port name="hz" default="1.0"/>
