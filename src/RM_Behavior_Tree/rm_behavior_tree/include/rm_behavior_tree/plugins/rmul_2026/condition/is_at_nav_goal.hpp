@@ -13,12 +13,12 @@ namespace rm_behavior_tree
  * @brief 判断机器人是否到达导航目标点
  *
  * 黑板输入：
- *   - rfid_status: rm_decision_interfaces::msg::RMUL
+ *   - nav_status: rm_decision_interfaces::msg::RMUL
  *
  * 语义：
  *   - is_at_nav_goal == true  -> SUCCESS（已到达目标点）
  *   - is_at_nav_goal == false -> FAILURE（未到达目标点）
- *   - 若读不到 rfid_status -> FAILURE（保守失败）
+ *   - 若读不到 nav_status -> FAILURE（保守失败）
  *
  * 设计说明：
  *  - 基于 RMUL.msg 第9个字段 is_at_nav_goal 进行判断
@@ -32,7 +32,7 @@ public:
   static BT::PortsList providedPorts()
   {
     return {
-      BT::InputPort<rm_decision_interfaces::msg::RMUL>("rfid_status")
+      BT::InputPort<rm_decision_interfaces::msg::RMUL>("nav_status")
     };
   }
 

@@ -14,7 +14,7 @@ BT::NodeStatus IsAtNavGoal::tick()
   // 1) 从黑板读取 RMUL.msg
   // ------------------------------------------------
   rm_decision_interfaces::msg::RMUL rfid_msg;
-  auto res = getInput<rm_decision_interfaces::msg::RMUL>("rfid_status");
+  auto res = getInput<rm_decision_interfaces::msg::RMUL>("nav_status");
   if (!res) {
     // 黑板没有该 key / 类型不匹配 / 尚未写入：保守失败
     return BT::NodeStatus::FAILURE;
