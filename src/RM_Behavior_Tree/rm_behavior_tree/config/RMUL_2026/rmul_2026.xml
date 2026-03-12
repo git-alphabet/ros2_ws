@@ -129,6 +129,7 @@
         </Action>
         <Action ID="SubRobotPosition" editable="true">
             <input_port name="topic_name" default="/robot_position"/>
+            <input_port name="rob_topic_name" default="/robot_status"/>
             <output_port name="pose_x" default="{pose.x}"/>
             <output_port name="pose_y" default="{pose.y}"/>
             <output_port name="is_at_nav_goal" default="{nav.is_at_goal}"/>

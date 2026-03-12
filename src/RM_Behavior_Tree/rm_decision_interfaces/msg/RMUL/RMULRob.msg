@@ -18,3 +18,6 @@ uint16 shooter_heat          # 枪口热量
 bool   rfid_supply_arrived   # 补给区交互卡反馈
 bool   rfid_control_arrived  # 控制区交互卡反馈
 
+# ── 4. 机器人位姿 (RobotPosition, 0x0203) ────────────────────────────────────
+float32 x                    # 当前位置 x (meter, map 坐标系)
+float32 y                    # 当前位置 y (meter, map 坐标系)

@@ -16,6 +16,7 @@
                         supply_goal_y="{cfg.supply_goal_y}"
                         arrive_radius="{cfg.arrive_radius}"/>
             <SubRobotPosition topic_name="/robot_position"
+                              rob_topic_name="/robot_status"
                               pose_x="{pose.x}"
                               pose_y="{pose.y}"
                               is_at_nav_goal="{nav.is_at_goal}"

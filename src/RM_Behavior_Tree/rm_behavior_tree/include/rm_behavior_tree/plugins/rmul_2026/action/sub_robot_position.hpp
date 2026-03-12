@@ -11,6 +11,7 @@
 #include "behaviortree_ros2/ros_node_params.hpp"
 
 #include "rm_decision_interfaces/msg/rmul_nav.hpp"
+#include "rm_decision_interfaces/msg/rmul_rob.hpp"
 
 namespace rm_behavior_tree
 {
@@ -27,7 +28,10 @@ public:
   static BT::PortsList providedPorts()
   {
     return {
-      BT::InputPort<std::string>("topic_name", std::string("/red_standard_robot1"), "订阅的话题名"),
+      // nav_topic_name: 订阅 RMULNav（导航状态：is_at_nav_goal, is_detect_enemy）
+      BT::InputPort<std::string>("topic_name", std::string("/robot_position"), "RMULNav 话题名"),
+      // rob_topic_name: 订阅 RMULRob（位姿：x, y）
+      BT::InputPort<std::string>("rob_topic_name", std::string("/robot_status"), "RMULRob 话题名（读取位姿 x/y）"),
       BT::OutputPort<double>("pose_x"),
       BT::OutputPort<double>("pose_y"),
       BT::OutputPort<bool>("is_at_nav_goal"),
@@ -38,11 +42,14 @@ public:
   BT::NodeStatus tick() override;
 
 private:
-  void robot_position_callback(
+  void nav_callback(
     const rm_decision_interfaces::msg::RMULNav::SharedPtr msg);
+  void rob_callback(
+    const rm_decision_interfaces::msg::RMULRob::SharedPtr msg);
 
   rclcpp::Node::SharedPtr node_;
-  rclcpp::Subscription<rm_decision_interfaces::msg::RMULNav>::SharedPtr sub_;
+  rclcpp::Subscription<rm_decision_interfaces::msg::RMULNav>::SharedPtr nav_sub_;
+  rclcpp::Subscription<rm_decision_interfaces::msg::RMULRob>::SharedPtr rob_sub_;
 
   mutable std::mutex mutex_;
 
@@ -53,7 +60,8 @@ private:
   bool is_detect_enemy_{false};
   rclcpp::Time last_stamp_;
 
-  bool has_data_{false};
+  bool has_nav_data_{false};
+  bool has_rob_data_{false};
 };
 
 }  // namespace rm_behavior_tree
