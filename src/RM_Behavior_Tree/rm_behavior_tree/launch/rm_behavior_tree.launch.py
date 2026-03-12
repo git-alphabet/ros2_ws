@@ -9,7 +9,7 @@ def generate_launch_description():
     bt_config_dir = os.path.join(get_package_share_directory('rm_behavior_tree'), 'config')
     
     # Default to an existing tree file in the package config directory
-    style = LaunchConfiguration('style', default='3v3_new.xml')
+    style = LaunchConfiguration('style', default='RMUL_2026/rmul_2026.xml')
     use_sim_time = LaunchConfiguration('use_sim_time', default='False')
     bt_xml_file = PathJoinSubstitution([bt_config_dir, style])
 

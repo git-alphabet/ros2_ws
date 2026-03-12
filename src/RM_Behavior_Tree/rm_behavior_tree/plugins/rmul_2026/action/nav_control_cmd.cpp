@@ -7,11 +7,11 @@ NavControlCmdAction::NavControlCmdAction(
   const std::string & name,
   const BT::NodeConfig & conf,
   const BT::RosNodeParams & params)
-: BT::RosTopicPubNode<rm_decision_interfaces::msg::RMUL>(name, conf, params)
+: BT::RosTopicPubNode<rm_decision_interfaces::msg::RMULNav>(name, conf, params)
 {
 }
 
-bool NavControlCmdAction::setMessage(rm_decision_interfaces::msg::RMUL & msg)
+bool NavControlCmdAction::setMessage(rm_decision_interfaces::msg::RMULNav & msg)
 {
   msg.cmd_type = 0;
   msg.emergency_stop = false;

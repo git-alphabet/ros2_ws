@@ -4,7 +4,7 @@
 #include <string>
 
 #include "behaviortree_cpp/condition_node.h"
-#include "rm_decision_interfaces/msg/rmul.hpp"
+// is_at_nav_goal 直接从黑板读 bool，无需引入 msg 头文件
 
 namespace rm_behavior_tree
 {
@@ -13,7 +13,7 @@ namespace rm_behavior_tree
  * @brief 判断机器人是否到达导航目标点
  *
  * 黑板输入：
- *   - nav_status: rm_decision_interfaces::msg::RMUL
+ *   - nav_status: rm_decision_interfaces::msg::RMULNav
  *
  * 语义：
  *   - is_at_nav_goal == true  -> SUCCESS（已到达目标点）
@@ -21,7 +21,7 @@ namespace rm_behavior_tree
  *   - 若读不到 nav_status -> FAILURE（保守失败）
  *
  * 设计说明：
- *  - 基于 RMUL.msg 第9个字段 is_at_nav_goal 进行判断
+ *  - 基于 RMUL_nav.msg 的 is_at_nav_goal 字段进行判断
  *  - 读不到输入时选择 FAILURE，避免订阅链路断线导致误判
  */
 class IsAtNavGoal : public BT::ConditionNode
@@ -32,7 +32,7 @@ public:
   static BT::PortsList providedPorts()
   {
     return {
-      BT::InputPort<rm_decision_interfaces::msg::RMUL>("nav_status")
+      BT::InputPort<bool>("nav_status")
     };
   }
 

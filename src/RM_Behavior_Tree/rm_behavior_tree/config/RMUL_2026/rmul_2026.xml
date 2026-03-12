@@ -51,8 +51,8 @@
                                             action_name="navigate_to_pose"/>
                                 </RateController>
 
-                                <!-- 到达补给区后的 RFID 感应 + 微调（实车用，仿真中注释掉避免 current_location 缺失导致来回跳）-->
-                                <IsAtNavGoal nav_status="{rfid.status}"/>
+                                <!-- 到达补给区后的 RFID 感应 + 微调（实车用，仳真中注释掉避免 current_location 缺失导致来回跳）-->
+                                <IsAtNavGoal nav_status="{nav.is_at_goal}"/>
                                 <ReactiveFallback>
                                     <IsSupplyCardDetected rfid_status="{rfid.status}"/>
                                     <MoveAround expected_nearby_goal_count="5"
@@ -72,8 +72,8 @@
                                             action_name="navigate_to_pose"/>
                                 </RateController>
 
-                                <!-- 到达控制区后的 RFID 感应 + 微调（实车用，仿真中注释掉）-->
-                                <IsAtNavGoal nav_status="{rfid.status}"/>
+                                <!-- 到达控制区后的 RFID 感应 + 微调（实车用，仳真中注释掉）-->
+                                <IsAtNavGoal nav_status="{nav.is_at_goal}"/>
                                 <ReactiveFallback>
                                     <IsControlZoneDetected rfid_status="{rfid.status}"/>
                                     <MoveAround expected_nearby_goal_count="5"
@@ -253,7 +253,7 @@
             <input_port name="rfid_status" default="{rfid.status}"/>
         </Condition>
         <Condition ID="IsAtNavGoal" editable="true">
-            <input_port name="nav_status" default="{rfid.status}"/>
+            <input_port name="nav_status" default="{nav.is_at_goal}"/>
         </Condition>
         <Decorator ID="RateController" editable="true">
             <input_port name="hz" default="1.0"/>

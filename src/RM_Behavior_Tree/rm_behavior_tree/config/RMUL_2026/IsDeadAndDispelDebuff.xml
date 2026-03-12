@@ -81,7 +81,7 @@
 
                             <!-- 2. 导航到补给区（到达前持续RUNNING） -->
                             <ReactiveFallback name="NavUntilArrived">
-                                <IsAtNavGoal nav_status="{rfid.status}"/>
+                                <IsAtNavGoal nav_status="{nav.is_at_goal}"/>
                                 <ReactiveSequence>
                                     <RateController hz="5">
                                         <SendGoal name="GoSupplyToHeal"
