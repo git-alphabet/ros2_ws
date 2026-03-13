@@ -47,8 +47,8 @@ if [[ "${MODE}" == "set_hp" ]]; then
     echo "[pub_test_status][set_hp] 按 Ctrl+C 停止（/game_status 由另一个终端的脚本维持）"
     echo ""
 
-    ros2 topic pub /robot_status rm_decision_interfaces/msg/RMUL \
-        "{current_hp: ${SET_HP}}" \
+    ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
+        "{current_hp: ${SET_HP}, x: 0.0, y: 0.0}" \
         --rate "${PUB_RATE}" &
     PID_SET_HP=$!
     trap "kill ${PID_SET_HP} 2>/dev/null; exit 0" INT TERM
@@ -73,8 +73,8 @@ if [[ "${MODE}" == "kill_and_revive" ]]; then
     echo ""
 
     # 立即发 hp=0（不发 game_status，由原脚本或手动维持）
-    ros2 topic pub /robot_status rm_decision_interfaces/msg/RMUL \
-        "{current_hp: 0}" \
+    ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
+        "{current_hp: 0, x: 0.0, y: 0.0}" \
         --rate "${PUB_RATE}" &
     PID_DEAD=$!
     trap "kill ${PID_DEAD} 2>/dev/null; exit 0" INT TERM
@@ -86,8 +86,8 @@ if [[ "${MODE}" == "kill_and_revive" ]]; then
 
     # 切换为复活血量，持续发布
     echo "[pub_test_status][kill_and_revive] >>> 切换为 hp=${REVIVE_HP}，BT 应触发复活沿导航回补给区 ..."
-    ros2 topic pub /robot_status rm_decision_interfaces/msg/RMUL \
-        "{current_hp: ${REVIVE_HP}}" \
+    ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
+        "{current_hp: ${REVIVE_HP}, x: 0.0, y: 0.0}" \
         --rate "${PUB_RATE}" &
     PID_REVIVE=$!
     trap "kill ${PID_REVIVE} 2>/dev/null; exit 0" INT TERM
@@ -116,7 +116,7 @@ if [[ "${MODE}" == "respawn" ]]; then
     echo ""
 
     # 持续发布 game_status（全程保持比赛进行中）
-    ros2 topic pub /game_status rm_decision_interfaces/msg/RMUL \
+    ros2 topic pub /game_status rm_decision_interfaces/msg/RMULRob \
         "{game_progress: ${GAME_PROGRESS}, stage_remain_time: ${STAGE_REMAIN_TIME}}" \
         --rate "${PUB_RATE}" &
     PID_GAME=$!
@@ -124,8 +124,8 @@ if [[ "${MODE}" == "respawn" ]]; then
 
     # 预备阶段：正常血量，让机器人先导航去目标点
     if [[ "${PRE_DELAY}" -gt 0 ]]; then
-        ros2 topic pub /robot_status rm_decision_interfaces/msg/RMUL \
-            "{current_hp: ${CURRENT_HP}}" \
+        ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
+            "{current_hp: ${CURRENT_HP}, x: 0.0, y: 0.0}" \
             --rate "${PUB_RATE}" &
         PID_PRE=$!
         trap "kill ${PID_GAME} ${PID_PRE} 2>/dev/null; exit 0" INT TERM
@@ -136,8 +136,8 @@ if [[ "${MODE}" == "respawn" ]]; then
     fi
 
     # 第一阶段：hp=0
-    ros2 topic pub /robot_status rm_decision_interfaces/msg/RMUL \
-        "{current_hp: 0}" \
+    ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
+        "{current_hp: 0, x: 0.0, y: 0.0}" \
         --rate "${PUB_RATE}" &
     PID_DEAD=$!
     trap "kill ${PID_GAME} ${PID_DEAD} 2>/dev/null; exit 0" INT TERM
@@ -149,8 +149,8 @@ if [[ "${MODE}" == "respawn" ]]; then
 
     # 第二阶段：切换为复活血量
     echo "[pub_test_status][respawn] >>> 切换为 hp=${REVIVE_HP}，观察 BT 是否触发复活沿导航回补给区 ..."
-    ros2 topic pub /robot_status rm_decision_interfaces/msg/RMUL \
-        "{current_hp: ${REVIVE_HP}}" \
+    ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
+        "{current_hp: ${REVIVE_HP}, x: 0.0, y: 0.0}" \
         --rate "${PUB_RATE}" &
     PID_REVIVE=$!
     trap "kill ${PID_GAME} ${PID_REVIVE} 2>/dev/null; exit 0" INT TERM
@@ -166,15 +166,15 @@ echo "[pub_test_status] 按 Ctrl+C 停止发布"
 echo ""
 
 # 全程持续发布 robot_status
-ros2 topic pub /robot_status rm_decision_interfaces/msg/RMUL \
-    "{current_hp: ${CURRENT_HP}}" \
+ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
+    "{current_hp: ${CURRENT_HP}, x: 0.0, y: 0.0}" \
     --rate "${PUB_RATE}" &
 PID_ROBOT=$!
 trap "kill ${PID_ROBOT} 2>/dev/null; exit 0" INT TERM
 
 # START_DELAY 阶段：先发 game_progress=0，BT 处于非比赛阶段不动
 if [[ "${START_DELAY}" -gt 0 ]]; then
-    ros2 topic pub /game_status rm_decision_interfaces/msg/RMUL \
+    ros2 topic pub /game_status rm_decision_interfaces/msg/RMULRob \
         "{game_progress: 0, stage_remain_time: ${STAGE_REMAIN_TIME}}" \
         --rate "${PUB_RATE}" &
     PID_WAIT=$!
@@ -187,7 +187,7 @@ if [[ "${START_DELAY}" -gt 0 ]]; then
 fi
 
 # 发布正式 game_status
-ros2 topic pub /game_status rm_decision_interfaces/msg/RMUL \
+ros2 topic pub /game_status rm_decision_interfaces/msg/RMULRob \
     "{game_progress: ${GAME_PROGRESS}, stage_remain_time: ${STAGE_REMAIN_TIME}}" \
     --rate "${PUB_RATE}" &
 PID_GAME=$!
