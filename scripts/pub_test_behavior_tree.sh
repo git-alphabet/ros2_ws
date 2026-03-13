@@ -32,6 +32,44 @@ source "/opt/ros/${ROS_DISTRO}/setup.bash"
 source "${WS_DIR}/install/setup.bash"
 set -u
 
+# ── 统一清理函数 ─────────────────────────────────────────────
+# 所有后台 PID 都注册到这个数组，EXIT/INT/TERM 时统一清理
+_BG_PIDS=()
+
+cleanup() {
+    echo ""
+    echo "[pub_test_status] 清理中..."
+
+    # 1. 终止所有本脚本启动的后台 ros2 topic pub 进程
+    for pid in "${_BG_PIDS[@]:-}"; do
+        kill "${pid}" 2>/dev/null || true
+    done
+    # 等待后台进程退出，避免僵尸进程
+    for pid in "${_BG_PIDS[@]:-}"; do
+        wait "${pid}" 2>/dev/null || true
+    done
+
+    # 2. 取消 Nav2 当前所有导航目标（超时1s，Nav2未运行时快速跳过）
+    ros2 service call /navigate_to_pose/_action/cancel_goal \
+        action_msgs/srv/CancelGoal "{}" \
+        --timeout 1 2>/dev/null || true
+
+    # 3. 清理残留的 ros2 topic pub 僵尸进程（防止同名进程未被捕获）
+    pkill -f "ros2 topic pub /robot_status" 2>/dev/null || true
+    pkill -f "ros2 topic pub /game_status"  2>/dev/null || true
+
+    echo "[pub_test_status] 清理完成"
+}
+
+# 注册退出钩子：无论正常退出、Ctrl+C、还是 kill 都会触发
+trap cleanup EXIT INT TERM
+
+# 辅助函数：启动后台进程并自动注册 PID
+bg_pub() {
+    "$@" &
+    _BG_PIDS+=($!)
+}
+
 # ── set_hp 模式 ──────────────────────────────────────────────────────────────────
 # 随时随地可用：只发 /robot_status，不碰 /game_status
 # 用途：测试低血量（<200）无条件触发回补给区的 BT 决策
@@ -47,13 +85,11 @@ if [[ "${MODE}" == "set_hp" ]]; then
     echo "[pub_test_status][set_hp] 按 Ctrl+C 停止（/game_status 由另一个终端的脚本维持）"
     echo ""
 
-    ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
+    bg_pub ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
         "{current_hp: ${SET_HP}, x: 0.0, y: 0.0}" \
-        --rate "${PUB_RATE}" &
-    PID_SET_HP=$!
-    trap "kill ${PID_SET_HP} 2>/dev/null; exit 0" INT TERM
+        --rate "${PUB_RATE}"
 
-    wait "${PID_SET_HP}"
+    wait
     exit 0
 fi
 
@@ -73,26 +109,23 @@ if [[ "${MODE}" == "kill_and_revive" ]]; then
     echo ""
 
     # 立即发 hp=0（不发 game_status，由原脚本或手动维持）
-    ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
+    bg_pub ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
         "{current_hp: 0, x: 0.0, y: 0.0}" \
-        --rate "${PUB_RATE}" &
-    PID_DEAD=$!
-    trap "kill ${PID_DEAD} 2>/dev/null; exit 0" INT TERM
+        --rate "${PUB_RATE}"
+    _DEAD_PID=${_BG_PIDS[-1]}
 
     echo "[pub_test_status][kill_and_revive] >>> hp=0 发布中，等待 ${DEAD_DURATION}s ..."
     sleep "${DEAD_DURATION}"
-    kill "${PID_DEAD}" 2>/dev/null
-    wait "${PID_DEAD}" 2>/dev/null || true
+    kill "${_DEAD_PID}" 2>/dev/null
+    wait "${_DEAD_PID}" 2>/dev/null || true
 
     # 切换为复活血量，持续发布
     echo "[pub_test_status][kill_and_revive] >>> 切换为 hp=${REVIVE_HP}，BT 应触发复活沿导航回补给区 ..."
-    ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
+    bg_pub ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
         "{current_hp: ${REVIVE_HP}, x: 0.0, y: 0.0}" \
-        --rate "${PUB_RATE}" &
-    PID_REVIVE=$!
-    trap "kill ${PID_REVIVE} 2>/dev/null; exit 0" INT TERM
+        --rate "${PUB_RATE}"
 
-    wait "${PID_REVIVE}"
+    wait
     exit 0
 fi
 
@@ -116,46 +149,40 @@ if [[ "${MODE}" == "respawn" ]]; then
     echo ""
 
     # 持续发布 game_status（全程保持比赛进行中）
-    ros2 topic pub /game_status rm_decision_interfaces/msg/RMULRob \
+    bg_pub ros2 topic pub /game_status rm_decision_interfaces/msg/RMULRob \
         "{game_progress: ${GAME_PROGRESS}, stage_remain_time: ${STAGE_REMAIN_TIME}}" \
-        --rate "${PUB_RATE}" &
-    PID_GAME=$!
-    trap "kill ${PID_GAME} 2>/dev/null; exit 0" INT TERM
+        --rate "${PUB_RATE}"
 
     # 预备阶段：正常血量，让机器人先导航去目标点
     if [[ "${PRE_DELAY}" -gt 0 ]]; then
-        ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
+        bg_pub ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
             "{current_hp: ${CURRENT_HP}, x: 0.0, y: 0.0}" \
-            --rate "${PUB_RATE}" &
-        PID_PRE=$!
-        trap "kill ${PID_GAME} ${PID_PRE} 2>/dev/null; exit 0" INT TERM
+            --rate "${PUB_RATE}"
+        _PRE_PID=${_BG_PIDS[-1]}
         echo "[pub_test_status][respawn] >>> hp=${CURRENT_HP} 发布中，等待 ${PRE_DELAY}s ..."
         sleep "${PRE_DELAY}"
-        kill "${PID_PRE}" 2>/dev/null
-        wait "${PID_PRE}" 2>/dev/null || true
+        kill "${_PRE_PID}" 2>/dev/null
+        wait "${_PRE_PID}" 2>/dev/null || true
     fi
 
     # 第一阶段：hp=0
-    ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
+    bg_pub ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
         "{current_hp: 0, x: 0.0, y: 0.0}" \
-        --rate "${PUB_RATE}" &
-    PID_DEAD=$!
-    trap "kill ${PID_GAME} ${PID_DEAD} 2>/dev/null; exit 0" INT TERM
+        --rate "${PUB_RATE}"
+    _DEAD_PID=${_BG_PIDS[-1]}
 
     echo "[pub_test_status][respawn] >>> hp=0 发布中，等待 ${DEAD_DURATION}s ..."
     sleep "${DEAD_DURATION}"
-    kill "${PID_DEAD}" 2>/dev/null
-    wait "${PID_DEAD}" 2>/dev/null || true
+    kill "${_DEAD_PID}" 2>/dev/null
+    wait "${_DEAD_PID}" 2>/dev/null || true
 
     # 第二阶段：切换为复活血量
     echo "[pub_test_status][respawn] >>> 切换为 hp=${REVIVE_HP}，观察 BT 是否触发复活沿导航回补给区 ..."
-    ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
+    bg_pub ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
         "{current_hp: ${REVIVE_HP}, x: 0.0, y: 0.0}" \
-        --rate "${PUB_RATE}" &
-    PID_REVIVE=$!
-    trap "kill ${PID_GAME} ${PID_REVIVE} 2>/dev/null; exit 0" INT TERM
+        --rate "${PUB_RATE}"
 
-    wait "${PID_REVIVE}"
+    wait
     exit 0
 fi
 
@@ -166,32 +193,26 @@ echo "[pub_test_status] 按 Ctrl+C 停止发布"
 echo ""
 
 # 全程持续发布 robot_status
-ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
+bg_pub ros2 topic pub /robot_status rm_decision_interfaces/msg/RMULRob \
     "{current_hp: ${CURRENT_HP}, x: 0.0, y: 0.0}" \
-    --rate "${PUB_RATE}" &
-PID_ROBOT=$!
-trap "kill ${PID_ROBOT} 2>/dev/null; exit 0" INT TERM
+    --rate "${PUB_RATE}"
 
 # START_DELAY 阶段：先发 game_progress=0，BT 处于非比赛阶段不动
 if [[ "${START_DELAY}" -gt 0 ]]; then
-    ros2 topic pub /game_status rm_decision_interfaces/msg/RMULRob \
+    bg_pub ros2 topic pub /game_status rm_decision_interfaces/msg/RMULRob \
         "{game_progress: 0, stage_remain_time: ${STAGE_REMAIN_TIME}}" \
-        --rate "${PUB_RATE}" &
-    PID_WAIT=$!
-    trap "kill ${PID_ROBOT} ${PID_WAIT} 2>/dev/null; exit 0" INT TERM
+        --rate "${PUB_RATE}"
+    _WAIT_PID=${_BG_PIDS[-1]}
     echo "[pub_test_status] >>> 停滞中，等待 ${START_DELAY}s ..."
     sleep "${START_DELAY}"
-    kill "${PID_WAIT}" 2>/dev/null
-    wait "${PID_WAIT}" 2>/dev/null || true
+    kill "${_WAIT_PID}" 2>/dev/null
+    wait "${_WAIT_PID}" 2>/dev/null || true
     echo "[pub_test_status] >>> 切换为 game_progress=${GAME_PROGRESS}，BT 开始执行"
 fi
 
 # 发布正式 game_status
-ros2 topic pub /game_status rm_decision_interfaces/msg/RMULRob \
+bg_pub ros2 topic pub /game_status rm_decision_interfaces/msg/RMULRob \
     "{game_progress: ${GAME_PROGRESS}, stage_remain_time: ${STAGE_REMAIN_TIME}}" \
-    --rate "${PUB_RATE}" &
-PID_GAME=$!
+    --rate "${PUB_RATE}"
 
-# 等待任意一个退出（Ctrl+C 会同时终止两个）
-trap "kill ${PID_GAME} ${PID_ROBOT} 2>/dev/null; exit 0" INT TERM
-wait ${PID_GAME} ${PID_ROBOT}
+wait
