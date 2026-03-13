@@ -244,7 +244,7 @@ def generate_launch_description():
                 output="screen",
                 respawn=use_respawn,
                 respawn_delay=2.0,
-                parameters=[configured_params],
+                parameters=[configured_params, {"use_sim_time": use_sim_time}],
                 arguments=["--ros-args", "--log-level", log_level],
             ),
             Node(
@@ -254,7 +254,7 @@ def generate_launch_description():
                 output="screen",
                 respawn=use_respawn,
                 respawn_delay=2.0,
-                parameters=[configured_params],
+                parameters=[configured_params, {"use_sim_time": use_sim_time}],
                 arguments=["--ros-args", "--log-level", log_level],
             ),
             start_pointcloud_to_laserscan_cmd,
@@ -265,7 +265,7 @@ def generate_launch_description():
                 output="screen",
                 respawn=use_respawn,
                 respawn_delay=2.0,
-                parameters=[configured_params],
+                parameters=[configured_params, {"use_sim_time": use_sim_time}],
                 arguments=["--ros-args", "--log-level", log_level],
             ),
             Node(
@@ -369,19 +369,19 @@ def generate_launch_description():
                 package="loam_interface",
                 plugin="loam_interface::LoamInterfaceNode",
                 name="loam_interface",
-                parameters=[configured_params],
+                parameters=[configured_params, {"use_sim_time": use_sim_time}],
             ),
             ComposableNode(
                 package="sensor_scan_generation",
                 plugin="sensor_scan_generation::SensorScanGenerationNode",
                 name="sensor_scan_generation",
-                parameters=[configured_params],
+                parameters=[configured_params, {"use_sim_time": use_sim_time}],
             ),
             ComposableNode(
                 package="fake_vel_transform",
                 plugin="fake_vel_transform::FakeVelTransform",
                 name="fake_vel_transform",
-                parameters=[configured_params],
+                parameters=[configured_params, {"use_sim_time": use_sim_time}],
             ),
             ComposableNode(
                 package="nav2_controller",
@@ -722,7 +722,7 @@ def generate_launch_description():
         executable="auto_aim_yaw_joint_state_bridge",
         name="auto_aim_yaw_joint_state_bridge",
         output="screen",
-        parameters=[configured_params],
+        parameters=[configured_params, {"use_sim_time": use_sim_time}],
     )
 
     start_auto_aim_yaw_sim_pub_cmd = Node(
@@ -741,7 +741,7 @@ def generate_launch_description():
         executable="gimbal_state_to_auto_aim_yaw",
         name="gimbal_state_to_auto_aim_yaw",
         output="screen",
-        parameters=[configured_params],
+        parameters=[configured_params, {"use_sim_time": use_sim_time}],
     )
 
     # Create the launch description and populate
