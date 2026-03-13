@@ -137,7 +137,6 @@ def generate_launch_description():
         parameters=[
             configured_params,
             {"prior_pcd.prior_pcd_map_path": prior_pcd_file},
-            {"use_sim_time": use_sim_time},
         ],
         arguments=["--ros-args", "--log-level", log_level],
         condition=IfCondition(
@@ -152,10 +151,7 @@ def generate_launch_description():
         output="screen",
         respawn=use_respawn,
         respawn_delay=2.0,
-        parameters=[
-            configured_params,
-            {"use_sim_time": use_sim_time},
-        ],
+        parameters=[configured_params],
         arguments=["--ros-args", "--log-level", log_level],
         condition=IfCondition(
             PythonExpression(["'", odometry_source, "' == 'small_point_lio'"])
