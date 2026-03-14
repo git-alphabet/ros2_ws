@@ -79,6 +79,7 @@ int main(int argc, char ** argv)
     "print_message",
     "is_at_nav_goal",
     "is_detect_enemy",
+    "is_nav_timeout",
 
     
   };

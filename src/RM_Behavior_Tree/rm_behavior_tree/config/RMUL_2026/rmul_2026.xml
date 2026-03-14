@@ -48,21 +48,34 @@
                                         action_name="navigate_to_pose"
                                         min_interval_ms="5000"/>
                             </RateController>
-                            <!-- 到达补给区后的 RFID 感应 + 微调（实车用，仿真中注释掉避免 current_location 缺失导致来回跳）-->
-                            <IsAtNavGoal nav_status="{nav.is_at_goal}"/>
-                            <ReactiveFallback>
-                                <IsSupplyCardDetected rfid_status="{rfid.status}"/>
-                                <MoveAround expected_nearby_goal_count="5"
-                                            expected_dis="0.3"
-                                            message="{current_location}"/>
-                            </ReactiveFallback>
+                            <Fallback>
+                                <!-- 正常到达补给区 → RFID 感应 + 微调 -->
+                                <Sequence>
+                                    <IsAtNavGoal nav_status="{nav.is_at_goal}"/>
+                                    <ReactiveFallback>
+                                        <IsSupplyCardDetected rfid_status="{rfid.status}"/>
+                                        <MoveAround expected_nearby_goal_count="5"
+                                                    expected_dis="0.3"
+                                                    message="{current_location}"/>
+                                    </ReactiveFallback>
+                                </Sequence>
+                                <!-- Recovery: 导航超时(25s) → 随机移动脱困后继续回补给 -->
+                                <Sequence>
+                                    <IsNavTimeout timeout_sec="25.0"
+                                                  nav_status="{nav.is_at_goal}"/>
+                                    <GetCurrentLocation current_location="{current_location}"/>
+                                    <MoveAround expected_nearby_goal_count="3"
+                                                expected_dis="0.5"
+                                                message="{current_location}"/>
+                                </Sequence>
+                            </Fallback>
                         </ReactiveSequence>
 
                     </Fallback>
                 </Fallback>
                 <!-- 非比赛阶段停止云台和旋转，回家 -->
                 <ReactiveSequence>
-                        <RateController hz="1">
+                    <RateController hz="1">
                         <SendGoal name="Home"
                             goal_x="0.0"
                             goal_y="0.0"
@@ -72,6 +85,18 @@
                     </RateController>
                     <RobotControl stop_gimbal_scan="True"
                                     chassis_spin="False"/>
+                    <!-- Recovery: 回家超时(30s) → 随机移动脱困 -->
+                    <Fallback>
+                        <IsAtNavGoal nav_status="{nav.is_at_goal}"/>
+                        <Sequence>
+                            <IsNavTimeout timeout_sec="30.0"
+                                          nav_status="{nav.is_at_goal}"/>
+                            <GetCurrentLocation current_location="{current_location}"/>
+                            <MoveAround expected_nearby_goal_count="3"
+                                        expected_dis="0.5"
+                                        message="{current_location}"/>
+                        </Sequence>
+                    </Fallback>
                 </ReactiveSequence>
             </WhileDoElse>
         </Sequence>
@@ -227,6 +252,10 @@
             <input_port name="rfid_status" default="{rfid.status}"/>
         </Condition>
         <Condition ID="IsAtNavGoal" editable="true">
+            <input_port name="nav_status" default="{nav.is_at_goal}"/>
+        </Condition>
+        <Condition ID="IsNavTimeout" editable="true">
+            <input_port name="timeout_sec" default="30.0"/>
             <input_port name="nav_status" default="{nav.is_at_goal}"/>
         </Condition>
         <Decorator ID="RateController" editable="true">

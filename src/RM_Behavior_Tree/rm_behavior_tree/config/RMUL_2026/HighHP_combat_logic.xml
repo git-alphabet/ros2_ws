@@ -74,14 +74,27 @@
                       action_name="navigate_to_pose"
                       min_interval_ms="5000"/>
           </RateController>
-          <!-- 到达控制区后的 RFID 感应 + 微调 -->
-          <IsAtNavGoal nav_status="{nav.is_at_goal}"/>
-          <ReactiveFallback>
-            <IsControlZoneDetected rfid_status="{rfid.status}"/>
-            <MoveAround expected_nearby_goal_count="5"
-                        expected_dis="0.3"
-                        message="{current_location}"/>
-          </ReactiveFallback>
+          <Fallback>
+            <!-- 正常到达控制区 → RFID 感应 + 微调 -->
+            <Sequence>
+              <IsAtNavGoal nav_status="{nav.is_at_goal}"/>
+              <ReactiveFallback>
+                <IsControlZoneDetected rfid_status="{rfid.status}"/>
+                <MoveAround expected_nearby_goal_count="5"
+                            expected_dis="0.3"
+                            message="{current_location}"/>
+              </ReactiveFallback>
+            </Sequence>
+            <!-- Recovery: 导航超时(30s未到达) → 随机移动脱困 -->
+            <Sequence>
+              <IsNavTimeout timeout_sec="30.0"
+                            nav_status="{nav.is_at_goal}"/>
+              <GetCurrentLocation current_location="{current_location}"/>
+              <MoveAround expected_nearby_goal_count="3"
+                          expected_dis="0.5"
+                          message="{current_location}"/>
+            </Sequence>
+          </Fallback>
         </ReactiveSequence>
 
       </Fallback>

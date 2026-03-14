@@ -417,6 +417,11 @@ ament_auto_add_library(is_at_nav_goal SHARED
 )
 add_target_dependencies(is_at_nav_goal)
 
+ament_auto_add_library(is_nav_timeout SHARED 
+    plugins/rmul_2026/condition/is_nav_timeout.cpp
+)
+add_target_dependencies(is_nav_timeout)
+
 ament_auto_add_library(keep_running SHARED 
     plugins/rmul_2026/action/keep_running.cpp
 )
