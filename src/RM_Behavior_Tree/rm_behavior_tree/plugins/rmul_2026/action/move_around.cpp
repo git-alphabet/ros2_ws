@@ -10,7 +10,7 @@ namespace rm_behavior_tree
 {
 
 MoveAroundAction::MoveAroundAction(const std::string & name, const BT::NodeConfig & config)
-: BT::StatefulActionNode(name, config), Node("move_around_node")
+: BT::StatefulActionNode(name, config), Node("move_around_" + name)
 {
   publisher_goal_pose = this->create_publisher<geometry_msgs::msg::PoseStamped>("goal_pose", 10);
 }
@@ -99,7 +99,7 @@ void MoveAroundAction::generatePoints(
   // 生成随机角度
   double angle = dis(gen);
 
-  nearby_random_point.header.stamp = rclcpp::Clock().now();
+  nearby_random_point.header.stamp = this->get_clock()->now();  // 使用节点时钟，仿真下跟随 /clock
   nearby_random_point.header.frame_id = "map";
   nearby_random_point.pose.position.x = location.transform.translation.x + distance * sin(angle);
   nearby_random_point.pose.position.y = location.transform.translation.y + distance * cos(angle);
@@ -112,7 +112,7 @@ void MoveAroundAction::generatePoints(
 
 void MoveAroundAction::sendGoalPose(geometry_msgs::msg::PoseStamped & msg)
 {
-  msg.header.stamp = rclcpp::Clock().now();
+  msg.header.stamp = this->get_clock()->now();  // 使用节点时钟，仿真下跟随 /clock
   msg.header.frame_id = nearby_random_point.header.frame_id;
   msg.pose.position.x = nearby_random_point.pose.position.x;
   msg.pose.position.y = nearby_random_point.pose.position.y;

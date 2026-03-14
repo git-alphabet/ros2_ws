@@ -75,7 +75,7 @@ int main(int argc, char ** argv)
     "move_around",
     "keep_running",
     "not_arrived",
-    "navigate_to_goal",
+    // "navigate_to_goal",  // 已废弃：CMakeLists.txt 无此库，XML也未使用
     "print_message",
     "is_at_nav_goal",
     "is_detect_enemy",

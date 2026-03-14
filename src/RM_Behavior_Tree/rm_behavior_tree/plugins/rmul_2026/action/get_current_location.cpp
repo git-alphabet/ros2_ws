@@ -9,7 +9,10 @@ GetCurrentLocationAction::GetCurrentLocationAction(
   const std::string & name, const BT::NodeConfig & config)
 : BT::SyncActionNode(name, config)
 {
-  auto node = std::make_shared<rclcpp::Node>("get_current_location");
+  // 传入 use_sim_time=true 使 TF buffer 使用仿真时钟，避免仿真中 TF 查询失败
+  rclcpp::NodeOptions opts;
+  opts.parameter_overrides({rclcpp::Parameter("use_sim_time", true)});
+  auto node = std::make_shared<rclcpp::Node>("get_current_location", opts);
   if (!node) {
     throw std::runtime_error("Failed to create node 'get_current_location'");
   }
