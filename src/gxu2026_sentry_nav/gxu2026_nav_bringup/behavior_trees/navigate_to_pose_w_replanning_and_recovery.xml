@@ -33,8 +33,8 @@
         <GoalUpdated/>
         <RoundRobin name="RecoveryActions">
           <Spin spin_dist="1.57"/>
-          <BackUp backup_dist="0.15"
-                  backup_speed="0.025"/>
+          <BackUp backup_dist="0.3"
+                  backup_speed="0.15"/>
         </RoundRobin>
       </ReactiveFallback>
     </RecoveryNode>
