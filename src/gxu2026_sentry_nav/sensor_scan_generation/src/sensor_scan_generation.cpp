@@ -218,10 +218,22 @@ void SensorScanGenerationNode::publishOdometry(
 
   static tf2::Transform previous_transform;
   static rclcpp::Time previous_time(0, 0, stamp.get_clock_type());
+  static bool first_call = true;
+
+  if (first_call) {
+    // Skip twist computation on the very first call — we have no valid
+    // previous_transform / previous_time yet.  Just seed and return.
+    previous_transform = transform;
+    previous_time = stamp;
+    first_call = false;
+    pub_chassis_odometry_->publish(out);
+    return;
+  }
 
   const double dt = (stamp - previous_time).seconds();
 
-  if (dt > 1e-6) {
+  if (dt > 1e-6 && dt < 1.0) {
+    // Clamp dt < 1.0s to reject stale / time-jump frames
     const auto linear_velocity = (transform.getOrigin() - previous_transform.getOrigin()) / dt;
 
     const tf2::Quaternion q_diff =
