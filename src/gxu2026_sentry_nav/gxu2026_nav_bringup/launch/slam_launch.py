@@ -174,9 +174,9 @@ def generate_launch_description():
         ],
     )
 
-    start_sync_slam_toolbox_node = Node(
+    start_async_slam_toolbox_node = Node(
         package="slam_toolbox",
-        executable="sync_slam_toolbox_node",
+        executable="async_slam_toolbox_node",
         name="slam_toolbox",
         output="screen",
         respawn=use_respawn,
@@ -266,7 +266,7 @@ def generate_launch_description():
     ld.add_action(start_lifecycle_manager_cmd)
 
     ld.add_action(start_pointcloud_to_laserscan_node)
-    ld.add_action(start_sync_slam_toolbox_node)
+    ld.add_action(start_async_slam_toolbox_node)
     ld.add_action(start_small_point_lio_node)
     ld.add_action(start_point_lio_node)
     ld.add_action(start_static_transform_node)
