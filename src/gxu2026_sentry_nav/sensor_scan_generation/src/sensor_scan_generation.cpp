@@ -217,14 +217,11 @@ void SensorScanGenerationNode::publishOdometry(
   out.pose.pose.orientation = tf2::toMsg(transform.getRotation());
 
   static tf2::Transform previous_transform;
-  static auto previous_time = std::chrono::steady_clock::now();
-  const auto current_time = std::chrono::steady_clock::now();
+  static rclcpp::Time previous_time(0, 0, stamp.get_clock_type());
 
-  const double dt =
-    std::chrono::duration_cast<std::chrono::nanoseconds>(current_time - previous_time).count() *
-    1e-9;
+  const double dt = (stamp - previous_time).seconds();
 
-  if (dt > 0) {
+  if (dt > 1e-6) {
     const auto linear_velocity = (transform.getOrigin() - previous_transform.getOrigin()) / dt;
 
     const tf2::Quaternion q_diff =
@@ -240,7 +237,7 @@ void SensorScanGenerationNode::publishOdometry(
   }
 
   previous_transform = transform;
-  previous_time = current_time;
+  previous_time = stamp;
 
   pub_chassis_odometry_->publish(out);
 }
