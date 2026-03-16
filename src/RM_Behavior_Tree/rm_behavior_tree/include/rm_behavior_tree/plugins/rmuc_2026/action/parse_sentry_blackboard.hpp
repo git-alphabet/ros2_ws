@@ -54,7 +54,6 @@ public:
       BT::OutputPort<int>("base_hp_max"),
       BT::OutputPort<bool>("outpost_alive"),
       BT::OutputPort<bool>("is_dead"),
-      BT::OutputPort<bool>("is_weak"),
       BT::OutputPort<bool>("is_disengaged"),
       BT::OutputPort<int>("disengage_countdown"),
       BT::OutputPort<bool>("can_remote_heal"),

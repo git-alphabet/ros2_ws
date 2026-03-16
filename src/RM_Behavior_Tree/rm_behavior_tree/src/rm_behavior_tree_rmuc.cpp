@@ -210,7 +210,7 @@ int main(int argc, char ** argv)
   regBT("rmuc_fire_burst");
   regBT("rmuc_hold_and_heal");
   regBT("rmuc_hold_for_supply_ammo_tick");
-  regBT("rmuc_select_nearest_resupply_station");
+  // SelectNearestDispelCard(场景 A:繾弱) 和 SelectNearestResupplyStation(场景 B:补弹) 共用同一库
   regBT("rmuc_select_nearest_dispel_card");
   regBT("rmuc_select_objective");
   regBT("rmuc_hold_objective");
@@ -229,6 +229,7 @@ int main(int argc, char ** argv)
   regBT("rmuc_is_combat_allowed");
   regBT("rmuc_is_fire_window_ok");
   regBT("rmuc_is_ammo_below");
+  regBT("rmuc_is_weakness");
 
   // ── M. 共享 RMUL BT 插件 ──
   regBT("rate_controller");

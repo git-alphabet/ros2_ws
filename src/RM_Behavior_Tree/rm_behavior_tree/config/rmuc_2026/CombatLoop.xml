@@ -26,7 +26,7 @@
             -->
             <ReactiveFallback>
                 <IsFireWindowOk heat_cur="{heat.cur}" heat_high="{cfg.heat_high}"
-                                ammo_allow="{ammo.allow}" is_weak="{state.is_weak}"/>
+                                ammo_allow="{ammo.allow}" robot_status="{robot_status}"/>
                 <RmucRobotControl fire_enable="False"/>
             </ReactiveFallback>
 

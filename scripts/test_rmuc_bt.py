@@ -100,7 +100,7 @@ class RMUCTestPublisher(Node):
         robot.ammo_allow = 200
         robot.ammo_left = 200
         robot.is_dead = False
-        robot.is_weak = False
+        robot.shooter_power_output = True
         robot.is_disengaged = True
         robot.disengage_cd_s = 0.0
         robot.can_remote_heal = False
@@ -170,7 +170,7 @@ class RMUCTestPublisher(Node):
         robot.current_hp = 600
         robot.max_hp = 600
         robot.is_dead = False
-        robot.is_weak = True  # <--- WEAK
+        robot.shooter_power_output = False  # <--- WEAK
         robot.ammo_left = 0   # 缺弹
         robot.can_remote_ammo = True
         robot.team_coins = 200
@@ -196,7 +196,7 @@ class RMUCTestPublisher(Node):
         robot.current_hp = 100  # <--- Critical HP
         robot.max_hp = 600
         robot.is_dead = False
-        robot.is_weak = False
+        robot.shooter_power_output = True
         robot.is_disengaged = True # 脱战
         robot.outpost_alive = True
         
@@ -221,7 +221,7 @@ class RMUCTestPublisher(Node):
         robot.max_hp = 600
         robot.ammo_left = 100
         robot.is_dead = False
-        robot.is_weak = False
+        robot.shooter_power_output = True
         
         # Radar (发现敌人)
         radar.enemy_count = 1
@@ -257,7 +257,7 @@ if __name__ == '__main__':
         msg.ammo_allow = 150
         msg.ammo_left = 150
         msg.is_dead = True
-        msg.is_weak = False
+        msg.shooter_power_output = True
         msg.is_disengaged = False
         msg.disengage_cd_s = 6.0
         msg.can_remote_heal = False
@@ -302,7 +302,7 @@ if __name__ == '__main__':
         msg.ammo_allow = 150
         msg.ammo_left = 150
         msg.is_dead = False
-        msg.is_weak = True   # 复活后虚弱
+        msg.shooter_power_output = False   # 复活后虚弱
         msg.is_disengaged = True
         msg.disengage_cd_s = 0.0
         msg.can_remote_heal = False
@@ -347,7 +347,7 @@ if __name__ == '__main__':
         msg.ammo_allow = 50   # 低弹药
         msg.ammo_left = 50
         msg.is_dead = False
-        msg.is_weak = False
+        msg.shooter_power_output = True
         msg.is_disengaged = True
         msg.disengage_cd_s = 0.0
         msg.can_remote_heal = True
@@ -387,7 +387,7 @@ if __name__ == '__main__':
         msg.ammo_allow = 200
         msg.ammo_left = 200
         msg.is_dead = False
-        msg.is_weak = False
+        msg.shooter_power_output = True
         msg.is_disengaged = False
         msg.disengage_cd_s = 4.0
         msg.can_remote_heal = False

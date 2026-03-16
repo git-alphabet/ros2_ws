@@ -32,7 +32,6 @@ BT::NodeStatus ParseSentryBlackboardAction::tick()
     setOutput("base_hp_max", static_cast<int>(r.base_hp_max));
     setOutput("outpost_alive", r.outpost_alive);
     setOutput("is_dead", r.current_hp <= 0);
-    setOutput("is_weak", r.is_weak);
 
     // 脱战判定
     setOutput("is_disengaged", r.is_disengaged);

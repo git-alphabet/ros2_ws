@@ -12,8 +12,8 @@ BT::NodeStatus SelectSafeRetreatGoalAction::tick()
   double px = 0, py = 0, sx = 0, sy = 0, dx = 0, dy = 0;
   getInput("pose_x", px);
   getInput("pose_y", py);
-  getInput("supply_x", sx);
-  getInput("supply_y", sy);
+  getInput("buff_zone_x", sx);
+  getInput("buff_zone_y", sy);
   getInput("defend_anchor_x", dx);
   getInput("defend_anchor_y", dy);
 

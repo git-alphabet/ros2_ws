@@ -59,7 +59,6 @@
                                    base_hp_max="{base.hp.max}"
                                    outpost_alive="{outpost.alive}"
                                    is_dead="{state.is_dead}"
-                                   is_weak="{state.is_weak}"
                                    is_disengaged="{state.disengaged}"
                                    disengage_countdown="{state.disengage_cd_s}"
                                    can_remote_heal="{economy.can_remote_heal}"

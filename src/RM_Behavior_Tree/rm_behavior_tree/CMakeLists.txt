@@ -256,10 +256,7 @@ ament_auto_add_library(rmuc_hold_for_supply_ammo_tick SHARED
     plugins/rmuc_2026/action/hold_for_supply_ammo_tick.cpp)
 add_target_dependencies(rmuc_hold_for_supply_ammo_tick)
 
-ament_auto_add_library(rmuc_select_nearest_resupply_station SHARED
-    plugins/rmuc_2026/action/select_nearest_resupply_station.cpp)
-add_target_dependencies(rmuc_select_nearest_resupply_station)
-
+# select_nearest_resupply_station 已合并入 rmuc_select_nearest_dispel_card，不需独立建库
 ament_auto_add_library(rmuc_select_nearest_dispel_card SHARED
     plugins/rmuc_2026/action/select_nearest_dispel_card.cpp)
 add_target_dependencies(rmuc_select_nearest_dispel_card)
@@ -301,6 +298,10 @@ add_target_dependencies(rmuc_is_combat_allowed)
 ament_auto_add_library(rmuc_is_fire_window_ok SHARED
     plugins/rmuc_2026/condition/is_fire_window_ok.cpp)
 add_target_dependencies(rmuc_is_fire_window_ok)
+
+ament_auto_add_library(rmuc_is_weakness SHARED
+    plugins/rmuc_2026/condition/is_weakness.cpp)
+add_target_dependencies(rmuc_is_weakness)
 
 ament_auto_add_library(rmuc_is_at_goal SHARED
     plugins/rmuc_2026/condition/is_at_goal.cpp)

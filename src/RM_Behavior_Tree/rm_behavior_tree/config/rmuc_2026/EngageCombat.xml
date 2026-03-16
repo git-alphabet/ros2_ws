@@ -13,7 +13,7 @@
             <HasValidTarget has_target="{combat.has_target}"
                             best_target="{combat.best_target}"/>
             <!-- 战斗许可检查：处于虚弱状态、弹药为零、热量过高或血量过低时禁止战斗 -->
-            <IsCombatAllowed is_weak="{state.is_weak}"
+            <IsCombatAllowed robot_status="{robot_status}"
                              ammo_allow="{ammo.allow}"
                              heat_cur="{heat.cur}"
                              heat_high="{cfg.heat_high}"

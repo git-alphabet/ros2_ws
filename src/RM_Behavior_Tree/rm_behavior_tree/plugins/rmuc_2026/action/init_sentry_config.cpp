@@ -22,7 +22,7 @@ BT::NodeStatus InitSentryConfigAction::tick()
   set("topic_radar_tracks", std::string("/radar/enemy_tracks"));
 
   // 坐标默认为 0，由 XML 参数或上层设置覆盖
-  for (auto * k : {"home_x","home_y","supply_x","supply_y",
+  for (auto * k : {"home_x","home_y","buff_zone_x","buff_zone_y",
                     "base_buff_x","base_buff_y","outpost_buff_x","outpost_buff_y",
                     "fortress_ally_x","fortress_ally_y","fortress_enemy_x","fortress_enemy_y",
                     "central_highland_x","central_highland_y",
@@ -49,6 +49,12 @@ BT::NodeStatus InitSentryConfigAction::tick()
   set("objective_hold_ms", 12000);
   set("combat_fire_burst_ms", 180);
   set("combat_fire_pause_ms", 120);
+  // RespawnRecovery 恢复流程配置
+  { double v = 0.0; getInput("supply_goal_x", v); setOutput("supply_goal_x", v); }
+  { double v = 0.0; getInput("supply_goal_y", v); setOutput("supply_goal_y", v); }
+  { std::uint64_t v = 3000ULL; getInput("heal_wait_ms", v); setOutput("heal_wait_ms", v); }
+  { double v = 0.6; getInput("heal_min_ratio", v); setOutput("heal_min_ratio", v); }
+  { std::uint64_t v = 5000ULL; getInput("search_timeout_ms", v); setOutput("search_timeout_ms", v); }
 
   return BT::NodeStatus::SUCCESS;
 }

@@ -21,9 +21,14 @@ uint16 cooling_rate          # 每秒冷却值
 uint16 ammo_allow            # 剩余允许发弹量
 uint16 ammo_left             # 物理剩余弹丸数
 
+# ── 电源管理模块输出 (0x0201 offset 12) ──
+bool    shooter_power_output # 0x0201 bit2: shooter 口 24V 输出 (1=有输出, 0=断电)
+                             # 虚弱状态下裁判系统会关闭 shooter 输出，
+                             # 但热量超限/初速超限/测速离线/允许发弹量=0 也会导致断电，
+                             # 需组合其他字段排除误判，详见 IsWeakness 插件。
+
 # ── 机器人状态标志 ──
 bool    is_dead              # 是否战亡
-bool    is_weak              # 是否虚弱 (复活后发射锁定)
 bool    is_disengaged        # 是否脱战
 float32 disengage_cd_s       # 脱战倒计时 (秒)
 

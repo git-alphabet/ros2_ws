@@ -1,6 +1,7 @@
 #ifndef RM_BEHAVIOR_TREE__PLUGINS__RMUC_2026__ACTION__INIT_SENTRY_CONFIG_HPP_
 #define RM_BEHAVIOR_TREE__PLUGINS__RMUC_2026__ACTION__INIT_SENTRY_CONFIG_HPP_
 
+#include <cstdint>
 #include <string>
 #include "behaviortree_cpp/action_node.h"
 
@@ -20,7 +21,7 @@ public:
       BT::OutputPort<std::string>("topic_robot_pose", "robot pose topic"),
       BT::OutputPort<std::string>("topic_radar_tracks", "radar tracks topic"),
       BT::OutputPort<double>("home_x"), BT::OutputPort<double>("home_y"),
-      BT::OutputPort<double>("supply_x"), BT::OutputPort<double>("supply_y"),
+      BT::OutputPort<double>("buff_zone_x"), BT::OutputPort<double>("buff_zone_y"),
       BT::OutputPort<double>("base_buff_x"), BT::OutputPort<double>("base_buff_y"),
       BT::OutputPort<double>("outpost_buff_x"), BT::OutputPort<double>("outpost_buff_y"),
       BT::OutputPort<double>("fortress_ally_x"), BT::OutputPort<double>("fortress_ally_y"),
@@ -43,7 +44,13 @@ public:
       BT::OutputPort<double>("enemy_near_base_radius"),
       BT::OutputPort<int>("objective_hold_ms"),
       BT::OutputPort<int>("combat_fire_burst_ms"),
-      BT::OutputPort<int>("combat_fire_pause_ms")};
+      BT::OutputPort<int>("combat_fire_pause_ms"),
+      // RespawnRecovery 恢复流程配置
+      BT::OutputPort<double>("supply_goal_x"),
+      BT::OutputPort<double>("supply_goal_y"),
+      BT::OutputPort<std::uint64_t>("heal_wait_ms"),
+      BT::OutputPort<double>("heal_min_ratio"),
+      BT::OutputPort<std::uint64_t>("search_timeout_ms")};
   }
   BT::NodeStatus tick() override;
 };

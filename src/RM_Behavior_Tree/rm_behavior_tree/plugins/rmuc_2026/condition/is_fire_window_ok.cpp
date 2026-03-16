@@ -10,13 +10,22 @@ IsFireWindowOkCondition::IsFireWindowOkCondition(
 BT::NodeStatus IsFireWindowOkCondition::tick()
 {
   int heat = 0, heat_high = 210, ammo = 300;
-  bool weak = false;
   getInput("heat_cur", heat);
   getInput("heat_high", heat_high);
   getInput("ammo_allow", ammo);
-  getInput("is_weak", weak);
 
-  if (weak || ammo <= 0 || heat >= heat_high) return BT::NodeStatus::FAILURE;
+  // 检查发射机构是否有供电 (替代旧的 is_weak 字段)
+  auto msg_opt = getInput<std::shared_ptr<rm_decision_interfaces::msg::RMUCRobotStatus>>(
+    "robot_status");
+  if (msg_opt && msg_opt.value()) {
+    const auto & r = *msg_opt.value();
+    // shooter 断电 → 无法射击
+    if (!r.shooter_power_output && r.current_hp > 0) {
+      return BT::NodeStatus::FAILURE;
+    }
+  }
+
+  if (ammo <= 0 || heat >= heat_high) return BT::NodeStatus::FAILURE;
   return BT::NodeStatus::SUCCESS;
 }
 

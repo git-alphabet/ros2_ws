@@ -11,7 +11,7 @@
                 topic_radar_tracks="{cfg.topic_radar_tracks}"
 
                 home_x="{cfg.home_x}" home_y="{cfg.home_y}"
-                supply_x="{cfg.supply_x}" supply_y="{cfg.supply_y}"
+                buff_zone_x="{cfg.buff_zone_x}" buff_zone_y="{cfg.buff_zone_y}"
                 base_buff_x="{cfg.base_buff_x}" base_buff_y="{cfg.base_buff_y}"
                 outpost_buff_x="{cfg.outpost_buff_x}" outpost_buff_y="{cfg.outpost_buff_y}"
                 fortress_ally_x="{cfg.fortress_ally_x}" fortress_ally_y="{cfg.fortress_ally_y}"
