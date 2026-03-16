@@ -6,8 +6,8 @@
             <!-- 检测血量或热量是否达到危险阈值，未触发则整棵树不执行 -->
             <IsCriticalState hp_cur="{hp.cur}" hp_critical="{cfg.hp_critical}"
                              heat_cur="{heat.cur}" heat_critical="{cfg.heat_critical}"/>
-            <!-- 立即取消当前导航任务 -->
-            <CancelNavGoal action_name="navigate_to_pose"/>
+            <!-- 注意: 不在 ReactiveSequence 中使用 CancelNavGoal, 因为它会每帧取消导航.
+                 SendGoal 发送新目标时 Nav2 会自动覆盖旧目标. -->
             <!-- 停止云台扫描、底盘旋转和开火 -->
             <RmucRobotControl stop_gimbal_scan="False"
                               chassis_spin="False"

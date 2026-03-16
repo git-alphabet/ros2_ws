@@ -13,6 +13,11 @@
                            is_disengaged="{state.disengaged}"
                            stage_elapsed_time="{game.elapsed_s}"
                            now_ms="{time.now_ms}"
+                           current_posture="{sentry.current_posture}"
+                           buff_cool_value="{buff.cool_value}"
+                           buff_defense_pct="{buff.defense_pct}"
+                           buff_vulnerability_pct="{buff.vulnerability_pct}"
+                           ammo_allow="{ammo.allow}"
                            posture_out="{cmd.posture}"/>
 
             <!-- Decide remote exchange & allow-ammo target (monotonic target is maintained inside node) -->
@@ -65,8 +70,6 @@
                               enable_big_energy="{cmd.enable_big_energy}"
                               cmd_state="{cmd.state}"/>
             </RateController>
-
-            <KeepRunning/>
         </Sequence>
     </BehaviorTree>
 

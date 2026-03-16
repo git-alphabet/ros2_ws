@@ -42,11 +42,11 @@
                         <!-- 等待回血到指定比例；达到目标血量后返回 SUCCESS，流程自然结束 -->
                         <RmucWaitAndHeal
                             topic_name="/robot_status"
-                            now_ms="{now_ms}"
+                            now_ms="{time.now_ms}"
                             heal_start_ms="{heal_start_ms}"
                             heal_wait_ms="{cfg.heal_wait_ms}"
-                            hp_cur="{hp_cur}"
-                            hp_max="{hp_max}"
+                            hp_cur="{hp.cur}"
+                            hp_max="{hp.max}"
                             heal_min_ratio="{cfg.heal_min_ratio}"/>
                     </Sequence>
 

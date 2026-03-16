@@ -36,6 +36,11 @@
                 objective_hold_ms="{cfg.objective_hold_ms}"
                 combat_fire_burst_ms="{cfg.combat_fire_burst_ms}"
                 combat_fire_pause_ms="{cfg.combat_fire_pause_ms}"
+                supply_goal_x="{cfg.supply_goal_x}"
+                supply_goal_y="{cfg.supply_goal_y}"
+                heal_wait_ms="{cfg.heal_wait_ms}"
+                heal_min_ratio="{cfg.heal_min_ratio}"
+                search_timeout_ms="{cfg.search_timeout_ms}"
                 />
             <InitCmdState cmd_state="{cmd.state}"
                           allow_ammo_target="{cmd.allow_ammo_target}"/>

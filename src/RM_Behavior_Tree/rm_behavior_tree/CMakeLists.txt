@@ -299,6 +299,10 @@ ament_auto_add_library(rmuc_is_fire_window_ok SHARED
     plugins/rmuc_2026/condition/is_fire_window_ok.cpp)
 add_target_dependencies(rmuc_is_fire_window_ok)
 
+ament_auto_add_library(rmuc_should_chassis_spin SHARED
+    plugins/rmuc_2026/condition/should_chassis_spin.cpp)
+add_target_dependencies(rmuc_should_chassis_spin)
+
 ament_auto_add_library(rmuc_is_weakness SHARED
     plugins/rmuc_2026/condition/is_weakness.cpp)
 add_target_dependencies(rmuc_is_weakness)

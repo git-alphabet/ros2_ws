@@ -230,6 +230,7 @@ int main(int argc, char ** argv)
   regBT("rmuc_is_fire_window_ok");
   regBT("rmuc_is_ammo_below");
   regBT("rmuc_is_weakness");
+  regBT("rmuc_should_chassis_spin");
 
   // ── M. 共享 RMUL BT 插件 ──
   regBT("rate_controller");
