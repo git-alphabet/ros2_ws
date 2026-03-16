@@ -35,28 +35,52 @@
                     <ReactiveFallback>
 
                         <!-- 0) 死亡 + 复活恢复（RMUC 版：死亡停车 / 复活后自主导航补给区刷卡回血） -->
-                        <SubTree ID="RespawnRecovery" _autoremap="true"/>
+                        <Sequence>
+                            <SetBlackboard output_key="active_subtree" value="RespawnRecovery"/>
+                            <SubTree ID="RespawnRecovery" _autoremap="true"/>
+                        </Sequence>
 
                         <!-- 0.5) 虚弱恢复安全网：独立路径，IsWeakness 门控 → 导航最近增益点解除虚弱 -->
-                        <SubTree ID="WeaknessRecovery" _autoremap="true"/>
+                        <Sequence>
+                            <SetBlackboard output_key="active_subtree" value="WeaknessRecovery"/>
+                            <SubTree ID="WeaknessRecovery" _autoremap="true"/>
+                        </Sequence>
 
                         <!-- 1) 危急生存（血量/热量/电量） -->
-                        <SubTree ID="CriticalSurvival" _autoremap="true"/>
+                        <Sequence>
+                            <SetBlackboard output_key="active_subtree" value="CriticalSurvival"/>
+                            <SubTree ID="CriticalSurvival" _autoremap="true"/>
+                        </Sequence>
 
                         <!-- 2) 基地/堡垒防御（受威胁时） -->
-                        <SubTree ID="BaseDefense" _autoremap="true"/>
+                        <Sequence>
+                            <SetBlackboard output_key="active_subtree" value="BaseDefense"/>
+                            <SubTree ID="BaseDefense" _autoremap="true"/>
+                        </Sequence>
 
                         <!-- 3) 交战（有有效目标且安全时） -->
-                        <SubTree ID="EngageCombat" _autoremap="true"/>
+                        <Sequence>
+                            <SetBlackboard output_key="active_subtree" value="EngageCombat"/>
+                            <SubTree ID="EngageCombat" _autoremap="true"/>
+                        </Sequence>
 
                         <!-- 4) 后勤：回血/补弹（经济感知） -->
-                        <SubTree ID="SustainAndEconomy" _autoremap="true"/>
+                        <Sequence>
+                            <SetBlackboard output_key="active_subtree" value="SustainAndEconomy"/>
+                            <SubTree ID="SustainAndEconomy" _autoremap="true"/>
+                        </Sequence>
 
                         <!-- 5) 目标控制：中央高地/梯形高地/堡垒/隧道等 -->
-                        <SubTree ID="ObjectivePlanner" _autoremap="true"/>
+                        <Sequence>
+                            <SetBlackboard output_key="active_subtree" value="ObjectivePlanner"/>
+                            <SubTree ID="ObjectivePlanner" _autoremap="true"/>
+                        </Sequence>
 
                         <!-- 6) 默认：巡逻扫描 -->
-                        <SubTree ID="PatrolAndScan" _autoremap="true"/>
+                        <Sequence>
+                            <SetBlackboard output_key="active_subtree" value="PatrolAndScan"/>
+                            <SubTree ID="PatrolAndScan" _autoremap="true"/>
+                        </Sequence>
 
                     </ReactiveFallback>
 

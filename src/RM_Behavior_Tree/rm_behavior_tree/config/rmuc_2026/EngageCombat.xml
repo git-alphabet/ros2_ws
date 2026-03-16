@@ -53,4 +53,37 @@
         </ReactiveSequence>
     </BehaviorTree>
 
+    <!-- ===== 临时 TreeNodesModel：仅用于 Groot2 独立加载，不影响运行时 ===== -->
+    <TreeNodesModel>
+        <Condition ID="HasValidTarget" editable="true">
+            <input_port name="has_target" default="{combat.has_target}"/>
+            <input_port name="best_target" default="{combat.best_target}"/>
+        </Condition>
+        <Condition ID="IsCombatAllowed" editable="true">
+            <input_port name="robot_status" default="{robot_status}"/>
+            <input_port name="ammo_allow" default="{ammo.allow}"/>
+            <input_port name="heat_cur" default="{heat.cur}"/>
+            <input_port name="heat_high" default="{cfg.heat_high}"/>
+            <input_port name="hp_cur" default="{hp.cur}"/>
+            <input_port name="hp_low" default="{cfg.hp_low}"/>
+        </Condition>
+        <Condition ID="ShouldChassisSpin" editable="true">
+            <input_port name="pose_x" default="{pose.x}"/>
+            <input_port name="pose_y" default="{pose.y}"/>
+            <input_port name="goal_x" default="{nav.goal_x}"/>
+            <input_port name="goal_y" default="{nav.goal_y}"/>
+            <input_port name="arrive_radius" default="{cfg.arrive_radius}"/>
+            <input_port name="current_posture" default="{sentry.current_posture}"/>
+            <input_port name="is_power_boosted" default="{state.power_boosted}"/>
+            <input_port name="force_spin" default="false"/>
+        </Condition>
+        <Action ID="RmucRobotControl" editable="true">
+            <input_port name="stop_gimbal_scan" default="False"/>
+            <input_port name="chassis_spin" default="False"/>
+            <input_port name="fire_enable" default="False"/>
+        </Action>
+        <Decorator ID="RateController" editable="true">
+            <input_port name="hz" default="1.0"/>
+        </Decorator>
+    </TreeNodesModel>
 </root>
