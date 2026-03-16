@@ -29,8 +29,9 @@ bool    shooter_power_output # 0x0201 bit2: shooter 口 24V 输出 (1=有输出,
 
 # ── 机器人状态标志 ──
 bool    is_dead              # 是否战亡
-bool    is_disengaged        # 是否脱战
-float32 disengage_cd_s       # 脱战倒计时 (秒)
+# 注意: 脱战状态(is_disengaged)不是裁判系统协议字段，
+# 由 ParseSentryBlackboard 根据 shooter_heat 和 current_hp 变化自行计算。
+# 规则: 存活状态下连续 6 秒未发射弹丸且未被扣血 = 脱战。
 
 # ── 经济与远程能力 ──
 bool   can_remote_heal       # 是否可触发远程补血

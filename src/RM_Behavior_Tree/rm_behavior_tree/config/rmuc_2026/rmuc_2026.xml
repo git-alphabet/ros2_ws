@@ -37,6 +37,9 @@
                         <!-- 0) 死亡 + 复活恢复（RMUC 版：死亡停车 / 复活后自主导航补给区刷卡回血） -->
                         <SubTree ID="RespawnRecovery" _autoremap="true"/>
 
+                        <!-- 0.5) 虚弱恢复安全网：独立路径，IsWeakness 门控 → 导航最近增益点解除虚弱 -->
+                        <SubTree ID="WeaknessRecovery" _autoremap="true"/>
+
                         <!-- 1) 危急生存（血量/热量/电量） -->
                         <SubTree ID="CriticalSurvival" _autoremap="true"/>
 
@@ -92,6 +95,7 @@
     <include path="InitOnce.xml"/>
     <include path="CommandHub.xml"/>
     <include path="RespawnRecovery.xml"/>
+    <include path="WeaknessRecovery.xml"/>
     <include path="CriticalSurvival.xml"/>
     <include path="BaseDefense.xml"/>
     <include path="EngageCombat.xml"/>
@@ -293,6 +297,12 @@
             <!-- P0 新增 outputs: 0x0003 -->
             <output_port name="team_outpost_hp" default="{team.outpost_hp}"/>
             <output_port name="team_base_hp" default="{team.base_hp}"/>
+            <!-- P1 新增 outputs: 复活/虚弱状态窗口 -->
+            <output_port name="is_respawn_invincible" default="{state.respawn_invincible}"/>
+            <output_port name="respawn_invincible_remain_s" default="{state.respawn_invincible_remain_s}"/>
+            <output_port name="is_power_boosted" default="{state.power_boosted}"/>
+            <output_port name="power_boost_remain_s" default="{state.power_boost_remain_s}"/>
+            <inout_port name="cumulative_instant_count" default="{respawn.cum_instant_count}"/>
         </Action>
 
         <!-- 动作：决策节点 -->
@@ -321,6 +331,14 @@
             <input_port name="team_coins" default="{economy.coins}"/>
             <input_port name="stage_remain_time" default="{game.remain_s}"/>
             <input_port name="base_threat" default="{threat.base}"/>
+            <!-- P2 新增 inputs -->
+            <input_port name="instant_respawn_cost" default="{sentry.instant_respawn_cost}"/>
+            <input_port name="cumulative_instant_count" default="{respawn.cum_instant_count}"/>
+            <input_port name="base_hp_cur" default="{base.hp.cur}"/>
+            <input_port name="base_hp_max" default="{base.hp.max}"/>
+            <input_port name="fortress_ammo" default="{economy.fortress_ammo}"/>
+            <input_port name="remote_heal_count" default="{sentry.remote_heal_count}"/>
+            <input_port name="remote_ammo_count" default="{sentry.remote_ammo_count}"/>
             <input_port name="allow_ammo_target_in" default="{cmd.allow_ammo_target}"/>
             <output_port name="allow_ammo_target_out" default="{cmd.allow_ammo_target}"/>
             <output_port name="trigger_remote_ammo" default="{cmd.trig_remote_ammo}"/>
@@ -336,6 +354,12 @@
             <input_port name="base_hp_cur" default="{base.hp.cur}"/>
             <input_port name="base_hp_max" default="{base.hp.max}"/>
             <input_port name="base_threat" default="{threat.base}"/>
+            <!-- P1 新增: 复活可用性 (from 0x020D) -->
+            <input_port name="can_free_respawn" default="{sentry.can_free_respawn}"/>
+            <input_port name="can_instant_respawn" default="{sentry.can_instant_respawn}"/>
+            <input_port name="instant_respawn_cost" default="{sentry.instant_respawn_cost}"/>
+            <!-- P1 新增: 累计立即复活次数 (影响复活倒计时公式) -->
+            <inout_port name="cumulative_instant_count" default="{respawn.cum_instant_count}"/>
             <output_port name="confirm_respawn" default="{cmd.confirm_respawn}"/>
             <output_port name="confirm_instant_respawn" default="{cmd.confirm_instant_respawn}"/>
         </Action>

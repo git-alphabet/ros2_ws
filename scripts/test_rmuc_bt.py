@@ -101,8 +101,6 @@ class RMUCTestPublisher(Node):
         robot.ammo_left = 200
         robot.is_dead = False
         robot.shooter_power_output = True
-        robot.is_disengaged = True
-        robot.disengage_cd_s = 0.0
         robot.can_remote_heal = False
         robot.can_remote_ammo = False
         robot.team_coins = 500
@@ -197,7 +195,6 @@ class RMUCTestPublisher(Node):
         robot.max_hp = 600
         robot.is_dead = False
         robot.shooter_power_output = True
-        robot.is_disengaged = True # 脱战
         robot.outpost_alive = True
         
         # RFID
@@ -258,8 +255,6 @@ if __name__ == '__main__':
         msg.ammo_left = 150
         msg.is_dead = True
         msg.shooter_power_output = True
-        msg.is_disengaged = False
-        msg.disengage_cd_s = 6.0
         msg.can_remote_heal = False
         msg.can_remote_ammo = False
         msg.team_coins = 450
@@ -303,8 +298,6 @@ if __name__ == '__main__':
         msg.ammo_left = 150
         msg.is_dead = False
         msg.shooter_power_output = False   # 复活后虚弱
-        msg.is_disengaged = True
-        msg.disengage_cd_s = 0.0
         msg.can_remote_heal = False
         msg.can_remote_ammo = False
         msg.team_coins = 400
@@ -348,8 +341,6 @@ if __name__ == '__main__':
         msg.ammo_left = 50
         msg.is_dead = False
         msg.shooter_power_output = True
-        msg.is_disengaged = True
-        msg.disengage_cd_s = 0.0
         msg.can_remote_heal = True
         msg.can_remote_ammo = True
         msg.team_coins = 350
@@ -388,8 +379,6 @@ if __name__ == '__main__':
         msg.ammo_left = 200
         msg.is_dead = False
         msg.shooter_power_output = True
-        msg.is_disengaged = False
-        msg.disengage_cd_s = 4.0
         msg.can_remote_heal = False
         msg.can_remote_ammo = False
         msg.team_coins = 300

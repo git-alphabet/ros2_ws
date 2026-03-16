@@ -121,6 +121,8 @@
 - 仿真环境中有对应的 mock publisher 可供测试
 - msg 文件有注释说明每个字段的来源协议和位定义
 
+# P0已完成
+
 ---
 
 
@@ -251,6 +253,8 @@ $$
 - 累计立即复活次数在黑板中有跟踪，且影响后续决策。
 - 复活后的无敌窗口 / 功率倍增窗口在日志中可观测。
 
+# P1已完成
+
 ---
 
 ## P2：经济与补给决策优化
@@ -329,6 +333,8 @@ $$
 - 远程回血不会在高交战风险时乱开。
 - 弹药不足时会优先利用补给区免费收益，而不是无脑远程兑换。
 - 金币消耗结构能在赛后复盘中解释。
+
+# P2已完成
 
 ### ⚠ 补充规则细节
 
@@ -832,3 +838,42 @@ BT.CPP v4 原生支持 Groot 实时监控。建议在比赛中开启 ZMQ publish
 - 建议每完成一个优先级，就做一次仿真对局复盘，再进入下一个优先级。
 - P0 的 msg 需求清单可以直接从本文档的"需要新增或扩展的话题"表格导出，发给电控。
 
+## 后续优化
+
+1.后续子树（如 CriticalSurvival、WeaknessRecovery）可以读取这些变量来做更激进的决策——无敌时可以更大胆穿越危险区域冲向解除虚弱点
+
+{state.respawn_invincible} 当前是否无敌
+{state.respawn_invincible_remain_s} 无敌剩余秒数
+{state.power_boosted} 当前是否功率翻倍
+{state.power_boost_remain_s} 功率提升剩余秒数
+
+2.// 通过检测 cumulative_instant_count 黑板值增加来推断立即复活事件
+int bb_cum = 0;
+getInput("cumulative_instant_count", bb_cum);
+if (bb_cum > cumulative_instant_count_) {
+    cumulative_instant_count_ = bb_cum;
+    power_boost_ms_ = now_ms;  // 记录功率提升开始时刻
+}
+// 4s 内 is_power_boosted = true
+
+输出到黑板: {state.power_boosted} (bool) + {state.power_boost_remain_s} (int)
+
+后续可在这 4 秒内选择更激进的导航目标（快速脱离出生点 / 冲向关键防守位），因为底盘功率上限翻倍意味着移动速度更快。Groot 可视化中也能实时看到这个窗口。
+
+3.// 虚弱解除沿检测: 上帧虚弱 → 本帧不虚弱 → 无敌窗口(重新)开始
+const bool cur_weakness = (!r.shooter_power_output && r.current_hp > 0);
+if (prev_weakness_ && !cur_weakness && !cur_dead && now_ms > 0) {
+    weakness_dispel_ms_ = now_ms;
+}
+// 无敌来源: 复活 OR 虚弱解除 → 取最近的时刻
+std::uint64_t invincible_start = std::max(respawn_ms_, weakness_dispel_ms_);
+
+规则要点: 复活后无敌最多 30s，但虚弱解除时：
+
+如果无敌已累计 > 10s → 无敌立即解除
+如果 < 10s → 保持到满 10s
+当前实现简化为 10s 窗口（RESPAWN_INVINCIBLE_MS = 10000），这是保守估计——确保在 10s 内的行为是正确的。
+
+越快解除虚弱 → 无敌保留越长。配合优化建议 3 的"选最近增益点"策略，形成闭环：快速到达最近增益点 → 快速解除虚弱 → 保留更多无敌时间 → 无敌时间内可以更激进行动。
+
+4.

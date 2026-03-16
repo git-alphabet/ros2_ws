@@ -95,7 +95,12 @@
                                    enemy_infantry4_vuln="{enemy.infantry4_vuln}"
                                    enemy_sentry_vuln="{enemy.sentry_vuln}"
                                    team_outpost_hp="{team.outpost_hp}"
-                                   team_base_hp="{team.base_hp}"/>
+                                   team_base_hp="{team.base_hp}"
+                                   is_respawn_invincible="{state.respawn_invincible}"
+                                   respawn_invincible_remain_s="{state.respawn_invincible_remain_s}"
+                                   is_power_boosted="{state.power_boosted}"
+                                   power_boost_remain_s="{state.power_boost_remain_s}"
+                                   cumulative_instant_count="{respawn.cum_instant_count}"/>
         </Sequence>
     </BehaviorTree>
 
