@@ -26,6 +26,14 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/RMUC/RMUCSentryCmd.msg"
   "msg/RMUC/RMUCRobotControl.msg"
   "msg/RMUC/RMUCNavControlCmd.msg"
+  # ── P0 新增: 电控接口约定话题 ──
+  "msg/RMUC/RMUCSentryDecisionStatus.msg"
+  "msg/RMUC/RMUCRobotBuff.msg"
+  "msg/RMUC/RMUCProjectileAllowance.msg"
+  "msg/RMUC/RMUCFieldStatus.msg"
+  "msg/RMUC/RMUCEnemyMark.msg"
+  "msg/RMUC/RMUCTeamPositions.msg"
+  "msg/RMUC/RMUCTeamHP.msg"
   DEPENDENCIES
     std_msgs
     geometry_msgs

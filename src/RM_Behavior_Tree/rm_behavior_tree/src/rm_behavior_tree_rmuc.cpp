@@ -69,6 +69,35 @@ int main(int argc, char ** argv)
   params_radar.nh = std::make_shared<rclcpp::Node>("rmuc_radar_io");
   params_radar.default_port_value = "/radar/enemy_tracks";
 
+  // ── P0 新增: 7 个裁判系统话题订阅 ──
+  BT::RosNodeParams params_sentry_decision;
+  params_sentry_decision.nh = std::make_shared<rclcpp::Node>("rmuc_sentry_decision_io");
+  params_sentry_decision.default_port_value = "/sentry_decision_status";
+
+  BT::RosNodeParams params_robot_buff;
+  params_robot_buff.nh = std::make_shared<rclcpp::Node>("rmuc_robot_buff_io");
+  params_robot_buff.default_port_value = "/robot_buff";
+
+  BT::RosNodeParams params_proj_allowance;
+  params_proj_allowance.nh = std::make_shared<rclcpp::Node>("rmuc_proj_allowance_io");
+  params_proj_allowance.default_port_value = "/projectile_allowance";
+
+  BT::RosNodeParams params_field_status;
+  params_field_status.nh = std::make_shared<rclcpp::Node>("rmuc_field_status_io");
+  params_field_status.default_port_value = "/field_status";
+
+  BT::RosNodeParams params_enemy_mark;
+  params_enemy_mark.nh = std::make_shared<rclcpp::Node>("rmuc_enemy_mark_io");
+  params_enemy_mark.default_port_value = "/enemy_mark";
+
+  BT::RosNodeParams params_team_positions;
+  params_team_positions.nh = std::make_shared<rclcpp::Node>("rmuc_team_positions_io");
+  params_team_positions.default_port_value = "/team_positions";
+
+  BT::RosNodeParams params_team_hp;
+  params_team_hp.nh = std::make_shared<rclcpp::Node>("rmuc_team_hp_io");
+  params_team_hp.default_port_value = "/team_hp";
+
   // ── 输出话题（发布者） ──
   BT::RosNodeParams params_sentry_cmd;
   params_sentry_cmd.nh = std::make_shared<rclcpp::Node>("rmuc_sentry_cmd_io");
@@ -135,6 +164,15 @@ int main(int argc, char ** argv)
 
   // ── E. 订阅者：radar/enemy_tracks (/radar/enemy_tracks → RMUCEnemyTracks) ──
   regRos("rmuc_sub_radar_tracks",               params_radar);
+
+  // ── E2. P0 新增: 7 个裁判系统话题订阅者 ──
+  regRos("rmuc_sub_sentry_decision_status",     params_sentry_decision);
+  regRos("rmuc_sub_robot_buff",                 params_robot_buff);
+  regRos("rmuc_sub_projectile_allowance",       params_proj_allowance);
+  regRos("rmuc_sub_field_status",               params_field_status);
+  regRos("rmuc_sub_enemy_mark",                 params_enemy_mark);
+  regRos("rmuc_sub_team_positions",             params_team_positions);
+  regRos("rmuc_sub_team_hp",                    params_team_hp);
 
   // ── F. 发布者：sentry_cmd (/sentry_cmd → RMUCSentryCmd) ──
   regRos("rmuc_sentry_cmd_mux",                 params_sentry_cmd);

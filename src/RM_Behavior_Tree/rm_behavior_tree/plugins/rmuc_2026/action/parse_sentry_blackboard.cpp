@@ -85,6 +85,66 @@ BT::NodeStatus ParseSentryBlackboardAction::tick()
     setOutput("fortress_threat", false);
   }
 
+  // ── P0 新增: 0x020D 哨兵决策状态 ──
+  auto sds_msg = getInput<rm_decision_interfaces::msg::RMUCSentryDecisionStatus>(
+    "sentry_decision_status");
+  if (sds_msg) {
+    setOutput("can_free_respawn", sds_msg->can_free_respawn);
+    setOutput("can_instant_respawn", sds_msg->can_instant_respawn);
+    setOutput("instant_respawn_cost", static_cast<int>(sds_msg->instant_respawn_cost));
+    setOutput("current_posture", static_cast<int>(sds_msg->current_posture));
+    setOutput("remote_ammo_count", static_cast<int>(sds_msg->remote_ammo_count));
+    setOutput("remote_heal_count", static_cast<int>(sds_msg->remote_heal_count));
+    setOutput("exchanged_ammo_total", static_cast<int>(sds_msg->exchanged_ammo_total));
+    setOutput("can_activate_energy", sds_msg->can_activate_energy);
+  }
+
+  // ── P0 新增: 0x0204 机器人增益 ──
+  auto buff_msg = getInput<rm_decision_interfaces::msg::RMUCRobotBuff>("robot_buff");
+  if (buff_msg) {
+    setOutput("buff_heal_rate", static_cast<int>(buff_msg->heal_rate));
+    setOutput("buff_cool_value", static_cast<int>(buff_msg->cool_value));
+    setOutput("buff_defense_pct", static_cast<int>(buff_msg->defense_pct));
+    setOutput("buff_vulnerability_pct", static_cast<int>(buff_msg->vulnerability_pct));
+    setOutput("buff_attack_pct", static_cast<int>(buff_msg->attack_pct));
+  }
+
+  // ── P0 新增: 0x0208 允许发弹量 ──
+  auto proj_msg = getInput<rm_decision_interfaces::msg::RMUCProjectileAllowance>(
+    "projectile_allowance");
+  if (proj_msg) {
+    setOutput("fortress_ammo", static_cast<int>(proj_msg->fortress_ammo));
+  }
+
+  // ── P0 新增: 0x0101 场地状态 ──
+  auto field_msg = getInput<rm_decision_interfaces::msg::RMUCFieldStatus>("field_status");
+  if (field_msg) {
+    setOutput("field_central_highland", static_cast<int>(field_msg->central_highland));
+    setOutput("field_ladder_highland", static_cast<int>(field_msg->ladder_highland));
+    setOutput("field_fortress", static_cast<int>(field_msg->fortress));
+    setOutput("field_outpost_buff", static_cast<int>(field_msg->outpost_buff));
+    setOutput("field_base_buff", field_msg->base_buff);
+    setOutput("field_small_energy", static_cast<int>(field_msg->small_energy_status));
+    setOutput("field_big_energy", static_cast<int>(field_msg->big_energy_status));
+  }
+
+  // ── P0 新增: 0x020C 敌方易伤 ──
+  auto mark_msg = getInput<rm_decision_interfaces::msg::RMUCEnemyMark>("enemy_mark");
+  if (mark_msg) {
+    setOutput("enemy_hero_vuln", mark_msg->enemy_hero_vuln);
+    setOutput("enemy_engi_vuln", mark_msg->enemy_engi_vuln);
+    setOutput("enemy_infantry3_vuln", mark_msg->enemy_infantry3_vuln);
+    setOutput("enemy_infantry4_vuln", mark_msg->enemy_infantry4_vuln);
+    setOutput("enemy_sentry_vuln", mark_msg->enemy_sentry_vuln);
+  }
+
+  // ── P0 新增: 0x0003 队伍血量 ──
+  auto hp_msg = getInput<rm_decision_interfaces::msg::RMUCTeamHP>("team_hp");
+  if (hp_msg) {
+    setOutput("team_outpost_hp", static_cast<int>(hp_msg->outpost_hp));
+    setOutput("team_base_hp", static_cast<int>(hp_msg->base_hp));
+  }
+
   return BT::NodeStatus::SUCCESS;
 }
 

@@ -168,6 +168,35 @@ ament_auto_add_library(rmuc_sub_radar_tracks SHARED
     plugins/rmuc_2026/action/sub_radar_tracks.cpp)
 add_target_dependencies(rmuc_sub_radar_tracks)
 
+# ── P0 新增: 7 个裁判系统话题订阅插件 ──
+ament_auto_add_library(rmuc_sub_sentry_decision_status SHARED
+    plugins/rmuc_2026/action/sub_sentry_decision_status.cpp)
+add_target_dependencies(rmuc_sub_sentry_decision_status)
+
+ament_auto_add_library(rmuc_sub_robot_buff SHARED
+    plugins/rmuc_2026/action/sub_robot_buff.cpp)
+add_target_dependencies(rmuc_sub_robot_buff)
+
+ament_auto_add_library(rmuc_sub_projectile_allowance SHARED
+    plugins/rmuc_2026/action/sub_projectile_allowance.cpp)
+add_target_dependencies(rmuc_sub_projectile_allowance)
+
+ament_auto_add_library(rmuc_sub_field_status SHARED
+    plugins/rmuc_2026/action/sub_field_status.cpp)
+add_target_dependencies(rmuc_sub_field_status)
+
+ament_auto_add_library(rmuc_sub_enemy_mark SHARED
+    plugins/rmuc_2026/action/sub_enemy_mark.cpp)
+add_target_dependencies(rmuc_sub_enemy_mark)
+
+ament_auto_add_library(rmuc_sub_team_positions SHARED
+    plugins/rmuc_2026/action/sub_team_positions.cpp)
+add_target_dependencies(rmuc_sub_team_positions)
+
+ament_auto_add_library(rmuc_sub_team_hp SHARED
+    plugins/rmuc_2026/action/sub_team_hp.cpp)
+add_target_dependencies(rmuc_sub_team_hp)
+
 ament_auto_add_library(rmuc_parse_sentry_blackboard SHARED
     plugins/rmuc_2026/action/parse_sentry_blackboard.cpp)
 add_target_dependencies(rmuc_parse_sentry_blackboard)
