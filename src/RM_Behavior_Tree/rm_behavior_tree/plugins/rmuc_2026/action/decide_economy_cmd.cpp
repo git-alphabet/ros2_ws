@@ -127,11 +127,13 @@ BT::NodeStatus DecideEconomyCmdAction::tick()
   // ══════════════════════════════════════════════════════
   //   远程补弹: 150 金币 / 100 发, 有 6s 延迟
   //   非远程(补给区): 100 金币 / 100 发 (allow_ammo_target 支付)
-  //   补给区免费产出: 100 发/min
+  //   补给区免费产出: 100 发/min, **可累积** (不去不会过期)
   //
   //   补给周期意识 (优化 2):
-  //     下一次免费补给 tick = ceil(elapsed_s / 60) * 60
-  //     如果距下一 tick < 20s → 倾向物理补给而非远程购买
+  //     规则: 每分钟 +100 发免费弹量, 未领取的可累积
+  //     (例: 6 分钟没去, 第 6 分钟去一次直接拿 600 发)
+  //     这意味着补给区的免费弹量是一笔"存款", 迟早都能拿到
+  //     → 非紧急时优先省钱等物理领取, 减少远程购买(150金币/100发)
   //
   //   堡垒储备弹量公式 (补充 5):
   //     N = 100 + 2 * floor(Δ/15), N ≤ 500, Δ = base_max - base_hp
@@ -139,9 +141,9 @@ BT::NodeStatus DecideEconomyCmdAction::tick()
   if (disengaged && can_ammo) {
     int elapsed_s = 420 - remain_s;
 
-    // 下一免费补给 tick 时刻
-    int next_supply_tick = ((elapsed_s / 60) + 1) * 60;
-    int sec_to_next_tick = next_supply_tick - elapsed_s;
+    // 当前累积的免费弹量 = floor(elapsed_s / 60) * 100
+    // (只要去补给区刷一次卡就能全部领取)
+    // int accumulated_free = (elapsed_s / 60) * 100;  // 留作后续使用
 
     // 弹量紧迫度
     double ammo_ratio = (ammo_target > 0)
@@ -159,10 +161,14 @@ BT::NodeStatus DecideEconomyCmdAction::tick()
     if (base_threat && ammo < 150) ammo_score += 30; // 基地受威胁时弹量重要
     if (fortress_ammo < fortress_target) ammo_score += 15; // 堡垒弹量不足
 
-    // 如果快到下一个免费补给 tick (< 20s) 且弹量非极度紧急 → 延迟购买
-    bool near_free_tick = (sec_to_next_tick <= 20);
-    if (near_free_tick && ammo >= ammo_low / 2) {
-      ammo_score -= 40;  // 大幅降低远程购买动力
+    // 补给区免费弹量累积感知:
+    //   accumulated_free = floor(elapsed_s / 60) * 100
+    //   这笔"存款"去补给区刷一次卡就能全部领取, 不会过期
+    //   如果累积量 >= 200 (约 2 分钟没去) 且弹量还没到极低
+    //   → 优先省钱去物理领取, 降低远程购买动力
+    int accumulated_free = (elapsed_s / 60) * SUPPLY_TICK_FREE_AMMO;
+    if (accumulated_free >= 200 && ammo >= ammo_low / 2) {
+      ammo_score -= 30;  // 有较多免费弹量未领取, 降低远程购买动力
     }
 
     // 远程补弹成本归一化
