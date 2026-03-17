@@ -153,6 +153,7 @@
             <output_port name="pose_y" default="{pose.y}"/>
             <output_port name="pose_yaw" default="{pose.yaw}"/>
             <output_port name="is_at_nav_goal" default="{is_at_nav_goal}"/>
+            <output_port name="pose" default="{pose}"/>
         </Action>
         <Action ID="SubRadarTracks" editable="true">
             <input_port name="topic_name" default="/radar/enemy_tracks"/>
@@ -690,7 +691,6 @@
             <inout_port name="search_start_ms" default="{search_start_ms}"/>
             <input_port name="timeout_ms" default="{cfg.search_timeout_ms}"/>
             <input_port name="rfid_status" default="{rfid.status}"/>
-            <input_port name="rfid_supply_arrived" default="{rfid.supply_arrived}"/>
         </Action>
         <Condition ID="RmucIsAtNavGoal" editable="true">
             <input_port name="is_at_nav_goal" default="{is_at_nav_goal}"/>

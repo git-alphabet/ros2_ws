@@ -457,8 +457,8 @@ ReactiveSequence
 | `{active_subtree}` | SetBlackboard (rmuc_2026.xml 各分支) | DecidePosture | ✅ (已修复) |
 | `{heal_start_ms}` | RmucWaitAndHeal(inout) | RmucWaitAndHeal(inout) | ✅ (子树内部闭环) |
 | `{search_start_ms}` | InitSearchTimerIfNeeded(inout) | RmucMicroSearchSupplyCard(inout) | ✅ |
-| `{rfid.supply_arrived}` | 未知（可能在 cpp 内部写入） | RmucMicroSearchSupplyCard | ⚠️ **需确认** |
-| `{pose}` | 未找到写入源 | MoveAround(message) | ⚠️ **需确认** (可能是 Pose msg 直接传递) |
+| `{rfid.supply_arrived}` | ~~未知（可能在 cpp 内部写入）~~ | ~~RmucMicroSearchSupplyCard~~ | ✅ **已修复 (#10)**: port 已移除 |
+| `{pose}` | RmucSubRobotPosition (TransformStamped output) | MoveAround(message) | ✅ **已修复 (#11)** |
 
 ### 3.6 有写无读汇总（Dead Data）
 
@@ -643,7 +643,7 @@ ReactiveSequence
 
 ## 7. 历史 Bug 汇总与根因分析
 
-### 7.1 全部已修复 Bug (3 轮审计 + 1 次数据流修复)
+### 7.1 全部已修复 Bug (3 轮审计 + 1 次数据流修复 + 1 次深度数据流审计)
 
 | # | 发现轮次 | 文件 | Bug 描述 | 根因类型 | 修复方式 |
 |---|---|---|---|---|---|
@@ -656,13 +656,17 @@ ReactiveSequence
 | 7 | Round 3 | PatrolAndScan.xml | `Sequence` 不重新 tick WaypointPatrol | 控制流 | 改为 ReactiveSequence |
 | 8 | Round 3 | CriticalSurvival.xml | `CancelNavGoal` 在 ReactiveSequence 中每帧取消导航 | 反模式 | 移除 CancelNavGoal |
 | 9 | 数据流修复 | rmuc_2026.xml | `active_subtree` 从未被写入，DecidePosture 任务绑定 (+40分) 完全失效 | **数据流断裂** | 添加 SetBlackboard |
+| 10 | 深度审计 | micro_search_supply_card.hpp/cpp, RespawnRecovery.xml, rmuc_2026.xml | `{rfid.supply_arrived}` 无写入源，`rfid_supply_arrived` port 是悬空输入 | **数据流断裂** | 移除冗余 port，统一用 `rfid_status` 消息的 `rfid_supply` 字段 |
+| 11 | 深度审计 | sub_robot_position.hpp/cpp, PerceptionAndBlackboard.xml, rmuc_2026.xml | `{pose}` (TransformStamped) 无写入源，`MoveAround` 永远 FAILURE → WeaknessRecovery 微动搜索失效 | **数据流断裂** | 在 `RmucSubRobotPosition` 中新增 TransformStamped 类型 `pose` output port |
+| 12 | 深度审计 | DeathAndRespawn.xml | 未被任何文件 include 或引用，是早期废弃版本 | 工程管理 | 添加 DEPRECATED 注释标记 |
 
 ### 7.2 根因分类
 
 ```
 控制流 Bug:  4 个 (#1, #5, #7, #8)
-数据流 Bug:  3 个 (#2, #3, #9)
+数据流 Bug:  5 个 (#2, #3, #9, #10, #11)
 一致性 Bug:  2 个 (#4, #6)
+工程管理:   1 个 (#12)
 ```
 
 ### 7.3 教训
@@ -692,8 +696,8 @@ ReactiveSequence
 
 | 项目 | 描述 | 需要确认 |
 |---|---|---|
-| `{rfid.supply_arrived}` | RmucMicroSearchSupplyCard 读取此 key，但未见 XML 层写入 | 确认是否在 cpp 内部写入 |
-| `{pose}` | MoveAround 的 `message` 参数使用 `{pose}`，但 XML 层只有 `{pose.x/y/yaw}` | 确认 MoveAround cpp 如何解析此 port |
+| `{rfid.supply_arrived}` | ~~RmucMicroSearchSupplyCard 读取此 key，但未见 XML 层写入~~ | ✅ **已修复 (#10)**: 移除冗余 port，统一用 rfid_status.rfid_supply |
+| `{pose}` | ~~MoveAround 的 `message` 参数使用 `{pose}`，但 XML 层只有 `{pose.x/y/yaw}`~~ | ✅ **已修复 (#11)**: RmucSubRobotPosition 新增 TransformStamped 类型 pose output |
 | 所有 TODO 坐标 | InitSentryConfig 中大量 `default="0.0"` 的坐标 | 上场前必须填写实际坐标 |
 | 大能量机关激活 | `enable_big_energy` 由 DecideEconomyCmd 输出，但激活条件和流程未在 XML 中体现 | 确认仿真中是否需要额外子树 |
 

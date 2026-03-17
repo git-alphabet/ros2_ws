@@ -86,8 +86,7 @@
                             <RmucMicroSearchSupplyCard
                                 search_start_ms="{search_start_ms}"
                                 timeout_ms="{cfg.search_timeout_ms}"
-                                rfid_status="{rfid.status}"
-                                rfid_supply_arrived="{rfid.supply_arrived}"/>
+                                rfid_status="{rfid.status}"/>
                         </ReactiveFallback>
 
                     </Sequence>
