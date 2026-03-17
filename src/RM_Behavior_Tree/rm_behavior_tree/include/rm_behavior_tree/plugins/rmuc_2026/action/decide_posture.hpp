@@ -70,7 +70,11 @@ public:
       // ── P4 新增: 弹量 ──
       BT::InputPort<int>("ammo_allow", "300", "当前允许发弹量"),
       // output
-      BT::OutputPort<int>("posture_out")};
+      BT::OutputPort<int>("posture_out"),
+      // ── Groot2 可视化: 各姿态实时评分 (仅展示用) ──
+      BT::OutputPort<int>("score_attack",  "进攻姿态实时评分"),
+      BT::OutputPort<int>("score_defense", "防御姿态实时评分"),
+      BT::OutputPort<int>("score_move",    "移动姿态实时评分")};
   }
   BT::NodeStatus tick() override;
 

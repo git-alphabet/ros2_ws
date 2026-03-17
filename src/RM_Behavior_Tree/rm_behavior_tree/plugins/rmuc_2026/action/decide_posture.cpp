@@ -217,6 +217,10 @@ BT::NodeStatus DecidePostureAction::tick()
 
   last_posture_ = output;
   setOutput("posture_out", output);
+  // Groot2 可视化: 输出各姿态实时评分
+  setOutput("score_attack",  scores[0]);
+  setOutput("score_defense", scores[1]);
+  setOutput("score_move",    scores[2]);
   return BT::NodeStatus::SUCCESS;
 }
 
