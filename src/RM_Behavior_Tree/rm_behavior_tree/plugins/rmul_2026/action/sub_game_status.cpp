@@ -12,6 +12,10 @@ SubGameStatusAction::SubGameStatusAction(
 BT::NodeStatus SubGameStatusAction::onTick(
   const std::shared_ptr<rm_decision_interfaces::msg::RMULRob> & last_msg)
 {
+  // 每次 tick 都写入 ROS 时间（毫秒），供 IsNavTimeout 等节点使用
+  const auto now_ns = node_->now().nanoseconds();
+  setOutput("now_ms", static_cast<std::uint64_t>(now_ns / 1000000ULL));
+
   if (last_msg)  // empty if no new message received, since the last tick
   {
     RCLCPP_DEBUG(

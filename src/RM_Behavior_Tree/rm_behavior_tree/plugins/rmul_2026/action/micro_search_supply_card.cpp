@@ -80,6 +80,10 @@ bool MicroSearchSupplyCardAction::getCurrentPose_(geometry_msgs::msg::PoseStampe
 
 BT::NodeStatus MicroSearchSupplyCardAction::onStart()
 {
+  // 从输入端口读取 TF 坐标系名（支持仿真命名空间配置）
+  getInput("map_frame", map_frame_);
+  getInput("base_frame", base_frame_);
+
   // 如果已经刷到卡，直接 SUCCESS（外层 ReactiveFallback 也会抢占，这里只是更干净）
   bool arrived = false;
   if (getInput<bool>("rfid_supply_arrived", arrived) && arrived) {

@@ -3,6 +3,7 @@
 
 #include "behaviortree_ros2/bt_topic_sub_node.hpp"
 #include "rm_decision_interfaces/msg/rmul_rob.hpp"
+#include <cstdint>
 
 namespace rm_behavior_tree
 {
@@ -16,7 +17,8 @@ public:
   {
     return {
       BT::InputPort<std::string>("topic_name"),
-      BT::OutputPort<rm_decision_interfaces::msg::RMULRob>("game_status")};
+      BT::OutputPort<rm_decision_interfaces::msg::RMULRob>("game_status"),
+      BT::OutputPort<std::uint64_t>("now_ms", "{time.now_ms}", "Current ROS time in milliseconds")};
   }
 
   BT::NodeStatus onTick(

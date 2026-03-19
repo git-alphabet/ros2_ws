@@ -106,6 +106,8 @@
     <TreeNodesModel>
         <Action ID="GetCurrentLocation" editable="true">
             <output_port name="current_location" default="{current_location}"/>
+            <input_port name="map_frame" default="map"/>
+            <input_port name="base_frame" default="gimbal_yaw"/>
         </Action>
         <Condition ID="IsDetectEnemy" editable="true">
             <input_port name="message" default="{nav.is_detect_enemy}"/>
@@ -193,6 +195,8 @@
             <input_port name="timeout_ms" default="{cfg.search_timeout_ms}"/>
             <input_port name="rfid_status" default="{rfid.status}"/>
             <input_port name="rfid_supply_arrived" default="{rfid.supply_arrived}"/>
+            <input_port name="map_frame" default="map"/>
+            <input_port name="base_frame" default="chassis"/>
         </Action>
         <Action ID="WaitAndHeal" editable="true">
             <input_port name="now_ms" default="{time.now_ms}"/>
@@ -257,6 +261,7 @@
         <Condition ID="IsNavTimeout" editable="true">
             <input_port name="timeout_sec" default="30.0"/>
             <input_port name="nav_status" default="{nav.is_at_goal}"/>
+            <input_port name="now_ms" default="{time.now_ms}"/>
         </Condition>
         <Decorator ID="RateController" editable="true">
             <input_port name="hz" default="1.0"/>

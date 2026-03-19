@@ -40,7 +40,10 @@ public:
       BT::InputPort<rm_decision_interfaces::msg::RMULRob>("rfid_status"),
 
       // ✅ 只用这个 bool，彻底不要 bitfield
-      BT::InputPort<bool>("rfid_supply_arrived")
+      BT::InputPort<bool>("rfid_supply_arrived"),
+
+      BT::InputPort<std::string>("map_frame", "map", "TF map frame name"),
+      BT::InputPort<std::string>("base_frame", "chassis", "TF base frame name")
     };
   }
 
@@ -62,7 +65,7 @@ private:
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
   std::string map_frame_{"map"};
-  std::string base_frame_{"chassis"};   // ✅ 你们底盘 frame
+  std::string base_frame_{"chassis"};
 
   int64_t last_pub_ms_{0};
   size_t step_idx_{0};

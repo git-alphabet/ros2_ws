@@ -6,64 +6,51 @@ namespace rm_behavior_tree
 {
 
 GetCurrentLocationAction::GetCurrentLocationAction(
-  const std::string & name, const BT::NodeConfig & config)
-: BT::SyncActionNode(name, config)
+  const std::string & name,
+  const BT::NodeConfig & conf,
+  const BT::RosNodeParams & params)
+: BT::SyncActionNode(name, conf),
+  node_(params.nh)
 {
-  // 传入 use_sim_time=true 使 TF buffer 使用仿真时钟，避免仿真中 TF 查询失败
-  rclcpp::NodeOptions opts;
-  opts.parameter_overrides({rclcpp::Parameter("use_sim_time", true)});
-  auto node = std::make_shared<rclcpp::Node>("get_current_location", opts);
-  if (!node) {
-    throw std::runtime_error("Failed to create node 'get_current_location'");
+  if (!node_) {
+    throw std::runtime_error("GetCurrentLocationAction: ROS node is null");
   }
 
-  auto clock = node->get_clock();
-  tf2::Duration buffer_duration(tf2::durationFromSec(10.0));  // 10 seconds buffer
-  tf_buffer_ = std::make_shared<tf2_ros::Buffer>(clock, buffer_duration, node);
-  if (!tf_buffer_) {
-    throw std::runtime_error("Failed to create tf2_ros::Buffer");
-  }
-
+  auto clock = node_->get_clock();
+  tf2::Duration buffer_duration(tf2::durationFromSec(10.0));
+  tf_buffer_ = std::make_shared<tf2_ros::Buffer>(clock, buffer_duration, node_);
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
-  if (!tf_listener_) {
-    throw std::runtime_error("Failed to create tf2_ros::TransformListener");
-  }
 }
 
 BT::NodeStatus GetCurrentLocationAction::tick()
 {
+  std::string map_frame = "map";
+  std::string base_frame = "gimbal_yaw";
+  getInput("map_frame", map_frame);
+  getInput("base_frame", base_frame);
+
   geometry_msgs::msg::TransformStamped t;
 
   try {
-    t = tf_buffer_->lookupTransform("map", "gimbal_yaw", tf2::TimePointZero);
+    t = tf_buffer_->lookupTransform(map_frame, base_frame, tf2::TimePointZero);
     setOutput("current_location", t);
 
     RCLCPP_DEBUG(
-      logger_,
-      "Current Location:"
-      "\nTranslation:"
-      "\nx: %f"
-      "\ny: %f"
-      "\nz: %f"
-      "\nRotation:"
-      "\nx: %f"
-      "\ny: %f"
-      "\nz: %f"
-      "\nw: %f",
-      t.transform.translation.x, t.transform.translation.y, t.transform.translation.z,
-      t.transform.rotation.x, t.transform.rotation.y, t.transform.rotation.z,
-      t.transform.rotation.w);
+      node_->get_logger(),
+      "Current Location: [%.3f, %.3f, %.3f]",
+      t.transform.translation.x, t.transform.translation.y, t.transform.translation.z);
 
     return BT::NodeStatus::SUCCESS;
   } catch (const tf2::TransformException & ex) {
+    RCLCPP_WARN_THROTTLE(
+      node_->get_logger(), *node_->get_clock(), 3000,
+      "GetCurrentLocation TF lookup failed (%s -> %s): %s",
+      map_frame.c_str(), base_frame.c_str(), ex.what());
     return BT::NodeStatus::FAILURE;
   }
 }
 
 }  // namespace rm_behavior_tree
 
-#include "behaviortree_cpp/bt_factory.h"
-BT_REGISTER_NODES(factory)
-{
-  factory.registerNodeType<rm_behavior_tree::GetCurrentLocationAction>("GetCurrentLocation");
-}
+#include "behaviortree_ros2/plugins.hpp"
+CreateRosNodePlugin(rm_behavior_tree::GetCurrentLocationAction, "GetCurrentLocation");

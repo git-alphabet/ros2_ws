@@ -60,6 +60,7 @@ int main(int argc, char ** argv)
     "is_supply_card_detected",
     "is_control_zone_detected",
     "is_within_scope",
+    "get_current_location",
     
   };
 
@@ -71,7 +72,6 @@ int main(int argc, char ** argv)
     "is_dead",
     "is_status_ok",
     "is_friend_ok",
-    "get_current_location",
     "move_around",
     "keep_running",
     "not_arrived",

@@ -31,13 +31,14 @@
           <Fallback>
             <!-- A-1: 热量安全(≤280) → 刹车+原地，开小陀螺
                  说明: 机器人停止移动以最大化射击精度，
+                       停止云台扫描让瞄准程序接管，
                        小陀螺提供被动防护 -->
             <Sequence>
               <IsStatusOK message="{robot_status}"
                           hp_threshold="0"
                           heat_threshold="280"/>
               <NavControlCmd cmd_type="3" emergency_stop="False"/>
-              <RobotControl stop_gimbal_scan="False"
+              <RobotControl stop_gimbal_scan="True"
                             chassis_spin="True"/>
             </Sequence>
 
