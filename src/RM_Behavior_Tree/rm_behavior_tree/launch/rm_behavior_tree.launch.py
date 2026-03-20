@@ -13,12 +13,16 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time', default='False')
     bt_xml_file = PathJoinSubstitution([bt_config_dir, style])
 
+    # 导航坐标等 BT 配置参数（YAML 文件，可按场地切换）
+    bt_params_file = os.path.join(bt_config_dir, 'RMUL_2026', 'bt_config.yaml')
+
     rm_behavior_tree_node = Node(
         package='rm_behavior_tree',
         executable='rm_behavior_tree',
         respawn=True,
         respawn_delay=3,
         parameters=[
+                        bt_params_file,
                         {
                             'style': bt_xml_file,
                             'use_sim_time': use_sim_time,

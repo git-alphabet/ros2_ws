@@ -43,8 +43,8 @@
               <NavControlCmd cmd_type="1" emergency_stop="False"/>
               <RateController hz="1">
                 <SendGoal name="RetreatingToSupply"
-                          goal_x="0.21"
-                          goal_y="-0.32"
+                          goal_x="{cfg.supply_goal_x}"
+                          goal_y="{cfg.supply_goal_y}"
                           frame_id="map"
                           action_name="navigate_to_pose"
                           min_interval_ms="5000"/>
@@ -76,8 +76,8 @@
           <NavControlCmd cmd_type="1" emergency_stop="False"/>
           <RateController hz="1">
             <SendGoal name="HoverNearSupply"
-                      goal_x="0.21"
-                      goal_y="-0.32"
+                      goal_x="{cfg.supply_goal_x}"
+                      goal_y="{cfg.supply_goal_y}"
                       frame_id="map"
                       action_name="navigate_to_pose"
                       min_interval_ms="5000"/>

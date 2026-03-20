@@ -42,8 +42,8 @@
                             <IsHPBelow message="{robot_status}" hp_threshold="200"/>
                             <RateController hz="1">
                                 <SendGoal name="GoSupplyToHeal"
-                                        goal_x="0.21"
-                                        goal_y="-0.32"
+                                        goal_x="{cfg.supply_goal_x}"
+                                        goal_y="{cfg.supply_goal_y}"
                                         frame_id="map"
                                         action_name="navigate_to_pose"
                                         min_interval_ms="5000"/>
@@ -77,8 +77,8 @@
                 <ReactiveSequence>
                     <RateController hz="1">
                         <SendGoal name="Home"
-                            goal_x="0.0"
-                            goal_y="0.0"
+                            goal_x="{cfg.home_goal_x}"
+                            goal_y="{cfg.home_goal_y}"
                             frame_id="map"
                             action_name="navigate_to_pose"
                             min_interval_ms="5000"/>
@@ -152,6 +152,10 @@
             <output_port name="recovery_timeout_ms" default="{cfg.recovery_timeout_ms}"/>
             <output_port name="supply_goal_x" default="{cfg.supply_goal_x}"/>
             <output_port name="supply_goal_y" default="{cfg.supply_goal_y}"/>
+            <output_port name="control_goal_x" default="{cfg.control_goal_x}"/>
+            <output_port name="control_goal_y" default="{cfg.control_goal_y}"/>
+            <output_port name="home_goal_x" default="{cfg.home_goal_x}"/>
+            <output_port name="home_goal_y" default="{cfg.home_goal_y}"/>
             <output_port name="arrive_radius" default="{cfg.arrive_radius}"/>
         </Action>
         <Action ID="SubRobotPosition" editable="true">

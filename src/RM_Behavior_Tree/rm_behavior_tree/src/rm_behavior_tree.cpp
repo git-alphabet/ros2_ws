@@ -18,11 +18,40 @@ int main(int argc, char ** argv)
   node->get_parameter_or<std::string>(
     "style", bt_xml_path, "./rm_decision_ws/rm_behavior_tree/config/attack_left.xml");
 
+  // 声明 BT 配置参数（从 YAML / launch 读取，未配置则用默认值）
+  node->declare_parameter<double>("supply_goal_x", 0.21);
+  node->declare_parameter<double>("supply_goal_y", -0.32);
+  node->declare_parameter<double>("control_goal_x", 5.13);
+  node->declare_parameter<double>("control_goal_y", -3.94);
+  node->declare_parameter<double>("home_goal_x", 0.0);
+  node->declare_parameter<double>("home_goal_y", 0.0);
+  node->declare_parameter<double>("arrive_radius", 0.6);
+  node->declare_parameter<double>("heal_min_ratio", 0.60);
+  node->declare_parameter<int64_t>("heal_wait_ms", 2000);
+  node->declare_parameter<int64_t>("search_timeout_ms", 3000);
+  node->declare_parameter<int64_t>("recovery_timeout_ms", 15000);
+
   std::cout << "Start RM_Behavior_Tree" << '\n';
   RCLCPP_INFO(node->get_logger(), "Load bt_xml: \e[1;42m %s \e[0m", bt_xml_path.c_str());
 
+  // 将主节点参数转发到 update_msg 节点（InitBlackboardConfig 从此节点读取）
+  rclcpp::NodeOptions update_msg_opts;
+  update_msg_opts.parameter_overrides({
+    rclcpp::Parameter("supply_goal_x",       node->get_parameter("supply_goal_x").as_double()),
+    rclcpp::Parameter("supply_goal_y",       node->get_parameter("supply_goal_y").as_double()),
+    rclcpp::Parameter("control_goal_x",      node->get_parameter("control_goal_x").as_double()),
+    rclcpp::Parameter("control_goal_y",      node->get_parameter("control_goal_y").as_double()),
+    rclcpp::Parameter("home_goal_x",         node->get_parameter("home_goal_x").as_double()),
+    rclcpp::Parameter("home_goal_y",         node->get_parameter("home_goal_y").as_double()),
+    rclcpp::Parameter("arrive_radius",       node->get_parameter("arrive_radius").as_double()),
+    rclcpp::Parameter("heal_min_ratio",      node->get_parameter("heal_min_ratio").as_double()),
+    rclcpp::Parameter("heal_wait_ms",        node->get_parameter("heal_wait_ms").as_int()),
+    rclcpp::Parameter("search_timeout_ms",   node->get_parameter("search_timeout_ms").as_int()),
+    rclcpp::Parameter("recovery_timeout_ms", node->get_parameter("recovery_timeout_ms").as_int()),
+  });
+
   BT::RosNodeParams params_update_msg;
-  params_update_msg.nh = std::make_shared<rclcpp::Node>("update_msg");
+  params_update_msg.nh = std::make_shared<rclcpp::Node>("update_msg", update_msg_opts);
 
   BT::RosNodeParams params_robot_control;
   params_robot_control.nh = std::make_shared<rclcpp::Node>("robot_control");
