@@ -67,7 +67,7 @@ fi
 # - yaw_type=2 / pitch_type=2 表示相对角度
 # - position.yaw 每条消息增加 YAW_STEP_RAD 弧度
 # - -r RATE_HZ 表示发送频率
-MSG="{yaw_type: 2, pitch_type: 2, position: {yaw: ${YAW_STEP_RAD}, pitch: ${PITCH_STEP_RAD}}}"
+MSG="{tid: 0, yaw_type: 2, pitch_type: 2, position: {yaw: ${YAW_STEP_RAD}, pitch: ${PITCH_STEP_RAD}}, velocity: {yaw: 0.0, pitch: 0.0}}"
 
 CMD=(ros2 topic pub -r "${RATE_HZ}" "${TOPIC}" rmoss_interfaces/msg/GimbalCmd "${MSG}")
 

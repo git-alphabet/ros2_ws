@@ -17,8 +17,8 @@ public:
     return {
       BT::InputPort<double>("pose_x"),
       BT::InputPort<double>("pose_y"),
-      BT::InputPort<double>("supply_x"),
-      BT::InputPort<double>("supply_y"),
+      BT::InputPort<double>("buff_zone_x"),
+      BT::InputPort<double>("buff_zone_y"),
       BT::InputPort<double>("defend_anchor_x"),
       BT::InputPort<double>("defend_anchor_y"),
       BT::OutputPort<double>("goal_x"),

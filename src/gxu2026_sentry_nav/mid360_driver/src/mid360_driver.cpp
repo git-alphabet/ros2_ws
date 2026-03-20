@@ -9,6 +9,12 @@
 #include <chrono>
 #include <cmath>
 
+#if defined(RM_USE_BOOST_ASIO)
+using asio_error_code_t = boost::system::error_code;
+#else
+using asio_error_code_t = asio::error_code;
+#endif
+
 namespace mid360_driver {
 
     enum DataType : std::uint8_t {
@@ -121,7 +127,7 @@ namespace mid360_driver {
 
     void Mid360Driver::stop() {
         is_running.store(false, std::memory_order_relaxed);
-        asio::error_code error_code;
+        asio_error_code_t error_code;
         receive_pointcloud_socket.close(error_code);
         receive_imu_socket.close(error_code);
     }
@@ -130,7 +136,7 @@ namespace mid360_driver {
         uint8_t buffer[1400];
         asio::ip::udp::endpoint sender_endpoint;
         while (is_running.load(std::memory_order_relaxed)) {
-            asio::error_code error_code;
+            asio_error_code_t error_code;
             co_await receive_pointcloud_socket.async_receive_from(
                     asio::buffer(buffer, 1400),
                     sender_endpoint,
@@ -208,7 +214,7 @@ namespace mid360_driver {
         uint8_t buffer[1400];
         asio::ip::udp::endpoint sender_endpoint;
         while (is_running.load(std::memory_order_relaxed)) {
-            asio::error_code error_code;
+            asio_error_code_t error_code;
             co_await receive_imu_socket.async_receive_from(
                     asio::buffer(buffer, 1400),
                     sender_endpoint,

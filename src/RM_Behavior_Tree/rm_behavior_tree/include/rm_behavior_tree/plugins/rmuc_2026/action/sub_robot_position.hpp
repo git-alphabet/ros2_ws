@@ -8,6 +8,7 @@
 #include "behaviortree_cpp/action_node.h"
 #include "behaviortree_ros2/ros_node_params.hpp"
 #include "rm_decision_interfaces/msg/rmuc_robot_position.hpp"
+#include <geometry_msgs/msg/transform_stamped.hpp>
 
 namespace rm_behavior_tree
 {
@@ -24,7 +25,9 @@ public:
       BT::OutputPort<double>("pose_x"),
       BT::OutputPort<double>("pose_y"),
       BT::OutputPort<double>("pose_yaw"),
-      BT::OutputPort<bool>("is_at_nav_goal")};
+      BT::OutputPort<bool>("is_at_nav_goal"),
+      BT::OutputPort<geometry_msgs::msg::TransformStamped>("pose",
+        "{pose}", "完整位姿 (TransformStamped), 供 MoveAround 等节点使用")};
   }
 
   BT::NodeStatus tick() override;

@@ -225,6 +225,7 @@ def generate_launch_description():
         package="rm_behavior_tree",
         executable="rm_behavior_tree",
         name="rm_behavior_tree",
+        # namespace 由 bringup_launch.py 的 PushRosNamespace 提供，不再重复设置
         output="screen",
         respawn=use_respawn,
         respawn_delay=2.0,
@@ -243,7 +244,7 @@ def generate_launch_description():
                 output="screen",
                 respawn=use_respawn,
                 respawn_delay=2.0,
-                parameters=[configured_params],
+                parameters=[configured_params, {"use_sim_time": use_sim_time}],
                 arguments=["--ros-args", "--log-level", log_level],
             ),
             Node(
@@ -253,7 +254,7 @@ def generate_launch_description():
                 output="screen",
                 respawn=use_respawn,
                 respawn_delay=2.0,
-                parameters=[configured_params],
+                parameters=[configured_params, {"use_sim_time": use_sim_time}],
                 arguments=["--ros-args", "--log-level", log_level],
             ),
             start_pointcloud_to_laserscan_cmd,
@@ -264,7 +265,7 @@ def generate_launch_description():
                 output="screen",
                 respawn=use_respawn,
                 respawn_delay=2.0,
-                parameters=[configured_params],
+                parameters=[configured_params, {"use_sim_time": use_sim_time}],
                 arguments=["--ros-args", "--log-level", log_level],
             ),
             Node(
@@ -368,19 +369,19 @@ def generate_launch_description():
                 package="loam_interface",
                 plugin="loam_interface::LoamInterfaceNode",
                 name="loam_interface",
-                parameters=[configured_params],
+                parameters=[configured_params, {"use_sim_time": use_sim_time}],
             ),
             ComposableNode(
                 package="sensor_scan_generation",
                 plugin="sensor_scan_generation::SensorScanGenerationNode",
                 name="sensor_scan_generation",
-                parameters=[configured_params],
+                parameters=[configured_params, {"use_sim_time": use_sim_time}],
             ),
             ComposableNode(
                 package="fake_vel_transform",
                 plugin="fake_vel_transform::FakeVelTransform",
                 name="fake_vel_transform",
-                parameters=[configured_params],
+                parameters=[configured_params, {"use_sim_time": use_sim_time}],
             ),
             ComposableNode(
                 package="nav2_controller",
@@ -721,7 +722,7 @@ def generate_launch_description():
         executable="auto_aim_yaw_joint_state_bridge",
         name="auto_aim_yaw_joint_state_bridge",
         output="screen",
-        parameters=[configured_params],
+        parameters=[configured_params, {"use_sim_time": use_sim_time}],
     )
 
     start_auto_aim_yaw_sim_pub_cmd = Node(
@@ -740,7 +741,7 @@ def generate_launch_description():
         executable="gimbal_state_to_auto_aim_yaw",
         name="gimbal_state_to_auto_aim_yaw",
         output="screen",
-        parameters=[configured_params],
+        parameters=[configured_params, {"use_sim_time": use_sim_time}],
     )
 
     # Create the launch description and populate
@@ -765,6 +766,8 @@ def generate_launch_description():
         SetLaunchConfiguration("processed_params_file", params_file)
     )
     ld.add_action(SetLaunchConfiguration("enable_obstacle_scan", "false"))
+    ld.add_action(SetLaunchConfiguration("enable_rm_behavior_tree", "false"))
+    ld.add_action(SetLaunchConfiguration("rm_behavior_tree_style_path", ""))
     # Set switches before starting nodes
     ld.add_action(set_switches_cmd)
     # Add the actions to launch all of the navigation nodes

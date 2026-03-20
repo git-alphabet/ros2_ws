@@ -20,7 +20,9 @@
              分支 A: 检测到敌人 → 中血量交战
              ══════════════════════════════════════════════════════════ -->
         <ReactiveSequence>
-          <IsDetectEnemy message="{robot_status}"/>
+          <IsDetectEnemy message="{nav.is_detect_enemy}"/>
+          <!-- 检测到敌人：立刻取消 Nav2 导航目标，避免底盘仍被 Nav2 控制与停车指令冲突 -->
+          <CancelNavGoal action_name="navigate_to_pose" min_interval_ms="2000"/>
 
           <Fallback>
             <!-- A-1: 热量安全 → 停车射击，精度优先 + 小陀螺防护 -->
@@ -41,11 +43,24 @@
               <NavControlCmd cmd_type="1" emergency_stop="False"/>
               <RateController hz="1">
                 <SendGoal name="RetreatingToSupply"
-                          goal_x="0.21"
-                          goal_y="-0.32"
+                          goal_x="{cfg.supply_goal_x}"
+                          goal_y="{cfg.supply_goal_y}"
                           frame_id="map"
-                          action_name="navigate_to_pose"/>
+                          action_name="navigate_to_pose"
+                          min_interval_ms="5000"/>
               </RateController>
+              <!-- 撤退超时 recovery: 20s 仍未脱离 → 随机移动脱困 -->
+              <Fallback>
+                <IsAtNavGoal nav_status="{nav.is_at_goal}"/>
+                <Sequence>
+                  <IsNavTimeout timeout_sec="20.0"
+                                nav_status="{nav.is_at_goal}"/>
+                  <GetCurrentLocation current_location="{current_location}"/>
+                  <MoveAround expected_nearby_goal_count="3"
+                              expected_dis="0.4"
+                              message="{current_location}"/>
+                </Sequence>
+              </Fallback>
             </Sequence>
           </Fallback>
         </ReactiveSequence>
@@ -55,18 +70,40 @@
              说明: 中血量时不再主动进攻控制区，而是靠近补给区
                    以便血量继续下降时能快速到达补给区回血
              ══════════════════════════════════════════════════════════ -->
-        <Sequence>
+        <ReactiveSequence>
           <RobotControl stop_gimbal_scan="False"
-                        chassis_spin="True"/>
+                        chassis_spin="False"/>
           <NavControlCmd cmd_type="1" emergency_stop="False"/>
           <RateController hz="1">
             <SendGoal name="HoverNearSupply"
-                      goal_x="0.21"
-                      goal_y="-0.32"
+                      goal_x="{cfg.supply_goal_x}"
+                      goal_y="{cfg.supply_goal_y}"
                       frame_id="map"
-                      action_name="navigate_to_pose"/>
+                      action_name="navigate_to_pose"
+                      min_interval_ms="5000"/>
           </RateController>
-        </Sequence>
+          <Fallback>
+            <!-- 正常到达补给区 → RFID 感应 + 微调 -->
+            <Sequence>
+              <IsAtNavGoal nav_status="{nav.is_at_goal}"/>
+              <ReactiveFallback>
+                <IsSupplyCardDetected rfid_status="{rfid.status}"/>
+                <MoveAround expected_nearby_goal_count="5"
+                            expected_dis="0.3"
+                            message="{current_location}"/>
+              </ReactiveFallback>
+            </Sequence>
+            <!-- Recovery: 导航超时(30s未到达) → 随机移动脱困 -->
+            <Sequence>
+              <IsNavTimeout timeout_sec="30.0"
+                            nav_status="{nav.is_at_goal}"/>
+              <GetCurrentLocation current_location="{current_location}"/>
+              <MoveAround expected_nearby_goal_count="3"
+                          expected_dis="0.5"
+                          message="{current_location}"/>
+            </Sequence>
+          </Fallback>
+        </ReactiveSequence>
 
       </Fallback>
     </ReactiveSequence>

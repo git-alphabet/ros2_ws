@@ -16,7 +16,7 @@
 
 #include "behaviortree_cpp/action_node.h"
 #include "behaviortree_ros2/ros_node_params.hpp"
-#include "rm_decision_interfaces/msg/rmul.hpp"
+#include "rm_decision_interfaces/msg/rmul_rob.hpp"
 
 namespace rm_behavior_tree
 {
@@ -37,10 +37,13 @@ public:
 
       BT::InputPort<std::uint64_t>("timeout_ms"),
 
-      BT::InputPort<rm_decision_interfaces::msg::RMUL>("rfid_status"),
+      BT::InputPort<rm_decision_interfaces::msg::RMULRob>("rfid_status"),
 
       // ✅ 只用这个 bool，彻底不要 bitfield
-      BT::InputPort<bool>("rfid_supply_arrived")
+      BT::InputPort<bool>("rfid_supply_arrived"),
+
+      BT::InputPort<std::string>("map_frame", "map", "TF map frame name"),
+      BT::InputPort<std::string>("base_frame", "chassis", "TF base frame name")
     };
   }
 
@@ -62,7 +65,7 @@ private:
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
   std::string map_frame_{"map"};
-  std::string base_frame_{"chassis"};   // ✅ 你们底盘 frame
+  std::string base_frame_{"chassis"};
 
   int64_t last_pub_ms_{0};
   size_t step_idx_{0};

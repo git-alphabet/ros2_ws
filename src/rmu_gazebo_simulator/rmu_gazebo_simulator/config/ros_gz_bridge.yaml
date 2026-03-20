@@ -12,11 +12,14 @@
   gz_type_name: "ignition.msgs.Model"
   direction: "GZ_TO_ROS"
 
-- ros_topic_name: "/<robot_name>/front_industrial_camera/image"
-  gz_topic_name: "/world/default/model/<robot_name>/link/front_industrial_camera/sensor/front_industrial_camera/image"
-  ros_type_name: "sensor_msgs/msg/Image"
-  gz_type_name: "ignition.msgs.Image"
-  direction: "GZ_TO_ROS"
+# 相机图像数据量大（每帧数MB），与 LiDAR 点云共用同一个 bridge 进程时会饿死 LiDAR（10Hz→1Hz）
+# 建图/导航调试时不需要相机图像，注释掉以释放 bridge 带宽，恢复 LiDAR 正常频率
+# 需要相机时取消注释
+# - ros_topic_name: "/<robot_name>/front_industrial_camera/image"
+#   gz_topic_name: "/world/default/model/<robot_name>/link/front_industrial_camera/sensor/front_industrial_camera/image"
+#   ros_type_name: "sensor_msgs/msg/Image"
+#   gz_type_name: "ignition.msgs.Image"
+#   direction: "GZ_TO_ROS"
 
 - ros_topic_name: "/<robot_name>/rplidar_a2/scan"
   gz_topic_name: "/world/default/model/<robot_name>/link/front_rplidar_a2/sensor/front_rplidar_a2/scan"

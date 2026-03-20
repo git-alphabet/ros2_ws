@@ -3,9 +3,11 @@
 
 #include <cstdint>
 #include <string>
+#include <memory>
 
 #include "behaviortree_cpp/action_node.h"
 #include "behaviortree_ros2/ros_node_params.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 namespace rm_behavior_tree
 {
@@ -27,6 +29,10 @@ public:
       BT::OutputPort<std::uint64_t>("recovery_timeout_ms"),
       BT::OutputPort<double>("supply_goal_x"),
       BT::OutputPort<double>("supply_goal_y"),
+      BT::OutputPort<double>("control_goal_x"),
+      BT::OutputPort<double>("control_goal_y"),
+      BT::OutputPort<double>("home_goal_x"),
+      BT::OutputPort<double>("home_goal_y"),
       BT::OutputPort<double>("arrive_radius")
     };
   }
@@ -35,6 +41,7 @@ public:
 
 private:
   bool initialized_{false};
+  rclcpp::Node::SharedPtr node_;
 
   // ====== 纯代码配置区（后续你只改这里） ======
   static constexpr std::uint64_t HEAL_WAIT_MS_DEFAULT        = 2000ULL;
@@ -43,6 +50,10 @@ private:
   static constexpr std::uint64_t RECOVERY_TIMEOUT_MS_DEFAULT = 15000ULL;
   static constexpr double        SUPPLY_GOAL_X_DEFAULT       = 0.21;
   static constexpr double        SUPPLY_GOAL_Y_DEFAULT       = -0.32;
+  static constexpr double        CONTROL_GOAL_X_DEFAULT      = 5.13;
+  static constexpr double        CONTROL_GOAL_Y_DEFAULT      = -3.94;
+  static constexpr double        HOME_GOAL_X_DEFAULT         = 0.0;
+  static constexpr double        HOME_GOAL_Y_DEFAULT         = 0.0;
   static constexpr double        ARRIVE_RADIUS_DEFAULT       = 0.6;
 };
 

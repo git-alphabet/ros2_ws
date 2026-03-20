@@ -2,7 +2,7 @@
 #define RM_BEHAVIOR_TREE__PLUGINS__CONDITION__IS_DETECT_ENEMY_HPP_
 
 #include "behaviortree_cpp/condition_node.h"
-#include "rm_decision_interfaces/msg/rmul.hpp"
+// is_detect_enemy 直接从黑板读 bool，无需引入 msg 头文件
 
 namespace rm_behavior_tree
 {
@@ -24,7 +24,7 @@ public:
 
   static BT::PortsList providedPorts()
   {
-    return {BT::InputPort<std::shared_ptr<rm_decision_interfaces::msg::RMUL>>("message")};
+    return {BT::InputPort<bool>("message")};
   }
 };
 }  // namespace rm_behavior_tree

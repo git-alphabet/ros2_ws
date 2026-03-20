@@ -37,66 +37,66 @@
                         <!-- 中血量战斗逻辑 (200 ≤ HP < 300) -->
                         <SubTree ID="MediumHPCombatLogic" _autoremap="true"/>
 
-                        <!-- 非战斗时刻占点逻辑 -->
-                        <ReactiveFallback>
-                            <!-- 低血量：回补给区回血（补给区占领：每秒回 25% 上限血量） -->
-                            <ReactiveSequence>
-                                <IsHPBelow message="{robot_status}" hp_threshold="200"/>
-
-                                <RateController hz="1">
-                                    <SendGoal name="GoSupplyToHeal"
-                                            goal_x="0.21"
-                                            goal_y="-0.32"
-                                            frame_id="map"
-                                            action_name="navigate_to_pose"/>
-                                </RateController>
-
-                                <!-- 到达补给区后的 RFID 感应 + 微调（实车用，仿真中注释掉避免 current_location 缺失导致来回跳）-->
-                                <IsAtNavGoal nav_status="{rfid_status}"/>
-                                <ReactiveFallback>
-                                    <IsSupplyCardDetected rfid_status="{rfid_status}"/>
-                                    <MoveAround expected_nearby_goal_count="5"
-                                                expected_dis="0.3"
+                        <!-- 低血量(<200)：无条件回补给区回血 -->
+                        <ReactiveSequence>
+                            <IsHPBelow message="{robot_status}" hp_threshold="200"/>
+                            <RateController hz="1">
+                                <SendGoal name="GoSupplyToHeal"
+                                        goal_x="{cfg.supply_goal_x}"
+                                        goal_y="{cfg.supply_goal_y}"
+                                        frame_id="map"
+                                        action_name="navigate_to_pose"
+                                        min_interval_ms="5000"/>
+                            </RateController>
+                            <Fallback>
+                                <!-- 正常到达补给区 → RFID 感应 + 微调 -->
+                                <Sequence>
+                                    <IsAtNavGoal nav_status="{nav.is_at_goal}"/>
+                                    <ReactiveFallback>
+                                        <IsSupplyCardDetected rfid_status="{rfid.status}"/>
+                                        <MoveAround expected_nearby_goal_count="5"
+                                                    expected_dis="0.3"
+                                                    message="{current_location}"/>
+                                    </ReactiveFallback>
+                                </Sequence>
+                                <!-- Recovery: 导航超时(25s) → 随机移动脱困后继续回补给 -->
+                                <Sequence>
+                                    <IsNavTimeout timeout_sec="25.0"
+                                                  nav_status="{nav.is_at_goal}"/>
+                                    <GetCurrentLocation current_location="{current_location}"/>
+                                    <MoveAround expected_nearby_goal_count="3"
+                                                expected_dis="0.5"
                                                 message="{current_location}"/>
-                                </ReactiveFallback>
-                                
-                            </ReactiveSequence>
-
-                            <!-- 抢控制区：对方每秒-1胜利点；离开后延迟2s失效 -->
-                            <ReactiveSequence>
-                                <RateController hz="1">
-                                    <SendGoal name="GoControlZone"
-                                            goal_x="5.13"
-                                            goal_y="-3.94"
-                                            frame_id="map"
-                                            action_name="navigate_to_pose"/>
-                                </RateController>
-
-                                <!-- 到达控制区后的 RFID 感应 + 微调（实车用，仿真中注释掉）-->
-                                <IsAtNavGoal nav_status="{rfid_status}"/>
-                                <ReactiveFallback>
-                                    <IsControlZoneDetected rfid_status="{rfid_status}"/>
-                                    <MoveAround expected_nearby_goal_count="5"
-                                                expected_dis="0.3"
-                                                message="{current_location}"/>
-                                </ReactiveFallback>
-                            </ReactiveSequence>
-
-                        </ReactiveFallback>
+                                </Sequence>
+                            </Fallback>
+                        </ReactiveSequence>
 
                     </Fallback>
                 </Fallback>
                 <!-- 非比赛阶段停止云台和旋转，回家 -->
                 <ReactiveSequence>
-                        <RateController hz="1">
+                    <RateController hz="1">
                         <SendGoal name="Home"
-                            goal_x="0.0"
-                            goal_y="0.0"
+                            goal_x="{cfg.home_goal_x}"
+                            goal_y="{cfg.home_goal_y}"
                             frame_id="map"
-                            action_name="navigate_to_pose"/>
+                            action_name="navigate_to_pose"
+                            min_interval_ms="5000"/>
                     </RateController>
                     <RobotControl stop_gimbal_scan="True"
                                     chassis_spin="False"/>
+                    <!-- Recovery: 回家超时(30s) → 随机移动脱困 -->
+                    <Fallback>
+                        <IsAtNavGoal nav_status="{nav.is_at_goal}"/>
+                        <Sequence>
+                            <IsNavTimeout timeout_sec="30.0"
+                                          nav_status="{nav.is_at_goal}"/>
+                            <GetCurrentLocation current_location="{current_location}"/>
+                            <MoveAround expected_nearby_goal_count="3"
+                                        expected_dis="0.5"
+                                        message="{current_location}"/>
+                        </Sequence>
+                    </Fallback>
                 </ReactiveSequence>
             </WhileDoElse>
         </Sequence>
@@ -106,10 +106,12 @@
     <TreeNodesModel>
         <Action ID="GetCurrentLocation" editable="true">
             <output_port name="current_location" default="{current_location}"/>
+            <input_port name="map_frame" default="map"/>
+            <input_port name="base_frame" default="gimbal_yaw"/>
         </Action>
-        <Action ID="IsDetectEnemy" editable="true">
-            <input_port name="message" default="{armors}"/>
-        </Action>
+        <Condition ID="IsDetectEnemy" editable="true">
+            <input_port name="message" default="{nav.is_detect_enemy}"/>
+        </Condition>
         <Action ID="MoveAround" editable="true">
             <input_port name="expected_nearby_goal_count" default="5"/>
             <input_port name="expected_dis" default="0.3"/>
@@ -150,12 +152,19 @@
             <output_port name="recovery_timeout_ms" default="{cfg.recovery_timeout_ms}"/>
             <output_port name="supply_goal_x" default="{cfg.supply_goal_x}"/>
             <output_port name="supply_goal_y" default="{cfg.supply_goal_y}"/>
+            <output_port name="control_goal_x" default="{cfg.control_goal_x}"/>
+            <output_port name="control_goal_y" default="{cfg.control_goal_y}"/>
+            <output_port name="home_goal_x" default="{cfg.home_goal_x}"/>
+            <output_port name="home_goal_y" default="{cfg.home_goal_y}"/>
             <output_port name="arrive_radius" default="{cfg.arrive_radius}"/>
         </Action>
         <Action ID="SubRobotPosition" editable="true">
             <input_port name="topic_name" default="/robot_position"/>
-            <output_port name="pose_x" default="{pose_x}"/>
-            <output_port name="pose_y" default="{pose_y}"/>
+            <input_port name="rob_topic_name" default="/robot_status"/>
+            <output_port name="pose_x" default="{pose.x}"/>
+            <output_port name="pose_y" default="{pose.y}"/>
+            <output_port name="is_at_nav_goal" default="{nav.is_at_goal}"/>
+            <output_port name="is_detect_enemy" default="{nav.is_detect_enemy}"/>
         </Action>
         <Action ID="KeepRunning" editable="true"/>
         <Action ID="CancelNavGoal" editable="true">
@@ -190,6 +199,8 @@
             <input_port name="timeout_ms" default="{cfg.search_timeout_ms}"/>
             <input_port name="rfid_status" default="{rfid.status}"/>
             <input_port name="rfid_supply_arrived" default="{rfid.supply_arrived}"/>
+            <input_port name="map_frame" default="map"/>
+            <input_port name="base_frame" default="chassis"/>
         </Action>
         <Action ID="WaitAndHeal" editable="true">
             <input_port name="now_ms" default="{time.now_ms}"/>
@@ -207,9 +218,6 @@
             <input_port name="cmd_type" default="0"/>
             <input_port name="emergency_stop" default="False"/>
         </Action>
-        <Condition ID="IsDetectEnemy" editable="true">
-            <input_port name="message" default="{robot_status}"/>
-        </Condition>
         <Condition ID="IsFriendOK" editable="true">
             <input_port name="message" default="{robot_status}"/>
         </Condition>
@@ -252,7 +260,12 @@
             <input_port name="rfid_status" default="{rfid.status}"/>
         </Condition>
         <Condition ID="IsAtNavGoal" editable="true">
-            <input_port name="nav_status" default="{rfid_status}"/>
+            <input_port name="nav_status" default="{nav.is_at_goal}"/>
+        </Condition>
+        <Condition ID="IsNavTimeout" editable="true">
+            <input_port name="timeout_sec" default="30.0"/>
+            <input_port name="nav_status" default="{nav.is_at_goal}"/>
+            <input_port name="now_ms" default="{time.now_ms}"/>
         </Condition>
         <Decorator ID="RateController" editable="true">
             <input_port name="hz" default="1.0"/>

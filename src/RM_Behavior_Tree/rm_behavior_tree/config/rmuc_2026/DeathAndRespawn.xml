@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ╔══════════════════════════════════════════════════════╗
+  ║  DEPRECATED — 此文件已被 RespawnRecovery.xml 替代     ║
+  ║  保留仅供参考，不被主树 include 或引用                   ║
+  ║  可安全删除  (2026-03-17 标记废弃)                     ║
+  ╚══════════════════════════════════════════════════════╝
+-->
 <root BTCPP_format="4">
 
     <BehaviorTree ID="DeathAndRespawn">

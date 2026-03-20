@@ -14,10 +14,17 @@
                         recovery_timeout_ms="{cfg.recovery_timeout_ms}"
                         supply_goal_x="{cfg.supply_goal_x}"
                         supply_goal_y="{cfg.supply_goal_y}"
+                        control_goal_x="{cfg.control_goal_x}"
+                        control_goal_y="{cfg.control_goal_y}"
+                        home_goal_x="{cfg.home_goal_x}"
+                        home_goal_y="{cfg.home_goal_y}"
                         arrive_radius="{cfg.arrive_radius}"/>
             <SubRobotPosition topic_name="/robot_position"
+                              rob_topic_name="/robot_status"
                               pose_x="{pose.x}"
-                              pose_y="{pose.y}"/>
+                              pose_y="{pose.y}"
+                              is_at_nav_goal="{nav.is_at_goal}"
+                              is_detect_enemy="{nav.is_detect_enemy}"/>
         </Sequence>
     </BehaviorTree>
 </root>

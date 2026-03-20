@@ -11,6 +11,11 @@
             <SelectBestTarget radar_tracks="{radar.tracks}"
                               pose_x="{pose.x}" pose_y="{pose.y}"
                               base_x="{cfg.base_buff_x}" base_y="{cfg.base_buff_y}"
+                              enemy_hero_vuln="{enemy.hero_vuln}"
+                              enemy_engi_vuln="{enemy.engi_vuln}"
+                              enemy_infantry3_vuln="{enemy.infantry3_vuln}"
+                              enemy_infantry4_vuln="{enemy.infantry4_vuln}"
+                              enemy_sentry_vuln="{enemy.sentry_vuln}"
                               out_target="{combat.best_target}"/>
             <!--
                 解析 best_target 的 "id:x:y"，发布 PointStamped 到 /aim_target 话题，
@@ -26,7 +31,10 @@
             -->
             <ReactiveFallback>
                 <IsFireWindowOk heat_cur="{heat.cur}" heat_high="{cfg.heat_high}"
-                                ammo_allow="{ammo.allow}" is_weak="{state.is_weak}"/>
+                                ammo_allow="{ammo.allow}" robot_status="{robot_status}"
+                                current_posture="{sentry.current_posture}"
+                                buff_cool_value="{buff.cool_value}"
+                                buff_vulnerability_pct="{buff.vulnerability_pct}"/>
                 <RmucRobotControl fire_enable="False"/>
             </ReactiveFallback>
 

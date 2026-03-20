@@ -1,0 +1,36 @@
+# ============================================================
+# RMUL 2026 行为树导航坐标配置
+# ============================================================
+# 使用方法:
+#   1. 在 RViz2 中用 "Publish Point" 工具点击目标位置，读取坐标
+#   2. 将坐标填写到下方对应字段
+#   3. 重启行为树节点即可生效（无需重新编译）
+#
+# 参数数据流：bt_config.yaml → launch 文件 → rm_behavior_tree 主节点 → 转发到 update_msg 节点 → InitBlackboardConfig 读取 → 写入黑板 {cfg.*} → XML SendGoal 引用
+#
+# 坐标系: map frame
+# ============================================================
+rm_behavior_tree:
+  ros__parameters:
+    # --- 补给区坐标 (血量低时回血的目标点) ---
+    supply_goal_x: 0.21
+    supply_goal_y: -0.32
+
+    # --- 控制区坐标 (高血量时巡逻占点的目标点) ---
+    control_goal_x: 5.13
+    control_goal_y: -3.94
+
+    # --- 家点坐标 (非比赛阶段回家的目标点) ---
+    home_goal_x: 0.0
+    home_goal_y: 0.0
+
+    # --- 到达判定半径 (m) ---
+    arrive_radius: 0.6
+
+    # --- 回血参数 ---
+    heal_wait_ms: 2000          # 补给区等待回血时间 (ms)
+    heal_min_ratio: 0.60        # 回血到血量比例后离开 (0.0~1.0)
+
+    # --- 超时参数 ---
+    search_timeout_ms: 3000     # 补给卡搜索超时 (ms)
+    recovery_timeout_ms: 15000  # 恢复模式总超时 (ms)

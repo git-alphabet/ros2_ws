@@ -76,17 +76,8 @@ bool RmucMicroSearchSupplyCardAction::getCurrentPose_(
 BT::NodeStatus RmucMicroSearchSupplyCardAction::onStart()
 {
   // 如果已经刷到卡，直接 SUCCESS
-  bool arrived = false;
-  if (getInput<bool>("rfid_supply_arrived", arrived) && arrived) {
-    return BT::NodeStatus::SUCCESS;
-  }
-  if (!arrived) {
-    auto rfid_msg = getInput<rm_decision_interfaces::msg::RMUCRFIDStatus>("rfid_status");
-    if (rfid_msg && rfid_msg.value().rfid_supply) {
-      arrived = true;
-    }
-  }
-  if (arrived) {
+  auto rfid_msg = getInput<rm_decision_interfaces::msg::RMUCRFIDStatus>("rfid_status");
+  if (rfid_msg && rfid_msg.value().rfid_supply) {
     return BT::NodeStatus::SUCCESS;
   }
 
@@ -137,17 +128,8 @@ void RmucMicroSearchSupplyCardAction::publishNextGoal_(
 BT::NodeStatus RmucMicroSearchSupplyCardAction::onRunning()
 {
   // 检查刷卡
-  bool arrived = false;
-  if (getInput<bool>("rfid_supply_arrived", arrived) && arrived) {
-    return BT::NodeStatus::SUCCESS;
-  }
-  if (!arrived) {
-    auto rfid_msg = getInput<rm_decision_interfaces::msg::RMUCRFIDStatus>("rfid_status");
-    if (rfid_msg && rfid_msg.value().rfid_supply) {
-      arrived = true;
-    }
-  }
-  if (arrived) {
+  auto rfid_msg = getInput<rm_decision_interfaces::msg::RMUCRFIDStatus>("rfid_status");
+  if (rfid_msg && rfid_msg.value().rfid_supply) {
     return BT::NodeStatus::SUCCESS;
   }
 

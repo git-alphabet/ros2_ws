@@ -34,8 +34,7 @@ public:
     return {
       BT::BidirectionalPort<std::uint64_t>("search_start_ms"),
       BT::InputPort<std::uint64_t>("timeout_ms"),
-      BT::InputPort<rm_decision_interfaces::msg::RMUCRFIDStatus>("rfid_status"),
-      BT::InputPort<bool>("rfid_supply_arrived")
+      BT::InputPort<rm_decision_interfaces::msg::RMUCRFIDStatus>("rfid_status")
     };
   }
 

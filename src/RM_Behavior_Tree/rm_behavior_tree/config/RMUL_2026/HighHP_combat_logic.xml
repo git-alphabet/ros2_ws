@@ -24,12 +24,15 @@
              分支 A: 检测到敌人 → 进入交战状态
              ══════════════════════════════════════════════════════════ -->
         <ReactiveSequence>
-          <IsDetectEnemy message="{robot_status}"/>
+          <IsDetectEnemy message="{nav.is_detect_enemy}"/>
+          <!-- 检测到敌人：立刻取消 Nav2 导航目标，避免底盘仍被 Nav2 控制与停车指令冲突 -->
+          <CancelNavGoal action_name="navigate_to_pose" min_interval_ms="2000"/>
 
           <Fallback>
-            <!-- A-1: 热量安全(≤280) → 刹车+原地，停云台扫描让自瞄接管，开小陀螺
+            <!-- A-1: 热量安全(≤280) → 刹车+原地，开小陀螺
                  说明: 机器人停止移动以最大化射击精度，
-                       小陀螺提供被动防护减少受弹面积 -->
+                       停止云台扫描让瞄准程序接管，
+                       小陀螺提供被动防护 -->
             <Sequence>
               <IsStatusOK message="{robot_status}"
                           hp_threshold="0"
@@ -57,21 +60,43 @@
         <!-- ══════════════════════════════════════════════════════════
              分支 B: 未检测到敌人 → 主动巡逻+占控制区
              ══════════════════════════════════════════════════════════ -->
-        <Sequence>
-          <!-- 保持云台扫描搜敌，开小陀螺防被偷袭 -->
+        <ReactiveSequence>
+          <!-- 保持云台扫描搜敌 -->
           <RobotControl stop_gimbal_scan="False"
-                        chassis_spin="True"/>
+                        chassis_spin="False"/>
           <!-- 允许导航移动 -->
           <NavControlCmd cmd_type="1" emergency_stop="False"/>
           <!-- 前往控制区巡逻: 高血量时优先争夺控制区获取战略优势 -->
           <RateController hz="1">
             <SendGoal name="PatrolControlZone"
-                      goal_x="5.13"
-                      goal_y="-3.94"
+                      goal_x="{cfg.control_goal_x}"
+                      goal_y="{cfg.control_goal_y}"
                       frame_id="map"
-                      action_name="navigate_to_pose"/>
+                      action_name="navigate_to_pose"
+                      min_interval_ms="5000"/>
           </RateController>
-        </Sequence>
+          <Fallback>
+            <!-- 正常到达控制区 → RFID 感应 + 微调 -->
+            <Sequence>
+              <IsAtNavGoal nav_status="{nav.is_at_goal}"/>
+              <ReactiveFallback>
+                <IsControlZoneDetected rfid_status="{rfid.status}"/>
+                <MoveAround expected_nearby_goal_count="5"
+                            expected_dis="0.3"
+                            message="{current_location}"/>
+              </ReactiveFallback>
+            </Sequence>
+            <!-- Recovery: 导航超时(30s未到达) → 随机移动脱困 -->
+            <Sequence>
+              <IsNavTimeout timeout_sec="30.0"
+                            nav_status="{nav.is_at_goal}"/>
+              <GetCurrentLocation current_location="{current_location}"/>
+              <MoveAround expected_nearby_goal_count="3"
+                          expected_dis="0.5"
+                          message="{current_location}"/>
+            </Sequence>
+          </Fallback>
+        </ReactiveSequence>
 
       </Fallback>
     </ReactiveSequence>

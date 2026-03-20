@@ -2,7 +2,7 @@
 <root BTCPP_format="4">
 
     <BehaviorTree ID="PatrolAndScan">
-        <Sequence>
+        <ReactiveSequence>
             <RmucRobotControl stop_gimbal_scan="False"
                               chassis_spin="False"
                               fire_enable="False"/>
@@ -17,7 +17,7 @@
                           frame_id="map" action_name="navigate_to_pose"/>
             </RateController>
             <KeepRunning/>
-        </Sequence>
+        </ReactiveSequence>
     </BehaviorTree>
 
 </root>

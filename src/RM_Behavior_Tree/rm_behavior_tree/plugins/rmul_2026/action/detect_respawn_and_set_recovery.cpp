@@ -9,7 +9,7 @@ DetectRespawnAndSetRecoveryAction::DetectRespawnAndSetRecoveryAction(
   const std::string & name,
   const BT::NodeConfig & conf,
   const BT::RosNodeParams & params)
-: BT::RosTopicSubNode<rm_decision_interfaces::msg::RMUL>(name, conf, params),
+: BT::RosTopicSubNode<rm_decision_interfaces::msg::RMULRob>(name, conf, params),
   alive_stable_frames_(0),
   respawn_locked_(false),
   last_respawn_ms_(0),
@@ -36,15 +36,15 @@ DetectRespawnAndSetRecoveryAction::DetectRespawnAndSetRecoveryAction(
     if (sub_instance_) {
       // connect to the shared broadcaster
       fallback_signal_conn_ = sub_instance_->broadcaster.connect(
-        [this](const std::shared_ptr<rm_decision_interfaces::msg::RMUL> msg) {
+        [this](const std::shared_ptr<rm_decision_interfaces::msg::RMULRob> msg) {
           this->fallback_last_msg_ = msg;
         });
       RCLCPP_DEBUG(node_->get_logger(), "Attached fallback to shared broadcaster for topic %s", topic.c_str());
     } else {
       // fallback to a standalone subscription (may require the node to be spun)
       rclcpp::SubscriptionOptions opts;
-      fallback_sub_ = node_->create_subscription<rm_decision_interfaces::msg::RMUL>(
-        topic, 10, [this](const std::shared_ptr<rm_decision_interfaces::msg::RMUL> msg) {
+      fallback_sub_ = node_->create_subscription<rm_decision_interfaces::msg::RMULRob>(
+        topic, 10, [this](const std::shared_ptr<rm_decision_interfaces::msg::RMULRob> msg) {
           this->fallback_last_msg_ = msg;
         }, opts);
       RCLCPP_DEBUG(node_->get_logger(), "Fallback subscriber created for topic %s", topic.c_str());
@@ -73,7 +73,7 @@ DetectRespawnAndSetRecoveryAction::~DetectRespawnAndSetRecoveryAction()
 }
 
 BT::NodeStatus DetectRespawnAndSetRecoveryAction::onTick(
-  const std::shared_ptr<rm_decision_interfaces::msg::RMUL> & last_msg)
+  const std::shared_ptr<rm_decision_interfaces::msg::RMULRob> & last_msg)
 {
   // If the shared SubscriberInstance becomes available after construction,
   // attach our fallback listener to its broadcaster so we reliably receive
@@ -81,7 +81,7 @@ BT::NodeStatus DetectRespawnAndSetRecoveryAction::onTick(
   try {
     if (!fallback_signal_conn_.connected() && sub_instance_ && node_) {
       fallback_signal_conn_ = sub_instance_->broadcaster.connect(
-        [this](const std::shared_ptr<rm_decision_interfaces::msg::RMUL> msg) {
+        [this](const std::shared_ptr<rm_decision_interfaces::msg::RMULRob> msg) {
           this->fallback_last_msg_ = msg;
         });
       RCLCPP_DEBUG(node_->get_logger(), "Deferred attach of fallback to shared broadcaster");
@@ -118,7 +118,8 @@ BT::NodeStatus DetectRespawnAndSetRecoveryAction::onTick(
   }
 
   if (!got_hp) {
-    RCLCPP_WARN(node_->get_logger(), "未获取到机器人血量，跳过复活沿检测");
+    RCLCPP_WARN_THROTTLE(node_->get_logger(), *node_->get_clock(), 5000,
+      "未获取到机器人血量，跳过复活沿检测");
     // 即使跳过检测，也要保证 need_recovery 键存在于黑板中，
     // 否则下游 IsRecoveryNeeded 节点会因找不到该键而抛异常崩溃
     setOutput("need_recovery", false);

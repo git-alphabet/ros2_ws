@@ -10,12 +10,12 @@ WaitAndHealAction::WaitAndHealAction(
   const std::string & name,
   const BT::NodeConfig & conf,
   const BT::RosNodeParams & params)
-: BT::RosTopicSubNode<rm_decision_interfaces::msg::RMUL>(name, conf, params)
+: BT::RosTopicSubNode<rm_decision_interfaces::msg::RMULRob>(name, conf, params)
 {
 }
 
 BT::NodeStatus WaitAndHealAction::onTick(
-  const std::shared_ptr<rm_decision_interfaces::msg::RMUL> & last_msg)
+  const std::shared_ptr<rm_decision_interfaces::msg::RMULRob> & last_msg)
 {
   // 1) 更新血量缓存（仅当有新消息）
   if (last_msg) {

@@ -7,7 +7,8 @@
             <IsBaseThreatened base_threat="{threat.base}"
                               base_hp_cur="{base.hp.cur}"
                               base_hp_max="{base.hp.max}"
-                              enemy_near_base_radius="{cfg.enemy_near_base_radius}"/>
+                              enemy_near_base_radius="{cfg.enemy_near_base_radius}"
+                              outpost_alive="{outpost.alive}"/>
             <!-- 开启云台跟踪和开火，关闭底盘旋转，进入防御战斗状态 -->
             <RmucRobotControl stop_gimbal_scan="False"
                               chassis_spin="False"

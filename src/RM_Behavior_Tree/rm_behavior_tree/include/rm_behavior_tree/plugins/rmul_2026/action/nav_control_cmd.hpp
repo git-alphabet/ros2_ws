@@ -4,12 +4,12 @@
 #include <string>
 
 #include "behaviortree_ros2/bt_topic_pub_node.hpp"
-#include "rm_decision_interfaces/msg/rmul.hpp"
+#include "rm_decision_interfaces/msg/rmul_nav.hpp"
 
 namespace rm_behavior_tree
 {
 
-class NavControlCmdAction : public BT::RosTopicPubNode<rm_decision_interfaces::msg::RMUL>
+class NavControlCmdAction : public BT::RosTopicPubNode<rm_decision_interfaces::msg::RMULNav>
 {
 public:
   NavControlCmdAction(
@@ -17,7 +17,7 @@ public:
     const BT::NodeConfig & conf,
     const BT::RosNodeParams & params);
 
-  bool setMessage(rm_decision_interfaces::msg::RMUL & msg) override;
+  bool setMessage(rm_decision_interfaces::msg::RMULNav & msg) override;
 
   static BT::PortsList providedPorts()
   {

@@ -1,5 +1,6 @@
 #include "rm_behavior_tree/plugins/rmuc_2026/action/sub_robot_position.hpp"
 #include "behaviortree_ros2/plugins.hpp"
+#include <cmath>
 
 namespace rm_behavior_tree
 {
@@ -42,6 +43,22 @@ BT::NodeStatus RmucSubRobotPositionAction::tick()
   setOutput("pose_y", pose_y_);
   setOutput("pose_yaw", pose_yaw_);
   setOutput("is_at_nav_goal", is_at_nav_goal_);
+
+  // 组装 TransformStamped 供 MoveAround 等节点使用
+  geometry_msgs::msg::TransformStamped tf;
+  tf.header.frame_id = "map";
+  tf.child_frame_id = "chassis";
+  tf.transform.translation.x = pose_x_;
+  tf.transform.translation.y = pose_y_;
+  tf.transform.translation.z = 0.0;
+  // 从 yaw 构造 quaternion (roll=0, pitch=0)
+  const double half_yaw = pose_yaw_ * 0.5;
+  tf.transform.rotation.x = 0.0;
+  tf.transform.rotation.y = 0.0;
+  tf.transform.rotation.z = std::sin(half_yaw);
+  tf.transform.rotation.w = std::cos(half_yaw);
+  setOutput("pose", tf);
+
   return BT::NodeStatus::SUCCESS;
 }
 

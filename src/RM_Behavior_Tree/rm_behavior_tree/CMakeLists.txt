@@ -25,6 +25,10 @@ set(PACKAGE_INCLUDE_DEPENDS
     std_msgs
     behaviortree_cpp
     behaviortree_ros2
+    geometry_msgs
+    tf2
+    tf2_ros
+    tf2_geometry_msgs
 )
 
 # 定义宏函数 add_target_dependencies
@@ -164,6 +168,35 @@ ament_auto_add_library(rmuc_sub_radar_tracks SHARED
     plugins/rmuc_2026/action/sub_radar_tracks.cpp)
 add_target_dependencies(rmuc_sub_radar_tracks)
 
+# ── P0 新增: 7 个裁判系统话题订阅插件 ──
+ament_auto_add_library(rmuc_sub_sentry_decision_status SHARED
+    plugins/rmuc_2026/action/sub_sentry_decision_status.cpp)
+add_target_dependencies(rmuc_sub_sentry_decision_status)
+
+ament_auto_add_library(rmuc_sub_robot_buff SHARED
+    plugins/rmuc_2026/action/sub_robot_buff.cpp)
+add_target_dependencies(rmuc_sub_robot_buff)
+
+ament_auto_add_library(rmuc_sub_projectile_allowance SHARED
+    plugins/rmuc_2026/action/sub_projectile_allowance.cpp)
+add_target_dependencies(rmuc_sub_projectile_allowance)
+
+ament_auto_add_library(rmuc_sub_field_status SHARED
+    plugins/rmuc_2026/action/sub_field_status.cpp)
+add_target_dependencies(rmuc_sub_field_status)
+
+ament_auto_add_library(rmuc_sub_enemy_mark SHARED
+    plugins/rmuc_2026/action/sub_enemy_mark.cpp)
+add_target_dependencies(rmuc_sub_enemy_mark)
+
+ament_auto_add_library(rmuc_sub_team_positions SHARED
+    plugins/rmuc_2026/action/sub_team_positions.cpp)
+add_target_dependencies(rmuc_sub_team_positions)
+
+ament_auto_add_library(rmuc_sub_team_hp SHARED
+    plugins/rmuc_2026/action/sub_team_hp.cpp)
+add_target_dependencies(rmuc_sub_team_hp)
+
 ament_auto_add_library(rmuc_parse_sentry_blackboard SHARED
     plugins/rmuc_2026/action/parse_sentry_blackboard.cpp)
 add_target_dependencies(rmuc_parse_sentry_blackboard)
@@ -223,10 +256,7 @@ ament_auto_add_library(rmuc_hold_for_supply_ammo_tick SHARED
     plugins/rmuc_2026/action/hold_for_supply_ammo_tick.cpp)
 add_target_dependencies(rmuc_hold_for_supply_ammo_tick)
 
-ament_auto_add_library(rmuc_select_nearest_resupply_station SHARED
-    plugins/rmuc_2026/action/select_nearest_resupply_station.cpp)
-add_target_dependencies(rmuc_select_nearest_resupply_station)
-
+# select_nearest_resupply_station 已合并入 rmuc_select_nearest_dispel_card，不需独立建库
 ament_auto_add_library(rmuc_select_nearest_dispel_card SHARED
     plugins/rmuc_2026/action/select_nearest_dispel_card.cpp)
 add_target_dependencies(rmuc_select_nearest_dispel_card)
@@ -268,6 +298,14 @@ add_target_dependencies(rmuc_is_combat_allowed)
 ament_auto_add_library(rmuc_is_fire_window_ok SHARED
     plugins/rmuc_2026/condition/is_fire_window_ok.cpp)
 add_target_dependencies(rmuc_is_fire_window_ok)
+
+ament_auto_add_library(rmuc_should_chassis_spin SHARED
+    plugins/rmuc_2026/condition/should_chassis_spin.cpp)
+add_target_dependencies(rmuc_should_chassis_spin)
+
+ament_auto_add_library(rmuc_is_weakness SHARED
+    plugins/rmuc_2026/condition/is_weakness.cpp)
+add_target_dependencies(rmuc_is_weakness)
 
 ament_auto_add_library(rmuc_is_at_goal SHARED
     plugins/rmuc_2026/condition/is_at_goal.cpp)
@@ -393,11 +431,6 @@ ament_auto_add_library(micro_search_supply_card SHARED
 )
 add_target_dependencies(micro_search_supply_card)
 
-ament_auto_add_library(navigate_to_goal SHARED 
-    plugins/rmul_2026/condition/navigate_to_goal.cpp
-)
-add_target_dependencies(navigate_to_goal)
-
 ament_auto_add_library(sub_robot_position SHARED 
     plugins/rmul_2026/action/sub_robot_position.cpp
 )
@@ -417,6 +450,11 @@ ament_auto_add_library(is_at_nav_goal SHARED
     plugins/rmul_2026/condition/is_at_nav_goal.cpp
 )
 add_target_dependencies(is_at_nav_goal)
+
+ament_auto_add_library(is_nav_timeout SHARED 
+    plugins/rmul_2026/condition/is_nav_timeout.cpp
+)
+add_target_dependencies(is_nav_timeout)
 
 ament_auto_add_library(keep_running SHARED 
     plugins/rmul_2026/action/keep_running.cpp
