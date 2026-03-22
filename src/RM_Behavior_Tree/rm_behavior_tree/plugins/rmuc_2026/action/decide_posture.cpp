@@ -22,10 +22,10 @@ BT::NodeStatus DecidePostureAction::tick()
   int cool_val = 0, def_pct = 0, vuln_pct = 0;
   int ammo = 300;
 
-  getInput("hp_cur", hp);
-  getInput("hp_max", hp_max);
-  getInput("heat_cur", heat);
-  getInput("heat_high", heat_high);
+  getInput("hp_cur", hp); // 当前血量。低血量(< 30%) → 强烈偏防御(+25)；高血量(> 70%) → 略偏进攻(+8)
+  getInput("hp_max", hp_max); // 最大血量。与 hp_cur 算比值 hp_ratio = hp_cur / hp_max
+  getInput("heat_cur", heat); // 当前枪口热量。热量快满(> 85%) → 偏防御冷却(+15)；热量低+有目标 → 偏进攻(+10)
+  getInput("heat_high", heat_high); // 枪口热量上限。与 heat_cur 算比值 heat_ratio = heat_cur / heat_high
   getInput("has_target", has_target);
   getInput("base_threat", base_threat);
   getInput("is_disengaged", disengaged);
