@@ -1769,9 +1769,9 @@ private:
 
     void initialize_publishers() {
         #ifdef ROS2
-            // Small data with queue depth 1
+            // Small data with queue depth 1, BEST_EFFORT to avoid DDS congestion with lifecycle service calls
             auto qos_small = rclcpp::QoS(1)
-                                    .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+                                    .reliability(RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
                                     .durability(RMW_QOS_POLICY_DURABILITY_VOLATILE);
 
             // Large sensor data with larger queue to avoid blocking
