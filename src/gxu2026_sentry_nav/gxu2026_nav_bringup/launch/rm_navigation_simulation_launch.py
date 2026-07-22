@@ -197,6 +197,12 @@ def generate_launch_description():
 
     # Add the actions to launch all of the navigation nodes
     ld.add_action(start_velodyne_convert_tool)
+
+    # 启动进程管理器（常驻后台，负责自动清理和自动保存地图）
+    from process_manager_utils import create_process_manager_node
+    start_process_manager_cmd = create_process_manager_node(bringup_dir, "sim")
+    ld.add_action(start_process_manager_cmd)
+
     ld.add_action(bringup_cmd)
     ld.add_action(joy_teleop_cmd)
     ld.add_action(rviz_cmd)
