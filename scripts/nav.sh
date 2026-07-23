@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# 建图启动脚本
+# 导航启动脚本
 # 支持 --sim 和 --reality 参数选择模式，默认使用 reality 模式
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -46,11 +46,11 @@ export __GLX_VENDOR_LIBRARY_NAME=nvidia
 # 根据模式选择 launch 文件
 if [ "$MODE" = "sim" ]; then
   LAUNCH_FILE="rm_navigation_simulation_launch.py"
-  echo "[mapping.sh] 启动仿真建图模式"
+  echo "[nav.sh] 启动仿真导航模式"
 else
   LAUNCH_FILE="rm_navigation_reality_launch.py"
-  echo "[mapping.sh] 启动实车建图模式"
+  echo "[nav.sh] 启动实车导航模式"
 fi
 
-# 启动 launch（建图模式需要 slam:=True）
-exec ros2 launch gxu2026_nav_bringup "$LAUNCH_FILE" slam:=True "${LAUNCH_ARGS[@]}"
+# 启动 launch
+exec ros2 launch gxu2026_nav_bringup "$LAUNCH_FILE" "${LAUNCH_ARGS[@]}"
