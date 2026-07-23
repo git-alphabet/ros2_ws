@@ -14,11 +14,23 @@ docker exec -it <container_name> bash
 # Execute quick build script
 ./scripts/quick_build.sh
 
-# Start SLAM mapping mode
+# Start SLAM mapping mode (default: reality mode)
 ./scripts/mapping.sh
 
-# Start relocation & navigation mode (without SLAM mapping)
+# Start SLAM mapping mode (simulation)
+./scripts/mapping.sh --sim
+
+# Start SLAM mapping mode (reality)
+./scripts/mapping.sh --reality
+
+# Start relocation & navigation mode (default: reality mode)
 ./scripts/nav.sh
+
+# Start relocation & navigation mode (simulation)
+./scripts/nav.sh --sim
+
+# Start relocation & navigation mode (reality)
+./scripts/nav.sh --reality
 Core Constraints &amp; Specifications
 - Container Isolation Rule: All Git operations are executed on the host machine. All other compilation, execution and debugging operations must be completed inside the container with thedocker exec prefix.
 - Branch Isolation Rule: The .buildcache directory stores build artifacts of different branches to realize isolated build environments.
