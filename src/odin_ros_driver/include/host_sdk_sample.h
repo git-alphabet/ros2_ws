@@ -1264,7 +1264,7 @@ void publishRgb(capture_Image_List_t *stream) {
 #endif
         
             msg.header.frame_id = "odom";
-            msg.child_frame_id = "imu";
+            msg.child_frame_id = "base_footprint";
 
             //RCLCPP_INFO(rclcpp::get_logger("device_cb"), "odom %ld",odom_data->timestamp_ns);
 
@@ -1356,7 +1356,7 @@ void publishRgb(capture_Image_List_t *stream) {
                         geometry_msgs::msg::TransformStamped transformStamped;
                         transformStamped.header.stamp = msg.header.stamp;
                         transformStamped.header.frame_id = "odom";
-                        transformStamped.child_frame_id = "imu";
+                        transformStamped.child_frame_id = "base_footprint";
                         transformStamped.transform.translation.x = msg.pose.pose.position.x;
                         transformStamped.transform.translation.y = msg.pose.pose.position.y;
                         transformStamped.transform.translation.z = msg.pose.pose.position.z;
@@ -1552,7 +1552,7 @@ void publishRgb(capture_Image_List_t *stream) {
                         geometry_msgs::TransformStamped transformStamped;
                         transformStamped.header.stamp = msg.header.stamp;
                         transformStamped.header.frame_id = "odom";
-                        transformStamped.child_frame_id = "imu";
+                        transformStamped.child_frame_id = "base_footprint";
                         transformStamped.transform.translation.x = msg.pose.pose.position.x;
                         transformStamped.transform.translation.y = msg.pose.pose.position.y;
                         transformStamped.transform.translation.z = msg.pose.pose.position.z;
