@@ -4,225 +4,122 @@ GXU RobotZ 2026 赛季 ROS 2 (Humble) 导航工作空间 —— RoboMaster 哨�
 
 - Nav2 实车导航与建图（odin1 分支，无仿真）
 - 双 LiDAR 3D 点云融合（odin1 + mid360）
-- Docker 容器开发，多分支构建缓存隔离
+- Docker 容器开发
 
-> 导航主代码位于 `src/gxu2026_sentry_nav/`，包级说明见各子包 README。
-
----
-
-## 1. 环境要求
-
-| 项目 | 要求 |
-|------|------|
-| OS | Ubuntu 22.04 |
-| ROS 2 | Humble |
-| 构建工具 | colcon, rosdep |
-| 容器 | Docker + docker compose |
+导航主代码在 `src/gxu2026_sentry_nav/`。
 
 ---
 
-## 2. 目录结构
+## 环境
+
+- Ubuntu 22.04 + ROS 2 Humble
+- Docker + docker compose
+- colcon, rosdep
+
+---
+
+## 目录
 
 ```text
-src/              ROS 2 packages
-scripts/          启动/构建/诊断脚本
-docker/           Dockerfile + compose 文件
-maps/             自动保存的地图（容器生成，宿主机可见）
-bags/             录包数据
-launch_logs/      启动日志
-.buildcache/      多分支构建缓存（按分支名隔离）
+src/          ROS 2 包（导航主代码在 gxu2026_sentry_nav/）
+scripts/      启动/构建/诊断脚本
+docker/       compose 文件（注意：里面的 Dockerfile 用不了，镜像走 DockerHub pull）
+maps/         地图（容器生成，宿主机可见）
+bags/         录包数据
 ```
 
 ---
 
-## 3. 快速开始
+## 快速开始
 
-### 3.1 构建环境镜像（一次性）
+1. 环境镜像：直接从 DockerHub pull（已经帮你 pull 好了）。仓库里的 Dockerfile 用不了，不要去 build。
 
-```bash
-docker compose -f docker/compose.build.yml build
-```
+2. 启动开发容器：用 VS Code 的 **Container Tools** 插件，右键 `docker/compose.dev.yml` → **Compose Up**，选 profile（已经配好）：
+   - `laptop` — 笔记本（有 GPU）
+   - `robot` — 小电脑实车（无 GPU）
 
-### 3.2 启动开发容器
+   容器只提供环境，代码和构建产物都是从宿主机挂载进去的（没有用 devcontainer）。
 
-```bash
-# 笔记本（有 GPU）
-docker compose -f docker/compose.dev.yml --profile laptop up dev-laptop
-
-# 小电脑实车（无 GPU）
-docker compose -f docker/compose.dev.yml --profile robot up dev-robot
-```
-
-Container Tools UI：右键 `docker/compose.dev.yml` → Compose Up，选对应服务。
-
-### 3.3 容器内构建
+3. 容器内构建：
 
 ```bash
-colcon build --symlink-install
-```
-
-首次构建用 `complete_build.sh`（串行，稳定），日常用 `quick_build.sh`（并行）：
-
-```bash
-./scripts/complete_build.sh
 ./scripts/quick_build.sh
 ```
 
 ---
 
-## 4. 运行
-
-### 导航（重定位模式）
+## 运行
 
 ```bash
-./scripts/nav.sh
+./scripts/nav.sh        # 导航（重定位模式，custom_map_mode=2）
+./scripts/mapping.sh    # 建图（custom_map_mode=1）
+
+./scripts/bag_nav.sh            # 导航 bag 回放
+./scripts/bag_odin1_mapping.sh  # 建图 bag 回放
 ```
 
-默认参数：`odin_map_mode:=2`（重定位），`slam:=False`。
+停止：正常情况在启动终端 **Ctrl+C** 即可。只有终端已经关掉、进程还在时才用 `./scripts/stop_launch.sh` 收尾。
 
-环境变量覆盖：
-
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `ODIN_MODE_PRESET` | 2 | odin 驱动模式（1=SLAM, 2=重定位） |
-| `NAV2_TF_WARMUP_ENABLED` | False | TF 预热开关 |
-| `NAV2_TF_WARMUP_TIMEOUT_SEC` | 30.0 | TF 预热超时 |
-
-### 建图
-
-```bash
-./scripts/mapping.sh
-```
-
-默认参数：`slam:=True`，`ODIN_MODE_PRESET=1`。
-
-### 停止
-
-```bash
-./scripts/stop_launch.sh
-```
-
-### Bag 回放
-
-```bash
-./scripts/bag_nav.sh               # 导航回放
-./scripts/bag_odin1_mapping.sh     # 建图回放
-```
-
-### 其他
-
-```bash
-./scripts/rmuc_map_calib.sh        # RMUC 地图标定
-./scripts/rmuc_test_publisher.py   # RMUC 测试话题发布
-```
+odin 驱动模式由 `custom_map_mode` 决定（建图=1，重定位导航=2）。脚本会自动覆盖这个参数，所以用 `mapping.sh` / `nav.sh` 时不用手动设。
 
 ---
 
-## 5. 架构
+## 架构要点
 
-### 5.1 数据流
+数据流：双 LiDAR → 点云融合 → 地形分析 → costmap → Nav2 → cmd_vel。
 
 ```mermaid
 flowchart LR
-  subgraph Sensors
-    A[odin_ros_driver\n定位/里程计主源]
-    B[mid360_driver]
-  end
-
-  subgraph Per-Sensor
-    B --> C[point_lio\nobstacle-only]
-    C --> D[loam_interface\nmid360 path]
-    A --> E[sensor_scan_generation]
-  end
-
-  subgraph 3D Fusion
-    A -->|registered_scan| F[pointcloud_merge_sync]
-    D -->|mid360/registered_scan| F
-    F -->|merged_registered_scan| G[terrain_analysis_ext\n全局]
-    F -->|merged_registered_scan| H[terrain_analysis\n局部]
-  end
-
-  subgraph Obstacle Map
-    G --> I[terrain_map_ext]
-    H --> J[terrain_map]
-    I --> K[local/global costmap\nIntensityVoxelLayer 3D]
-    J --> K
-  end
-
-  subgraph Scan Chain
-    G --> L[pointcloud_to_laserscan]
-    L --> M[scan_additive_adapter]
-    M --> N[obstacle_scan_additive]
-  end
-
-  subgraph Nav2
-    K --> O[nav2_planner]
-    K --> P[controller_server]
-    N -->|laser input| P
-    P --> Q[velocity_smoother]
-    Q --> R[fake_vel_transform]
-    R --> S[cmd_vel]
-  end
+  A[odin_ros_driver\n定位主源] -->|registered_scan| F[pointcloud_merge_sync]
+  B[mid360_driver] --> C[point_lio\nobstacle-only] --> D[loam_interface] -->|registered_scan| F
+  F -->|merged| G[terrain_analysis] --> K[costmap\nIntensityVoxelLayer 3D]
+  K --> P[controller_server] --> Q[velocity_smoother] --> R[fake_vel_transform] --> S[cmd_vel]
 ```
 
-### 5.2 实车约定
+实车关键约定：
 
-| 约定 | 说明 |
-|------|------|
-| 定位主源 | odin1，`odom -> base_footprint` 由 odin 驱动负责 |
-| mid360 角色 | 点云补盲，不接管定位，`point_lio` obstacle-only |
-| 3D 融合 | `pointcloud_merge_sync` 在 terrain_analysis 之前合并双 LiDAR（ApproximateTime 80ms） |
-| Costmap | `IntensityVoxelLayer`（3D 体素层），intensity = 地面相对高度 |
-| obstacle_scan | `obstacle_scan_additive` 共享话题 |
-| TF 防抖 | `sensor_scan_generation.publish_base_tf=false` |
-| 融合回退 | mid360 不可用时自动回退到 odin1 单源 |
+- **定位主源是 odin1**，`odom -> base_footprint` 由 odin 驱动负责。
+- **mid360 只补盲、不接管定位**，`point_lio` 跑 obstacle-only。
+- 双 LiDAR 在 `pointcloud_merge_sync` 里合并（ApproximateTime 80ms）；mid360 不可用时自动回退到 odin1 单源。
+- Costmap 用 `IntensityVoxelLayer`（3D 体素层），intensity = 地面相对高度。
 
-### 5.3 开关（navigation_launch）
+navigation_launch 里有两个补盲开关，**默认都是关的**（`navigation_launch.py` 里设为 `false`）：
 
-| 参数 | 作用 |
-|------|------|
-| `enable_mid360_costmap_additive` | mid360 -> costmap 补盲 |
-| `enable_scan_additive` | scan 合成链路 |
+- `enable_mid360_costmap_additive` — mid360 → costmap 补盲
+- `enable_scan_additive` — scan 合成链路
 
-### 5.4 Odin 地图保存
-
-- 目录：`/ws/src/odin_ros_driver/map/{driver_start_time}/`
-- 文件名：`map_{save_time}.bin`（北京时间 UTC+8）
-
-### 5.5 框架图
-
-- `docs/architecture/planned_pipeline.drawio`
+框架图：`docs/architecture/planned_pipeline.drawio`。
 
 ---
 
-## 6. Docker
+## 建图与重定位
 
-### 开发容器挂载
+**建图**：跑 `./scripts/mapping.sh`，odin 会以建图模式启动。终止程序时自动保存两份地图（都以时间戳命名）：
 
-| 容器路径 | 来源 | 说明 |
-|----------|------|------|
-| `/ws/src` | 宿主机 `src/` | 改代码直接生效 |
-| `/ws/scripts` | 宿主机 `scripts/` | 脚本同步 |
-| `/ws/build` | bind mount | 宿主机可直接清除 |
-| `/ws/install` | bind mount | 编译产物 |
-| `/ws/maps` | 宿主机 `maps/` | 地图持久化 |
-| `/ws/bags` | 宿主机 `bags/` | 录包数据 |
+- pgm → 宿主机 `maps/`
+- odin 的 bin → 宿主机构建产物 `.buildcache/odin1/src/odin_ros_driver/map/`
+  - 每次建图一个以时间戳命名的文件夹，里面的 bin 文件名是 odin 开始建图的时间戳
 
-### 多分支构建缓存
+**重定位**：先从建图产物里挑要用的图，手动搬到启动位置：
 
-容器入口脚本自动检测当前 git 分支，从 `.buildcache/<分支名>/install/setup.bash` source 编译产物。不同分支环境和构建产物完全隔离。
+- bin：从 `.buildcache/odin1/src/odin_ros_driver/map/` 挑一份，放到 `src/odin_ros_driver/map/` 下
+- pgm：从 `maps/` 挑一份，放到启动包的 map 目录 `src/gxu2026_sentry_nav/gxu2026_nav_bringup/map/` 下
 
-### 依赖变更
-
-| 变更类型 | 操作 |
-|----------|------|
-| 改业务代码 | 容器内 `colcon build` |
-| 改 package.xml | 重建镜像 |
-| 改 requirements.txt | 重建镜像 |
+然后把 bin 的**容器内绝对路径**（`/ws/src/odin_ros_driver/map/...`）填到 `src/odin_ros_driver/config/control_command.yaml` 的 `relocalization_map_abs_path`。然后直接跑 `./scripts/nav.sh` 即可（脚本会自动设 `custom_map_mode=2` 进入重定位模式）。
 
 ---
 
-## 7. 参考
+## NeuPAN 控制器
 
-- 导航主包：`src/gxu2026_sentry_nav/`
-- 框架图：`docs/architecture/planned_pipeline.drawio`
+- 选用控制器：`src/gxu2026_sentry_nav/gxu2026_nav_bringup/config/reality/nav2_params.yaml`
+- NeuPAN 调参：`src/gxu2026_sentry_nav/gxu2026_nav_bringup/config/reality/neupan_planner.yaml`
+
+NeuPAN 用的是 Python 3.12，所以单独开了一个容器（已经开好）。
+
+---
+
+## Docker 说明
+
+容器只提供环境，代码和构建产物都是从宿主机挂载进去的（`src/`、`scripts/`、`maps/`、`bags/` 等），改代码直接生效。
+
+改业务代码后在容器内重新跑 `./scripts/quick_build.sh` 即可。
