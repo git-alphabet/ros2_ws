@@ -24,3 +24,5 @@ __pycache__/
 /.codex
 /CLAUDE.md
 library/PCL_FLOW.md
+.agents/
+.teach/
